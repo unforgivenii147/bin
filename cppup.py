@@ -1,0 +1,57 @@
+#!/data/data/com.termux/files/usr/bin/env python3
+from time import perf_counter
+import os
+import subprocess
+from concurrent.futures import ProcessPoolExecutor
+
+# List of file extensions to search for
+FILE_EXTENSIONS = {'.c', '.cpp', '.cxx', '.cc', '.h', '.hh', '.hpp', '.hxx'}
+
+
+# Function to run clang-format on a single file
+def format_file(file_path):
+    print(f'formating {os.path.relpath(file_path)}')
+    try:
+        # -i flag modifies the file in place
+        subprocess.run(['clang-format', '-i', file_path], check=True)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+# Function to find all files with specified extensions recursively
+def find_files():
+    all_files = []
+    for root, _, files in os.walk('.'):
+        for file in files:
+            if any(file.endswith(ext) for ext in FILE_EXTENSIONS):
+                all_files.append(os.path.join(root, file))
+    return all_files
+
+
+def main() -> None:
+    start = perf_counter()
+    # Step 1: Find all files to format
+    files_to_format = find_files()
+
+    if not files_to_format:
+        print('No files found with the specified extensions.')
+        return
+
+    print(f'Formatting {len(files_to_format)} files...')
+
+    # Step 2: Format files in parallel using ProcessPoolExecutor
+    # Max_workers defaults to the number of processors on the machine
+    count = 0
+    with ProcessPoolExecutor(max_workers=8) as executor:
+        results = executor.map(format_file, files_to_format)
+
+        # Count successful formatting operations
+        count = sum(1 for success in results if success)
+
+    # Step 3: Print the result
+    print(f'{perf_counter() - start} sec')
+
+
+if __name__ == '__main__':
+    main()
