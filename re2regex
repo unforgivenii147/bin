@@ -1,0 +1,488 @@
+#!/usr/bin/env python3
+"""
+Script to replace 'import re' with 'import regex as re' in all Python files recursively.
+Supports both .py files, extensionless Python scripts, and compressed archives.
+"""
+
+import os
+import regex as re
+import tarfile
+import zipfile
+import tempfile
+import shutil
+from pathlib import Path
+from io import BytesIO
+
+
+def is_python_file(file_path):
+    """
+    Check if a file is a Python file by extension or shebang.
+
+    Args:
+        file_path: Path to the file
+
+    Returns:
+        bool: True if file is a Python file, False otherwise
+    """
+    # Check if it has .py extension
+    if file_path.suffix == '.py':
+        return True
+
+    # For files without extension, check the shebang
+    if file_path.suffix == '':
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                first_line = f.readline()
+                # Check for Python shebang
+                if first_line.startswith('#!') and 'python' in first_line.lower():
+                    return True
+        except (UnicodeDecodeError, PermissionError, IsADirectoryError):
+            # Skip binary files, permission denied, or directories
+            return False
+
+    return False
+
+
+def is_python_content(content_bytes):
+    """
+    Check if content is Python by checking for shebang or .py patterns.
+
+    Args:
+        content_bytes: File content as bytes
+
+    Returns:
+        bool: True if content appears to be Python
+    """
+    try:
+        first_line = content_bytes.split(b'\n', 1)[0].decode('utf-8', errors='ignore')
+        if first_line.startswith('#!') and 'python' in first_line.lower():
+            return True
+    except:
+        pass
+    return False
+
+
+def process_content(content):
+    """
+    Process content to replace import statements.
+
+    Args:
+        content: String content to process
+
+    Returns:
+        tuple: (modified_content, was_modified)
+    """
+    original_content = content
+
+    # Pattern to match 'import re' but not 'import regex' or other variations
+    pattern = r'^(\s*)import\s+re\s*($|#)'
+    replacement = r'\1import regex as re\2'
+    content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
+
+    return content, content != original_content
+
+
+def process_file(file_path, dry_run=False):
+    """
+    Process a single Python file to replace import statements.
+
+    Args:
+        file_path: Path to the Python file
+        dry_run: If True, don't actually modify files
+
+    Returns:
+        bool: True if file was modified, False otherwise
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        new_content, was_modified = process_content(content)
+
+        if was_modified and not dry_run:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(new_content)
+
+        return was_modified
+
+    except Exception as e:
+        print(f'Error processing {file_path}: {e}')
+        return False
+
+
+def process_zip_archive(zip_path, dry_run=False):
+    """
+    Process Python files inside a ZIP archive.
+
+    Args:
+        zip_path: Path to the ZIP file
+        dry_run: If True, don't actually modify files
+
+    Returns:
+        tuple: (total_files, modified_files_list)
+    """
+    modified_files = []
+    total_files = 0
+
+    try:
+        # Create a temporary directory for processing
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_zip = Path(temp_dir) / 'temp.zip'
+
+            # Copy original zip to temp location
+            shutil.copy2(zip_path, temp_zip)
+
+            with zipfile.ZipFile(temp_zip, 'r') as zip_read:
+                file_list = zip_read.namelist()
+
+                # Create new zip for writing
+                new_zip_path = Path(temp_dir) / 'new.zip'
+                with zipfile.ZipFile(new_zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_write:
+                    for file_name in file_list:
+                        file_info = zip_read.getinfo(file_name)
+
+                        # Skip directories
+                        if file_name.endswith('/'):
+                            zip_write.writestr(file_info, '')
+                            continue
+
+                        # Read file content
+                        content_bytes = zip_read.read(file_name)
+
+                        # Check if it's a Python file
+                        is_py = file_name.endswith('.py') or is_python_content(content_bytes)
+
+                        if is_py:
+                            try:
+                                content = content_bytes.decode('utf-8')
+                                new_content, was_modified = process_content(content)
+
+                                if was_modified:
+                                    total_files += 1
+                                    modified_files.append(f'{zip_path}::{file_name}')
+                                    print(f'    ✓ Modified: {file_name}')
+                                    content_bytes = new_content.encode('utf-8')
+                                else:
+                                    total_files += 1
+                                    print(f'    - No changes: {file_name}')
+                            except UnicodeDecodeError:
+                                pass  # Skip binary files
+
+                        # Write file to new zip
+                        zip_write.writestr(file_info, content_bytes)
+
+            # Replace original zip with modified one
+            if modified_files and not dry_run:
+                shutil.move(new_zip_path, zip_path)
+
+    except Exception as e:
+        print(f'  Error processing ZIP archive: {e}')
+
+    return total_files, modified_files
+
+
+def process_tar_archive(tar_path, dry_run=False):
+    """
+    Process Python files inside a TAR archive (including .tar.gz, .tar.xz, .tar.zst).
+
+    Args:
+        tar_path: Path to the TAR file
+        dry_run: If True, don't actually modify files
+
+    Returns:
+        tuple: (total_files, modified_files_list)
+    """
+    modified_files = []
+    total_files = 0
+
+    try:
+        # Determine compression mode
+        if tar_path.suffix == '.zst':
+            try:
+                import zstandard as zstd
+
+                has_zstd = True
+            except ImportError:
+                print(f'  Warning: zstandard module not installed. Skipping {tar_path}')
+                print(f'  Install with: pip install zstandard')
+                return 0, []
+        else:
+            has_zstd = False
+
+        # Create a temporary directory for processing
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_tar = Path(temp_dir) / 'temp.tar'
+
+            # Handle .zst compression separately
+            if tar_path.suffix == '.zst' or tar_path.name.endswith('.tar.zst'):
+                import zstandard as zstd
+
+                # Decompress .zst file
+                with open(tar_path, 'rb') as compressed:
+                    dctx = zstd.ZstdDecompressor()
+                    with open(temp_tar, 'wb') as decompressed:
+                        dctx.copy_stream(compressed, decompressed)
+
+                mode = 'r'
+            else:
+                # Copy original tar to temp location
+                shutil.copy2(tar_path, temp_tar)
+
+                # Determine read mode
+                if tar_path.suffix == '.gz' or tar_path.name.endswith('.tar.gz'):
+                    mode = 'r:gz'
+                elif tar_path.suffix == '.xz' or tar_path.name.endswith('.tar.xz'):
+                    mode = 'r:xz'
+                elif tar_path.suffix == '.bz2' or tar_path.name.endswith('.tar.bz2'):
+                    mode = 'r:bz2'
+                else:
+                    mode = 'r'
+
+            # Read and process tar archive
+            with tarfile.open(temp_tar, mode) as tar_read:
+                members = tar_read.getmembers()
+
+                # Create new tar for writing
+                new_tar_path = Path(temp_dir) / 'new.tar'
+                with tarfile.open(new_tar_path, 'w') as tar_write:
+                    for member in members:
+                        # Skip directories
+                        if member.isdir():
+                            tar_write.addfile(member)
+                            continue
+
+                        # Read file content
+                        if member.isfile():
+                            file_obj = tar_read.extractfile(member)
+                            if file_obj is None:
+                                tar_write.addfile(member)
+                                continue
+
+                            content_bytes = file_obj.read()
+
+                            # Check if it's a Python file
+                            is_py = member.name.endswith('.py') or is_python_content(content_bytes)
+
+                            if is_py:
+                                try:
+                                    content = content_bytes.decode('utf-8')
+                                    new_content, was_modified = process_content(content)
+
+                                    if was_modified:
+                                        total_files += 1
+                                        modified_files.append(f'{tar_path}::{member.name}')
+                                        print(f'    ✓ Modified: {member.name}')
+                                        content_bytes = new_content.encode('utf-8')
+
+                                        # Update member size
+                                        member.size = len(content_bytes)
+                                    else:
+                                        total_files += 1
+                                        print(f'    - No changes: {member.name}')
+                                except UnicodeDecodeError:
+                                    pass  # Skip binary files
+
+                            # Write file to new tar
+                            tar_write.addfile(member, BytesIO(content_bytes))
+                        else:
+                            tar_write.addfile(member)
+
+            # Compress and replace original archive
+            if modified_files and not dry_run:
+                if tar_path.suffix == '.zst' or tar_path.name.endswith('.tar.zst'):
+                    import zstandard as zstd
+
+                    # Compress with zstd
+                    cctx = zstd.ZstdCompressor()
+                    with open(new_tar_path, 'rb') as decompressed:
+                        with open(tar_path, 'wb') as compressed:
+                            cctx.copy_stream(decompressed, compressed)
+                else:
+                    # Determine write mode
+                    if tar_path.suffix == '.gz' or tar_path.name.endswith('.tar.gz'):
+                        write_mode = 'w:gz'
+                    elif tar_path.suffix == '.xz' or tar_path.name.endswith('.tar.xz'):
+                        write_mode = 'w:xz'
+                    elif tar_path.suffix == '.bz2' or tar_path.name.endswith('.tar.bz2'):
+                        write_mode = 'w:bz2'
+                    else:
+                        write_mode = 'w'
+
+                    # Recompress
+                    final_tar = Path(temp_dir) / 'final.tar'
+                    with tarfile.open(new_tar_path, 'r') as tar_read:
+                        with tarfile.open(final_tar, write_mode) as tar_write:
+                            for member in tar_read.getmembers():
+                                if member.isfile():
+                                    tar_write.addfile(member, tar_read.extractfile(member))
+                                else:
+                                    tar_write.addfile(member)
+
+                    shutil.move(final_tar, tar_path)
+
+    except Exception as e:
+        print(f'  Error processing TAR archive: {e}')
+        import traceback
+
+        traceback.print_exc()
+
+    return total_files, modified_files
+
+
+def is_archive(file_path):
+    """
+    Check if a file is a supported archive.
+
+    Args:
+        file_path: Path to the file
+
+    Returns:
+        str: Archive type ('zip', 'tar', 'whl', 'zst') or None
+    """
+    name = file_path.name.lower()
+
+    if name.endswith('.zip'):
+        return 'zip'
+    elif name.endswith('.whl'):
+        return 'whl'  # Wheel files are ZIP archives
+    elif name.endswith(('.tar.gz', '.tgz')):
+        return 'tar'
+    elif name.endswith(('.tar.xz', '.txz')):
+        return 'tar'
+    elif name.endswith('.tar.bz2'):
+        return 'tar'
+    elif name.endswith('.tar.zst'):
+        return 'tar'
+    elif name.endswith('.tar'):
+        return 'tar'
+    elif name.endswith('.zst'):
+        return 'zst'
+
+    return None
+
+
+def find_and_process_python_files(root_dir='.', dry_run=False):
+    """
+    Find all Python files recursively and process them.
+
+    Args:
+        root_dir: Root directory to start searching (default: current directory)
+        dry_run: If True, don't actually modify files
+    """
+    root_path = Path(root_dir)
+    modified_files = []
+    total_files = 0
+    archive_stats = {'total': 0, 'modified': 0}
+
+    # Directories to skip
+    skip_dirs = {
+        '.git',
+        '.svn',
+        '.hg',
+        'venv',
+        'env',
+        '__pycache__',
+        'site-packages',
+        'node_modules',
+        '.venv',
+        '.tox',
+    }
+
+    # Walk through all files recursively
+    for item in root_path.rglob('*'):
+        # Skip if it's a directory
+        if item.is_dir():
+            continue
+
+        # Skip files in excluded directories
+        if any(part in skip_dirs or part.startswith('.') for part in item.parts):
+            continue
+
+        # Check if it's an archive
+        archive_type = is_archive(item)
+        if archive_type:
+            print(f'Processing archive [{archive_type}]: {item}')
+
+            if archive_type in ['zip', 'whl']:
+                arch_total, arch_modified = process_zip_archive(item, dry_run)
+            elif archive_type in ['tar', 'zst']:
+                arch_total, arch_modified = process_tar_archive(item, dry_run)
+            else:
+                continue
+
+            archive_stats['total'] += arch_total
+            archive_stats['modified'] += len(arch_modified)
+            modified_files.extend(arch_modified)
+
+            if arch_modified:
+                print(f'  Archive summary: {len(arch_modified)} files modified')
+
+            continue
+
+        # Check if it's a Python file
+        if is_python_file(item):
+            total_files += 1
+            file_type = f'(.py)' if item.suffix == '.py' else '(no ext)'
+            if Path(item).stat().st_size==0:
+                continue
+            print(f'Processing {file_type}: {item}')
+            if process_file(item, dry_run):
+                modified_files.append(str(item))
+                print(f'  ✓ Modified')
+            else:
+                print(f'  - No changes needed')
+
+    # Print summary
+    print('\n' + '=' * 60)
+    print(f'Summary:')
+    print(f'  Regular Python files processed: {total_files}')
+    print(
+        f'  Regular Python files modified: {len([f for f in modified_files if "::" not in str(f)])}'
+    )
+    print(f'  Archive Python files processed: {archive_stats["total"]}')
+    print(f'  Archive Python files modified: {archive_stats["modified"]}')
+    print(f'  Total files modified: {len(modified_files)}')
+
+    if modified_files:
+        print(f'\nModified files:')
+        for file in modified_files:
+            print(f'  - {file}')
+
+
+def main():
+    """Main function with command-line argument support."""
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Replace 'import re' with 'import regex as re' in Python files recursively.",
+        epilog='Supported archives: .zip, .whl, .tar, .tar.gz, .tar.xz, .tar.bz2, .tar.zst, .zst',
+    )
+    parser.add_argument(
+        '--dry-run', action='store_true', help='Show what would be changed without modifying files'
+    )
+    parser.add_argument(
+        'directory',
+        nargs='?',
+        default='.',
+        help='Directory to process (default: current directory)',
+    )
+
+    args = parser.parse_args()
+
+    print("Starting to replace 'import re' with 'import regex as re'...")
+    print(f'Target directory: {os.path.abspath(args.directory)}')
+    print('Supports:')
+    print('  - .py files and extensionless Python scripts (with shebang)')
+    print('  - Archives: .zip, .whl, .tar, .tar.gz, .tar.xz, .tar.bz2, .tar.zst, .zst')
+    print('=' * 60)
+
+    if args.dry_run:
+        print('\n*** DRY RUN MODE - No files will be modified ***\n')
+
+
+    find_and_process_python_files(args.directory, args.dry_run)
+    print('\nDone!')
+
+
+if __name__ == '__main__':
+    main()
