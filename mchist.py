@@ -19,7 +19,9 @@ with open(input_file, 'r') as file:
                 '=',
                 1)[-1].strip()  # Get the part after '=' and strip whitespace
             cmdline_section.append(cleaned_line)
+soniq=list(set(cmdline_section))
 
 with open(output_file, 'a') as file:
-    for cmd in cmdline_section:
+    for cmd in soniq:
+        print(str(cmd))
         file.write(cmd + '\n')
