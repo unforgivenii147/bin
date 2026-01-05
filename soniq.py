@@ -21,12 +21,12 @@ def sort_and_uniq(file_path):
         # Step 1: Efficient Reading
         if file_size > MB_5:
             # Use mmap for files > 5MB to map file content directly to virtual memory
-            with open(file_path, 'r+b') as f:
+            with open(file_path, "r+b") as f:
                 with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
                     # Convert bytes to string lines
-                    lines = mm.read().decode('utf-8').splitlines()
+                    lines = mm.read().decode("utf-8").splitlines()
         else:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.read().splitlines()
 
         # Step 2: Concurrent Processing (Deduplication + Normalization)
@@ -42,9 +42,9 @@ def sort_and_uniq(file_path):
         # Write to a temp file first. If it fails here, the original is untouched.
         fd, temp_path = tempfile.mkstemp(dir=os.path.dirname(file_path))
         try:
-            with os.fdopen(fd, 'w', encoding='utf-8') as tmp:
+            with os.fdopen(fd, "w", encoding="utf-8") as tmp:
                 for line in unique_sorted_lines:
-                    tmp.write(line + '\n')
+                    tmp.write(line + "\n")
 
             # Atomic replace: If this succeeds, the file is updated.
             os.replace(temp_path, file_path)
@@ -55,11 +55,11 @@ def sort_and_uniq(file_path):
             raise e
 
     except Exception as e:
-        print(f'Failed to process file: {e}')
+        print(f"Failed to process file: {e}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print('Usage: python script.py <filename>')
+        print("Usage: python script.py <filename>")
     else:
         sort_and_uniq(sys.argv[1])

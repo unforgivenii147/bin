@@ -15,24 +15,24 @@ import multiprocessing as mp
 import os
 from typing import Dict, List, Tuple
 
-OUTPUT_DIR = 'output'
-EXCLUDE_DIRS = {'test', 'tests', 'examples', 'output'}
+OUTPUT_DIR = "output"
+EXCLUDE_DIRS = {"test", "tests", "examples", "output"}
 
 
 def is_python_script(path: str) -> bool:
-    if path.endswith('.py'):
+    if path.endswith(".py"):
         return True
     try:
-        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
             line = f.readline()
-        return line.startswith('#!') and 'python' in line.lower()
+        return line.startswith("#!") and "python" in line.lower()
     except Exception:
         return False
 
 
 def discover_python_files() -> List[str]:
     files = []
-    for root, dirs, fnames in os.walk('.'):
+    for root, dirs, fnames in os.walk("."):
         dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
         for fname in fnames:
             p = os.path.join(root, fname)
@@ -43,7 +43,7 @@ def discover_python_files() -> List[str]:
 
 def mark_parents(node: ast.AST, parent=None):
     for child in ast.iter_child_nodes(node):
-        setattr(child, '_parent', node)
+        setattr(child, "_parent", node)
         mark_parents(child, node)
 
 
@@ -62,7 +62,7 @@ def extract_from_file(
     Dict[str, str],  # top-level constants
 ]:
     try:
-        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(path, "r", encoding="utf-8", errors="ignore") as f:
             source = f.read()
         tree = ast.parse(source)
     except Exception:
@@ -81,7 +81,7 @@ def extract_from_file(
             if not src:
                 continue
 
-            parent = getattr(node, '_parent', None)
+            parent = getattr(node, "_parent", None)
             is_toplevel = isinstance(parent, ast.Module)
 
             if isinstance(node, ast.ClassDef):
@@ -98,7 +98,7 @@ def extract_from_file(
 
         # ----- Constants (top-level only) -----
         if isinstance(node, (ast.Assign, ast.AnnAssign)):
-            parent = getattr(node, '_parent', None)
+            parent = getattr(node, "_parent", None)
             if not isinstance(parent, ast.Module):
                 continue
 
@@ -124,9 +124,9 @@ def extract_from_file(
 
 
 def write_output(path: str, data: Dict[str, str]) -> None:
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         for name, src in sorted(data.items()):
-            f.write(src.rstrip() + '\n\n')
+            f.write(src.rstrip() + "\n\n")
 
 
 def main():
@@ -134,7 +134,7 @@ def main():
     files = discover_python_files()
 
     if not files:
-        print('No Python files found.')
+        print("No Python files found.")
         return
 
     with mp.Pool(mp.cpu_count()) as pool:
@@ -151,34 +151,34 @@ def main():
         nested_funcs.update(nf)
         const_map.update(consts)
 
-    write_output(os.path.join(OUTPUT_DIR, 'classes.py'), tl_classes)
-    write_output(os.path.join(OUTPUT_DIR, 'functions.py'), tl_funcs)
-    write_output(os.path.join(OUTPUT_DIR, 'nested_classes.py'), nested_classes)
-    write_output(os.path.join(OUTPUT_DIR, 'nested_functions.py'), nested_funcs)
-    write_output(os.path.join(OUTPUT_DIR, 'const.py'), const_map)
+    write_output(os.path.join(OUTPUT_DIR, "classes.py"), tl_classes)
+    write_output(os.path.join(OUTPUT_DIR, "functions.py"), tl_funcs)
+    write_output(os.path.join(OUTPUT_DIR, "nested_classes.py"), nested_classes)
+    write_output(os.path.join(OUTPUT_DIR, "nested_functions.py"), nested_funcs)
+    write_output(os.path.join(OUTPUT_DIR, "const.py"), const_map)
 
-    print('\n=== Top-Level Classes ===')
+    print("\n=== Top-Level Classes ===")
     for n in sorted(tl_classes):
-        print(' -', n)
+        print(" -", n)
 
-    print('\n=== Top-Level Functions ===')
+    print("\n=== Top-Level Functions ===")
     for n in sorted(tl_funcs):
-        print(' -', n)
+        print(" -", n)
 
-    print('\n=== Nested Classes ===')
+    print("\n=== Nested Classes ===")
     for n in sorted(nested_classes):
-        print(' -', n)
+        print(" -", n)
 
-    print('\n=== Nested Functions ===')
+    print("\n=== Nested Functions ===")
     for n in sorted(nested_funcs):
-        print(' -', n)
+        print(" -", n)
 
-    print('\n=== Constants ===')
+    print("\n=== Constants ===")
     for n in sorted(const_map):
-        print(' -', n)
+        print(" -", n)
 
-    print('\nOutputs saved to:', OUTPUT_DIR)
+    print("\nOutputs saved to:", OUTPUT_DIR)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

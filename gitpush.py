@@ -18,25 +18,25 @@ def run(cmd) -> bool | None:
 
 def in_git_repo():
     """Return True if current directory is a Git repository."""
-    return run('git rev-parse --is-inside-work-tree > /dev/null 2>&1')
+    return run("git rev-parse --is-inside-work-tree > /dev/null 2>&1")
 
 
 def ensure_gitignore() -> None:
     """If `.gitignore` does not exist in the repo root,
     copy ~/.gitignore_global to ./.gitignore (if it exists).
     """
-    repo_gitignore = Path('.gitignore')
-    global_gitignore = Path.home() / '.gitignore_global'
+    repo_gitignore = Path(".gitignore")
+    global_gitignore = Path.home() / ".gitignore_global"
 
     if repo_gitignore.exists():
-        print('.gitignore already exists.')
+        print(".gitignore already exists.")
         return
 
     if global_gitignore.exists():
-        print('Copying global .gitignore_global to local .gitignore...')
+        print("Copying global .gitignore_global to local .gitignore...")
         shutil.copy(global_gitignore, repo_gitignore)
     else:
-        print('No local .gitignore and no ~/.gitignore_global found. Skipping.')
+        print("No local .gitignore and no ~/.gitignore_global found. Skipping.")
 
 
 def find_python_scripts_without_extension():
@@ -44,16 +44,16 @@ def find_python_scripts_without_extension():
     Detected via a python shebang.
     """
     py_files = []
-    for root, _, files in os.walk('.'):
+    for root, _, files in os.walk("."):
         for f in files:
-            if '.' in f:  # skip files with extensions
+            if "." in f:  # skip files with extensions
                 continue
 
             path = os.path.join(root, f)
             try:
-                with open(path, encoding='utf-8', errors='ignore') as file:
+                with open(path, encoding="utf-8", errors="ignore") as file:
                     first_line = file.readline().strip()
-                    if first_line.startswith('#!') and 'python' in first_line.lower():
+                    if first_line.startswith("#!") and "python" in first_line.lower():
                         py_files.append(path)
             except (OSError, UnicodeDecodeError):
                 continue
@@ -63,7 +63,7 @@ def find_python_scripts_without_extension():
 
 def main() -> None:
     if not in_git_repo():
-        print('Not inside a Git repository. Doing nothing.')
+        print("Not inside a Git repository. Doing nothing.")
         return
 
     # Ensure .gitignore exists
@@ -72,47 +72,47 @@ def main() -> None:
     # 1. Collect all Python files: *.py + extensionless python scripts
     python_files = []
 
-    for root, _, files in os.walk('.'):
+    for root, _, files in os.walk("."):
         for f in files:
-            if f.endswith('.py'):
+            if f.endswith(".py"):
                 python_files.append(os.path.join(root, f))
 
     python_files.extend(find_python_scripts_without_extension())
 
     if not python_files:
-        print('No Python files found.')
+        print("No Python files found.")
         return
 
-    print('Formatting Python files with black:')
+    print("Formatting Python files with black:")
     for f in python_files:
-        print('  ->', f)
-        if not run(f'black {f}'):
-            print(f'Black failed for {f}.')
+        print("  ->", f)
+        if not run(f"black {f}"):
+            print(f"Black failed for {f}.")
             return
 
     # 2. git add .
-    print('Running git add .')
-    if not run('git add .'):
-        print('git add failed.')
+    print("Running git add .")
+    if not run("git add ."):
+        print("git add failed.")
         return
 
     # 3. git commit with timestamp
-    commit_message = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print(f'Committing with message: {commit_message}')
+    commit_message = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"Committing with message: {commit_message}")
     commit_success = run(f'git commit -m "{commit_message}"')
 
     if not commit_success:
-        print('Nothing to commit or commit failed.')
+        print("Nothing to commit or commit failed.")
         return
 
     # 4. git push
-    print('Pushing changes...')
-    if not run('git push'):
-        print('git push failed.')
+    print("Pushing changes...")
+    if not run("git push"):
+        print("git push failed.")
         return
 
-    print('Done!')
+    print("Done!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

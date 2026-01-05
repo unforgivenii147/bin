@@ -14,9 +14,9 @@ from typing import List
 import requests
 from bs4 import BeautifulSoup
 
-BASE_URL = 'https://github.com/trending/python'
-TIMEFRAMES = ['daily', 'weekly', 'monthly']
-OUTPUT_DIR = Path('trending_repos')
+BASE_URL = "https://github.com/trending/python"
+TIMEFRAMES = ["daily", "weekly", "monthly"]
+OUTPUT_DIR = Path("trending_repos")
 
 
 @dataclass
@@ -30,25 +30,25 @@ class Repo:
 
 
 def fetch_trending(timeframe: str) -> List[Repo]:
-    url = f'{BASE_URL}?since={timeframe}'
+    url = f"{BASE_URL}?since={timeframe}"
     response = requests.get(url, timeout=10)
     response.raise_for_status()
 
-    soup = BeautifulSoup(response.text, 'html.parser')
+    soup = BeautifulSoup(response.text, "html.parser")
     repos = []
 
-    for article in soup.select('article.Box-row'):
-        name = article.h2.text.strip().replace('\n', '').replace(' ', '')
-        repo_url = 'https://github.com' + article.h2.a['href']
+    for article in soup.select("article.Box-row"):
+        name = article.h2.text.strip().replace("\n", "").replace(" ", "")
+        repo_url = "https://github.com" + article.h2.a["href"]
 
-        description_tag = article.find('p')
-        description = description_tag.text.strip() if description_tag else ''
+        description_tag = article.find("p")
+        description = description_tag.text.strip() if description_tag else ""
 
-        language_tag = article.find('span', itemprop='programmingLanguage')
-        language = language_tag.text.strip() if language_tag else ''
+        language_tag = article.find("span", itemprop="programmingLanguage")
+        language = language_tag.text.strip() if language_tag else ""
 
         stars_tag = article.select_one("a[href$='stargazers']")
-        stars = stars_tag.text.strip() if stars_tag else '0'
+        stars = stars_tag.text.strip() if stars_tag else "0"
 
         repos.append(
             Repo(
@@ -65,7 +65,7 @@ def fetch_trending(timeframe: str) -> List[Repo]:
 
 
 def save_csv(repos: List[Repo], path: Path) -> None:
-    with path.open('w', newline='', encoding='utf-8') as f:
+    with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=Repo.__annotations__.keys())
         writer.writeheader()
         for repo in repos:
@@ -75,7 +75,7 @@ def save_csv(repos: List[Repo], path: Path) -> None:
 def save_json(repos: List[Repo], path: Path) -> None:
     path.write_text(
         json.dumps([asdict(r) for r in repos], indent=2),
-        encoding='utf-8',
+        encoding="utf-8",
     )
 
 
@@ -88,11 +88,11 @@ def main() -> None:
         repos = fetch_trending(timeframe)
         all_repos.extend(repos)
 
-        save_csv(repos, OUTPUT_DIR / f'python_trending_{timeframe}.csv')
-        save_json(repos, OUTPUT_DIR / f'python_trending_{timeframe}.json')
+        save_csv(repos, OUTPUT_DIR / f"python_trending_{timeframe}.csv")
+        save_json(repos, OUTPUT_DIR / f"python_trending_{timeframe}.json")
 
-    print(f'Saved {len(all_repos)} repos to {OUTPUT_DIR.resolve()}')
+    print(f"Saved {len(all_repos)} repos to {OUTPUT_DIR.resolve()}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

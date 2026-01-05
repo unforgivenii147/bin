@@ -8,16 +8,16 @@ import time
 from watchdog.events import LoggingEventHandler
 from watchdog.observers import Observer
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Set the format for logging info
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S',
+        format="%(asctime)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     # Set format for displaying path
-    path = sys.argv[1] if len(sys.argv) > 1 else '.'
+    path = sys.argv[1] if len(sys.argv) > 1 else "."
 
     # Initialize logging event handler
     event_handler = LoggingEventHandler()

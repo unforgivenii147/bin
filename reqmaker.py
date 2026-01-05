@@ -6,14 +6,14 @@ from typing import Iterable, List, Set
 
 import regex as re
 
-REQUIREMENTS_FILE = Path('requirements.txt')
-MISSING_PATTERN = re.compile(r'requires ([A-Za-z0-9_\-]+), which is not installed\.')
+REQUIREMENTS_FILE = Path("requirements.txt")
+MISSING_PATTERN = re.compile(r"requires ([A-Za-z0-9_\-]+), which is not installed\.")
 
 
 def run_pip_check() -> str:
     """Run `pip check` and return stdout."""
     result = subprocess.run(
-        ['pip', 'check'],
+        ["pip", "check"],
         capture_output=True,
         text=True,
         check=False,
@@ -41,7 +41,7 @@ def read_existing_requirements() -> Set[str]:
     return {
         line.strip()
         for line in REQUIREMENTS_FILE.read_text().splitlines()
-        if line.strip() and not line.startswith('#')
+        if line.strip() and not line.startswith("#")
     }
 
 
@@ -50,28 +50,30 @@ def save_to_requirements(packages: Iterable[str]) -> None:
     existing = read_existing_requirements()
     merged = sorted(existing | set(packages))
 
-    REQUIREMENTS_FILE.write_text('\n'.join(merged) + '\n')
-    print(f'✔️ Saved {len(packages)} new package(s). Total: {len(merged)} in requirements.txt')
+    REQUIREMENTS_FILE.write_text("\n".join(merged) + "\n")
+    print(
+        f"✔️ Saved {len(packages)} new package(s). Total: {len(merged)} in requirements.txt"
+    )
 
 
 def main() -> None:
-    print('🔍 Running pip check...')
+    print("🔍 Running pip check...")
     output = run_pip_check()
 
     if not output:
-        print('🎉 No issues found by pip check.')
+        print("🎉 No issues found by pip check.")
         return
 
-    print('🔎 Parsing missing packages...')
+    print("🔎 Parsing missing packages...")
     missing_packages = parse_missing_packages(output)
 
     if not missing_packages:
-        print('🎉 No missing libraries detected.')
+        print("🎉 No missing libraries detected.")
         return
 
-    print(f'⚠️ Missing packages detected: {missing_packages}')
+    print(f"⚠️ Missing packages detected: {missing_packages}")
     save_to_requirements(missing_packages)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -2,13 +2,13 @@
 
 import os
 
-EXCLUDE_DIRS = {'.git'}
-OUTPUT_FILE = '/sdcard/all2.txt'
+EXCLUDE_DIRS = {".git"}
+OUTPUT_FILE = "/sdcard/all2.txt"
 
 
 def read_file(path):
     try:
-        with open(path, encoding='utf-8', errors='ignore') as f:
+        with open(path, encoding="utf-8", errors="ignore") as f:
             return f.read()
     except Exception:
         return None
@@ -23,7 +23,7 @@ def collect_files(root):
             # skip output file itself
             if (
                 os.path.abspath(full) == os.path.abspath(OUTPUT_FILE)
-                or 'license' not in str(fname).lower()
+                or "license" not in str(fname).lower()
             ):
                 continue
             yield full
@@ -31,25 +31,25 @@ def collect_files(root):
 
 def build_all_txt(root) -> None:
     files = list(collect_files(root))
-    print(f'Found {len(files)} files')
+    print(f"Found {len(files)} files")
 
-    with open(OUTPUT_FILE, 'w', encoding='utf-8') as out:
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as out:
         for i, path in enumerate(files, 1):
             content = read_file(path)
             if content is None:
-                print(f'Skipping unreadable file: {path}')
+                print(f"Skipping unreadable file: {path}")
                 continue
 
             #            out.write(f"--- FILE: {path} ---\n")
             out.write(content)
 
             if i != len(files):
-                out.write('\n\n\n')  # 3 empty lines
+                out.write("\n\n\n")  # 3 empty lines
 
-            print(f'Added: {path}')
+            print(f"Added: {path}")
 
-    print(f'\nFinished: {OUTPUT_FILE} created.')
+    print(f"\nFinished: {OUTPUT_FILE} created.")
 
 
-if __name__ == '__main__':
-    build_all_txt('.')
+if __name__ == "__main__":
+    build_all_txt(".")

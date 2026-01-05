@@ -7,10 +7,10 @@ import rignore
 from deep_translator import GoogleTranslator
 
 # Directory to scan
-DIRECTORY = '.'
+DIRECTORY = "."
 
 # Detect non-ASCII characters (Chinese, Japanese, Korean, Arabic, etc.)
-non_english_pattern = re.compile(r'[^\x00-\x7F]')
+non_english_pattern = re.compile(r"[^\x00-\x7F]")
 
 
 def translate_if_needed(name: str) -> str:
@@ -22,7 +22,7 @@ def translate_if_needed(name: str) -> str:
         return name
 
     try:
-        translated = GoogleTranslator(source='auto', target='en').translate(base)
+        translated = GoogleTranslator(source="auto", target="en").translate(base)
         return translated + ext
     except Exception as e:
         print(f"Translation error for '{name}': {e}")
@@ -40,7 +40,7 @@ def get_unique_path(path: Path) -> Path:
 
     counter = 1
     while True:
-        new_path = parent / f'{base}_{counter}{ext}'
+        new_path = parent / f"{base}_{counter}{ext}"
         if not new_path.exists():
             return new_path
         counter += 1
@@ -62,7 +62,7 @@ def rename_files(directory: str):
             new_path = get_unique_path(new_path)
 
             os.rename(fp, new_path)
-            print(f'File renamed: {fp.name} -> {new_path.name}')
+            print(f"File renamed: {fp.name} -> {new_path.name}")
 
         # Handle directories
         elif fp.is_dir():
@@ -76,8 +76,8 @@ def rename_files(directory: str):
             new_path = get_unique_path(new_path)
 
             os.rename(fp, new_path)
-            print(f'Directory renamed: {fp.name} -> {new_path.name}')
+            print(f"Directory renamed: {fp.name} -> {new_path.name}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     rename_files(DIRECTORY)

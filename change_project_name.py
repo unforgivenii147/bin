@@ -29,7 +29,7 @@ import sys
 def replace_in_file(path: str, old: str, new: str) -> None:
     """Why: update file content safely."""
     try:
-        with open(path, encoding='utf-8', errors='ignore') as f:
+        with open(path, encoding="utf-8", errors="ignore") as f:
             text = f.read()
     except (UnicodeDecodeError, PermissionError):
         return
@@ -39,7 +39,7 @@ def replace_in_file(path: str, old: str, new: str) -> None:
 
     new_text = text.replace(old, new)
 
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(new_text)
 
 
@@ -54,7 +54,7 @@ def rename_path(path: str, old: str, new: str) -> str:
     new_basename = basename.replace(old, new)
     new_path = os.path.join(dirname, new_basename)
     if os.path.exists(new_path):
-        print(f'path by name {new_path} already exists\n rename it manually')
+        print(f"path by name {new_path} already exists\n rename it manually")
         return path
 
     try:
@@ -66,19 +66,19 @@ def rename_path(path: str, old: str, new: str) -> str:
 
 def main() -> None:
     if len(sys.argv) != 3:
-        print(f'Usage: {sys.argv[0]} <text_to_change> <replacement_text>')
+        print(f"Usage: {sys.argv[0]} <text_to_change> <replacement_text>")
         sys.exit(1)
 
     old = sys.argv[1]
     new = sys.argv[2]
 
     # Phase 1: replace contents in all files
-    for root, _, files in os.walk('.', topdown=True):
+    for root, _, files in os.walk(".", topdown=True):
         for fn in files:
             replace_in_file(os.path.join(root, fn), old, new)
 
     # Phase 2: rename files & folders bottom-up
-    for root, dirs, files in os.walk('.', topdown=False):
+    for root, dirs, files in os.walk(".", topdown=False):
         for fn in files:
             rename_path(os.path.join(root, fn), old, new)
 
@@ -86,5 +86,5 @@ def main() -> None:
             rename_path(os.path.join(root, dn), old, new)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

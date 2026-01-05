@@ -21,17 +21,17 @@ def hash_file(path: Path, chunk_size: int = 8192) -> str:
     try:
         file_size = path.stat().st_size
         with (
-            open(path, 'rb') as f,
+            open(path, "rb") as f,
             tqdm(
                 total=file_size,
-                unit='B',
+                unit="B",
                 unit_scale=True,
                 unit_divisor=1024,
-                desc=f'Hashing {path.name}',
+                desc=f"Hashing {path.name}",
                 leave=False,
             ) as pbar,
         ):
-            for chunk in iter(lambda: f.read(chunk_size), b''):
+            for chunk in iter(lambda: f.read(chunk_size), b""):
                 sha.update(chunk)
                 pbar.update(len(chunk))
 
@@ -64,14 +64,14 @@ def find_duplicate_files(directory: str):
     """
     directory = Path(directory)
     if not directory.exists():
-        raise ValueError(f'Directory does not exist: {directory}')
+        raise ValueError(f"Directory does not exist: {directory}")
 
     all_files = collect_all_files(directory)
     duplicates = defaultdict(list)
 
-    print(f'📁 Scanning {len(all_files)} files...\n')
+    print(f"📁 Scanning {len(all_files)} files...\n")
 
-    for file_path in tqdm(all_files, desc='Overall Progress', unit='file'):
+    for file_path in tqdm(all_files, desc="Overall Progress", unit="file"):
         file_hash = hash_file(file_path)
         if file_hash:
             duplicates[file_hash].append(str(file_path))
@@ -81,38 +81,38 @@ def find_duplicate_files(directory: str):
 
 def print_duplicates(dups: dict) -> None:
     if not dups:
-        print('🎉 No duplicates found!')
+        print("🎉 No duplicates found!")
         return
 
-    print('\n🔍 Duplicate Files Found:\n')
+    print("\n🔍 Duplicate Files Found:\n")
     for i, (h, paths) in enumerate(dups.items(), start=1):
-        print(f'Group {i} (hash={h[:12]}...):')
+        print(f"Group {i} (hash={h[:12]}...):")
         for p in paths:
-            print(f'   • {p}')
-        print('-' * 40)
+            print(f"   • {p}")
+        print("-" * 40)
 
 
-def export_to_json(dups: dict, output_path='duplicates.json') -> None:
-    with open(output_path, 'w', encoding='utf-8') as f:
+def export_to_json(dups: dict, output_path="duplicates.json") -> None:
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(dups, f, indent=2)
-    print(f'📦 Results exported to {output_path}')
+    print(f"📦 Results exported to {output_path}")
 
 
 def print_skipped_paths() -> None:
     if not SKIPPED_PATHS:
         return
-    print('\n⚠️  Skipped (permission denied):')
+    print("\n⚠️  Skipped (permission denied):")
     for p in SKIPPED_PATHS:
-        print(f'   • {p}')
+        print(f"   • {p}")
 
 
-if __name__ == '__main__':
-    folder = input('Enter folder path to scan: ').strip()
+if __name__ == "__main__":
+    folder = input("Enter folder path to scan: ").strip()
     duplicates = find_duplicate_files(folder)
     print_duplicates(duplicates)
     print_skipped_paths()
 
     if duplicates:
-        save = input('Export results to JSON? (y/n): ').lower().strip()
-        if save == 'y':
+        save = input("Export results to JSON? (y/n): ").lower().strip()
+        if save == "y":
             export_to_json(duplicates)

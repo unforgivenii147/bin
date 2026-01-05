@@ -8,7 +8,7 @@ from PIL import Image, ImageFilter, ImageOps
 
 def preprocess_image(img):
     # Convert to grayscale
-    img = img.convert('L')
+    img = img.convert("L")
     # Increase contrast
     img = ImageOps.autocontrast(img)
     # Reduce noise
@@ -18,10 +18,10 @@ def preprocess_image(img):
     return img.point(lambda x: 255 if x > threshold else 0)
 
 
-def extract_text(image_path, lang='eng'):
+def extract_text(image_path, lang="eng"):
     img = Image.open(image_path)
     img = preprocess_image(img)
-    config = '--oem 3 --psm 6'
+    config = "--oem 3 --psm 6"
     return pytesseract.image_to_string(img, lang=lang, config=config)
 
 
@@ -31,11 +31,11 @@ def main() -> None:
     image_path = sys.argv[1]
     if not pathlib.Path(image_path).is_file():
         sys.exit(1)
-    text = extract_text(image_path, lang='eng')
-    output_file = os.path.splitext(image_path)[0] + '.txt'
-    with pathlib.Path(output_file).open('w', encoding='utf-8') as f:
+    text = extract_text(image_path, lang="eng")
+    output_file = os.path.splitext(image_path)[0] + ".txt"
+    with pathlib.Path(output_file).open("w", encoding="utf-8") as f:
         f.write(text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

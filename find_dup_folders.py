@@ -4,7 +4,7 @@ import pathlib
 from collections import defaultdict
 
 
-def hash_folder(folder_path, hash_algorithm='sha256'):
+def hash_folder(folder_path, hash_algorithm="sha256"):
     """Compute the hash of a folder by hashing all its files and subfolders recursively."""
     hasher = hashlib.new(hash_algorithm)
     for root, dirs, files in os.walk(folder_path):
@@ -14,7 +14,7 @@ def hash_folder(folder_path, hash_algorithm='sha256'):
         for file in files:
             file_path = os.path.join(root, file)
             try:
-                with pathlib.Path(file_path).open('rb') as f:
+                with pathlib.Path(file_path).open("rb") as f:
                     while chunk := f.read(8192):
                         hasher.update(chunk)
             except OSError:
@@ -38,7 +38,7 @@ def find_duplicate_folders(root_dir):
     return {h: paths for h, paths in folder_hashes.items() if len(paths) > 1}
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     root_dir = pathlib.Path.cwd()
     duplicates = find_duplicate_folders(root_dir)
     if duplicates:

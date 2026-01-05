@@ -18,7 +18,7 @@ def get_file_hash(file_path):
         file_hash = sha256.update(mapped_file).hexdigest()
         return file_hash
     except Exception as e:
-        print(f'Error processing file {file_path}: {e}')
+        print(f"Error processing file {file_path}: {e}")
         return None
 
 
@@ -30,7 +30,7 @@ def find_duplicates(path: Path):
     # Walk through the directory recursively
     for root, _, files in os.walk(path):
         # Skip .git directory
-        if '.git' in root:
+        if ".git" in root:
             continue
 
         for file in files:
@@ -44,7 +44,7 @@ def find_duplicates(path: Path):
                     if file_hash:
                         files_by_hash[file_hash].append(file_path)
                 except Exception as e:
-                    print(f'Error processing file {file_path}: {e}')
+                    print(f"Error processing file {file_path}: {e}")
                     continue
 
     # Report duplicates: for each group of files with the same hash, print the relative paths
@@ -53,27 +53,29 @@ def find_duplicates(path: Path):
             duplicate_count += len(file_paths) - 1  # Count the duplicates (all but one)
 
             # Print the relative paths of the duplicates
-            print(f'Duplicate files found for hash {file_hash}:')
+            print(f"Duplicate files found for hash {file_hash}:")
             for file_path in file_paths:
                 relative_path = file_path.relative_to(path)  # Get relative path
-                print(f'  {relative_path}')
+                print(f"  {relative_path}")
             print()  # Add a newline for better separation
 
     return duplicate_count
 
 
 @click.command()
-@click.argument('path', default='.', type=click.Path(exists=True, file_okay=False, dir_okay=True))
+@click.argument(
+    "path", default=".", type=click.Path(exists=True, file_okay=False, dir_okay=True)
+)
 def report_duplicates(path) -> None:
     """Finds and reports duplicate files in the specified directory by their relative paths."""
-    print(f'Searching for duplicates in directory: {path}')
+    print(f"Searching for duplicates in directory: {path}")
     duplicate_count = find_duplicates(Path(path))
 
     # Report results
-    print('\nSummary:')
-    print(f'Number of duplicate groups found: {duplicate_count}')
-    print('Duplicate detection process completed.')
+    print("\nSummary:")
+    print(f"Number of duplicate groups found: {duplicate_count}")
+    print("Duplicate detection process completed.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     report_duplicates()

@@ -5,7 +5,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
 # Configuration
-EXCLUDE_DIRS = {'.git'}
+EXCLUDE_DIRS = {".git"}
 
 
 def should_exclude(path: Path) -> bool:
@@ -24,7 +24,7 @@ def delete_item(path: Path):
             path.unlink()
         elif path.is_dir():
             # Sum size of all files inside before removing the dir
-            size_freed = sum(f.stat().st_size for f in path.rglob('*') if f.is_file())
+            size_freed = sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
             shutil.rmtree(path)
             dir_count = 1
     except Exception:
@@ -39,16 +39,16 @@ def main():
 
     # 1. Collect targets
     # We collect .pyc files first, then __pycache__ folders
-    for p in root.rglob('*.pyc'):
+    for p in root.rglob("*.pyc"):
         if not should_exclude(p):
             targets.append(p)
 
-    for d in root.rglob('__pycache__'):
+    for d in root.rglob("__pycache__"):
         if d.is_dir() and not should_exclude(d):
             targets.append(d)
 
     if not targets:
-        print('Everything is already clean.')
+        print("Everything is already clean.")
         return
 
     total_size = 0
@@ -63,19 +63,19 @@ def main():
             total_dirs += d_count
 
     # 3. Report
-    print('--- Cleanup Report ---')
-    print(f'Total directories removed: {total_dirs}')
-    print(f'Total space reclaimed:     {format_size(total_size)}')
+    print("--- Cleanup Report ---")
+    print(f"Total directories removed: {total_dirs}")
+    print(f"Total space reclaimed:     {format_size(total_size)}")
 
 
 def format_size(size_bytes):
     """Helper to format bytes into a readable string."""
-    for unit in ['B', 'KB', 'MB', 'GB']:
+    for unit in ["B", "KB", "MB", "GB"]:
         if size_bytes < 1024:
-            return f'{size_bytes:.2f} {unit}'
+            return f"{size_bytes:.2f} {unit}"
         size_bytes /= 1024
-    return f'{size_bytes:.2f} TB'
+    return f"{size_bytes:.2f} TB"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

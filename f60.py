@@ -13,7 +13,7 @@ def parse_minutes() -> float:
     try:
         return float(sys.argv[1])
     except ValueError:
-        print('Invalid argument. Usage: script.py [minutes]')
+        print("Invalid argument. Usage: script.py [minutes]")
         sys.exit(1)
 
 
@@ -21,7 +21,7 @@ def main() -> None:
     minutes = parse_minutes()
     cutoff = time.time() - (minutes * 60)
 
-    for root, _dirs, files in os.walk('.'):
+    for root, _dirs, files in os.walk("."):
         for file in files:
             path = os.path.join(root, file)
 
@@ -35,9 +35,14 @@ def main() -> None:
             changed = stats.st_ctime
             accessed = stats.st_atime
 
-            if created >= cutoff or modified >= cutoff or changed >= cutoff or accessed >= cutoff:
+            if (
+                created >= cutoff
+                or modified >= cutoff
+                or changed >= cutoff
+                or accessed >= cutoff
+            ):
                 print(path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

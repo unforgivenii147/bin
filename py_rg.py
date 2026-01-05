@@ -19,34 +19,41 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 # ========= Configuration (tweak as desired) =========
-IGNORED_DIRS = {'.git', '.hg', '.svn', 'node_modules', '__pycache__'}
+IGNORED_DIRS = {".git", ".hg", ".svn", "node_modules", "__pycache__"}
 BINARY_CHUNK = 4096
 DEFAULT_THREADS = max(4, (os.cpu_count() or 4))
 # ====================================================
 
 # ---------- Utility: terminal color ----------
-ANSI_BOLD = '\033[1m'
-ANSI_RESET = '\033[0m'
-ANSI_HIGHLIGHT = '\033[31m'  # red; allow environment/no-color override
+ANSI_BOLD = "\033[1m"
+ANSI_RESET = "\033[0m"
+ANSI_HIGHLIGHT = "\033[31m"  # red; allow environment/no-color override
 
 
 def colorize(text: str, start: int, end: int, enable: bool = True) -> str:
     if not enable:
         return text
-    return text[:start] + ANSI_HIGHLIGHT + ANSI_BOLD + text[start:end] + ANSI_RESET + text[end:]
+    return (
+        text[:start]
+        + ANSI_HIGHLIGHT
+        + ANSI_BOLD
+        + text[start:end]
+        + ANSI_RESET
+        + text[end:]
+    )
 
 
 # ---------- Binary detection ----------
 def is_binary_file(path: str, max_bytes: int = BINARY_CHUNK) -> bool:
     try:
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             chunk = f.read(max_bytes)
             if not chunk:
                 return False
-            if b'\0' in chunk:
+            if b"\0" in chunk:
                 return True
             # Heuristic: if many bytes are non-text (control except \n\r\t), treat as binary
-            text_chars = bytearray(range(32, 127)) + b'\n\r\t\f\b'
+            text_chars = bytearray(range(32, 127)) + b"\n\r\t\f\b"
             nontext = sum(1 for b in chunk if b not in text_chars)
             return (nontext / max(1, len(chunk))) > 0.3
     except Exception:
@@ -84,12 +91,12 @@ def collect_files(
             dirnames[:] = [
                 d
                 for d in dirnames
-                if (include_hidden or not d.startswith('.'))
+                if (include_hidden or not d.startswith("."))
                 and d not in IGNORED_DIRS
                 and not matches_any_glob(os.path.join(dirpath, d), exclude_globs)
             ]
             for fn in filenames:
-                if not include_hidden and fn.startswith('.'):
+                if not include_hidden and fn.startswith("."):
                     continue
                 full = os.path.join(dirpath, fn)
                 if matches_any_glob(full, exclude_globs):
@@ -120,9 +127,9 @@ def search_file_text_mode(
     """Returns: (path, [ (lineno, line_text, [ (match_start, match_end), ...] ), ... ])."""
     matches = []
     try:
-        with open(path, encoding='utf-8', errors='replace') as fh:
+        with open(path, encoding="utf-8", errors="replace") as fh:
             for lineno, raw_line in enumerate(fh, start=1):
-                line = raw_line.rstrip('\n')
+                line = raw_line.rstrip("\n")
                 spans: list[tuple[int, int]] = []
                 if regex:
                     for m in regex.finditer(line):
@@ -150,47 +157,59 @@ def search_file_text_mode(
 
 # ---------- Main CLI ----------
 def build_argparser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description='ripgrep-like recursive search in Python')
-    p.add_argument('pattern', nargs='?', help='Regex pattern (positional) or use -e')
-    p.add_argument('-e', '--regexp', dest='pattern_e', help='Pattern (alternative to positional)')
-    p.add_argument('-i', '--ignore-case', action='store_true', help='Case-insensitive search')
+    p = argparse.ArgumentParser(description="ripgrep-like recursive search in Python")
+    p.add_argument("pattern", nargs="?", help="Regex pattern (positional) or use -e")
     p.add_argument(
-        '-F',
-        '--fixed-strings',
-        action='store_true',
-        help='Fixed string search (no regex)',
+        "-e", "--regexp", dest="pattern_e", help="Pattern (alternative to positional)"
     )
-    p.add_argument('-n', '--line-number', action='store_true', help='Show line numbers')
     p.add_argument(
-        '-l',
-        '--files-with-matches',
-        action='store_true',
-        help='Only print filenames that match',
+        "-i", "--ignore-case", action="store_true", help="Case-insensitive search"
     )
-    p.add_argument('-c', '--count', action='store_true', help='Print count of matches per file')
     p.add_argument(
-        '-t',
-        '--threads',
+        "-F",
+        "--fixed-strings",
+        action="store_true",
+        help="Fixed string search (no regex)",
+    )
+    p.add_argument("-n", "--line-number", action="store_true", help="Show line numbers")
+    p.add_argument(
+        "-l",
+        "--files-with-matches",
+        action="store_true",
+        help="Only print filenames that match",
+    )
+    p.add_argument(
+        "-c", "--count", action="store_true", help="Print count of matches per file"
+    )
+    p.add_argument(
+        "-t",
+        "--threads",
         type=int,
         default=DEFAULT_THREADS,
-        help='Number of worker threads',
+        help="Number of worker threads",
     )
-    p.add_argument('--hidden', action='store_true', help='Search hidden files and directories')
-    p.add_argument('--glob', action='append', help='Include glob (fnmatch); can be repeated')
-    p.add_argument('--exclude', action='append', help='Exclude glob (fnmatch); can be repeated')
-    p.add_argument('--no-color', action='store_true', help='Disable colorized output')
     p.add_argument(
-        '--max-filesize',
+        "--hidden", action="store_true", help="Search hidden files and directories"
+    )
+    p.add_argument(
+        "--glob", action="append", help="Include glob (fnmatch); can be repeated"
+    )
+    p.add_argument(
+        "--exclude", action="append", help="Exclude glob (fnmatch); can be repeated"
+    )
+    p.add_argument("--no-color", action="store_true", help="Disable colorized output")
+    p.add_argument(
+        "--max-filesize",
         type=int,
         default=10_000_000,
-        help='Skip files larger than size (bytes)',
+        help="Skip files larger than size (bytes)",
     )
-    p.add_argument('--follow', action='store_true', help='Follow symlinks')
+    p.add_argument("--follow", action="store_true", help="Follow symlinks")
     p.add_argument(
-        'paths',
-        nargs='*',
-        default=['.'],
-        help='Files or directories to search (default: .)',
+        "paths",
+        nargs="*",
+        default=["."],
+        help="Files or directories to search (default: .)",
     )
     return p
 
@@ -200,7 +219,7 @@ def main(argv: list[str] | None = None) -> int:
     pattern = args.pattern_e or args.pattern
     if not pattern:
         print(
-            'No pattern provided. Use positional PATTERN or -e PATTERN.',
+            "No pattern provided. Use positional PATTERN or -e PATTERN.",
             file=sys.stderr,
         )
         return 2
@@ -215,7 +234,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             compiled = re.compile(pattern, flags)
         except re.error as ex:
-            print(f'Invalid regex: {ex}', file=sys.stderr)
+            print(f"Invalid regex: {ex}", file=sys.stderr)
             return 2
 
     include_globs = args.glob or []
@@ -268,7 +287,7 @@ def main(argv: list[str] | None = None) -> int:
                     print(path)
                     # avoid printing repeats
                 elif args.count:
-                    print(f'{path}:{len(matches)}')
+                    print(f"{path}:{len(matches)}")
                 else:
                     for lineno, line, spans in matches:
                         # build highlighted line
@@ -278,15 +297,15 @@ def main(argv: list[str] | None = None) -> int:
                             for s, e in sorted(spans, key=lambda x: x[0], reverse=True):
                                 out_line = colorize(out_line, s, e, enable=True)
                         if args.line_number:
-                            print(f'{path}:{lineno}:{out_line}')
+                            print(f"{path}:{lineno}:{out_line}")
                         else:
-                            print(f'{path}:{out_line}')
+                            print(f"{path}:{out_line}")
         except KeyboardInterrupt:
-            print('\nSearch cancelled.', file=sys.stderr)
+            print("\nSearch cancelled.", file=sys.stderr)
             return 130
 
     return 0 if any_match else 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

@@ -5,9 +5,11 @@ import pkg_resources
 import importlib
 from typing import List, Dict, Tuple
 
+
 def get_installed_python_packages() -> List[Tuple[str, str]]:
     """Return a list of installed Python packages and their versions."""
     return [(d.project_name, d.version) for d in pkg_resources.working_set]
+
 
 def check_package_importable(package_name: str) -> Tuple[bool, str]:
     """Check if a Python package is importable."""
@@ -18,6 +20,7 @@ def check_package_importable(package_name: str) -> Tuple[bool, str]:
         return False, f"ImportError: {e}"
     except Exception as e:
         return False, f"Unexpected error: {e}"
+
 
 def get_latest_version(package_name: str) -> str:
     """Get the latest version of a package from PyPI."""
@@ -35,6 +38,7 @@ def get_latest_version(package_name: str) -> str:
     except subprocess.CalledProcessError:
         pass
     return "Unknown"
+
 
 def main():
     print("=== Python Packages Sanity Check ===")
@@ -69,6 +73,7 @@ def main():
         print("All packages are importable.")
     else:
         print("Some packages may need attention.")
+
 
 if __name__ == "__main__":
     main()

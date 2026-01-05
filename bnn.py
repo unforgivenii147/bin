@@ -4,20 +4,20 @@ import sys
 
 def main():
     if len(sys.argv) != 2:
-        print(f'Usage: {sys.argv[0]} <filename>')
+        print(f"Usage: {sys.argv[0]} <filename>")
         sys.exit(1)
 
     fname = sys.argv[1]
 
-    with open(fname, 'r', encoding='utf-8') as f:
+    with open(fname, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Replace literal backslash-n with actual newline
-    content = content.replace('\\n', '\n')
+    content = content.replace("\\n", "\n")
 
-    with open(fname, 'w', encoding='utf-8') as f:
+    with open(fname, "w", encoding="utf-8") as f:
         f.write(content)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

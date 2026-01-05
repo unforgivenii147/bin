@@ -11,7 +11,7 @@ def folderize_files_alphabetically() -> None:
     """
     current_dir = pathlib.Path.cwd()
     # Special folder for files not starting with a letter
-    other_folder_name = 'Other_Symbols_Or_Numbers'
+    other_folder_name = "Other_Symbols_Or_Numbers"
     # List all entries in the current directory
     try:
         all_entries = os.listdir(current_dir)
@@ -22,7 +22,7 @@ def folderize_files_alphabetically() -> None:
         # Construct the full path
         entry_path = os.path.join(current_dir, entry)
         # 1. Skip the script itself, directories, and hidden files
-        if pathlib.Path(entry_path).is_dir() or entry.startswith('.'):
+        if pathlib.Path(entry_path).is_dir() or entry.startswith("."):
             continue
         # Determine the target folder name
         first_char = entry[0]
@@ -51,8 +51,8 @@ def folderize_files_alphabetically() -> None:
             pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Add a safety check to ensure the user is ready to proceed
     confirmation = input("Type 'YES' to continue with file organization: ")
-    if confirmation.upper() == 'YES':
+    if confirmation.upper() == "YES":
         folderize_files_alphabetically()

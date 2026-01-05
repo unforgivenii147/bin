@@ -24,20 +24,20 @@ URL_RE = re.compile(
     r"""(https?://[^\s<>"\']+|\bwww\.[^\s<>"\']+\b|\b[^\s<>"\']+\.(com|net|org)[^\s<>"\']*)"""
 )
 
-GITHUB_RE = re.compile(r'(?i)github\.com')
+GITHUB_RE = re.compile(r"(?i)github\.com")
 
 MAX_WORKERS = os.cpu_count() or 4
 
 all_urls: Set[str] = set()
 git_urls: Set[str] = set()
 git_urls_classified: Dict[str, Set[str]] = {
-    'repo': set(),
-    'issue': set(),
-    'pull': set(),
-    'release': set(),
-    'raw': set(),
-    'clone': set(),
-    'other': set(),
+    "repo": set(),
+    "issue": set(),
+    "pull": set(),
+    "release": set(),
+    "raw": set(),
+    "clone": set(),
+    "other": set(),
 }
 
 lock = threading.Lock()
@@ -49,14 +49,14 @@ def normalize_url(url: str) -> str:
         scheme = p.scheme.lower()
         netloc = p.netloc.lower()
 
-        if (scheme == 'http' and netloc.endswith(':80')) or (
-            scheme == 'https' and netloc.endswith(':443')
+        if (scheme == "http" and netloc.endswith(":80")) or (
+            scheme == "https" and netloc.endswith(":443")
         ):
-            netloc = netloc.rsplit(':', 1)[0]
+            netloc = netloc.rsplit(":", 1)[0]
 
-        path = p.path.rstrip('/') or '/'
+        path = p.path.rstrip("/") or "/"
 
-        return urlunparse((scheme, netloc, path, '', p.query, ''))
+        return urlunparse((scheme, netloc, path, "", p.query, ""))
     except Exception:
         return url
 
@@ -66,29 +66,29 @@ def classify_github_url(url: str) -> str:
         p = urlparse(url)
         path = p.path.lower()
 
-        if p.netloc.startswith('raw.githubusercontent.com'):
-            return 'raw'
-        if url.endswith('.git'):
-            return 'clone'
-        if '/issues/' in path:
-            return 'issue'
-        if '/pull/' in path or '/pulls/' in path:
-            return 'pull'
-        if '/releases' in path:
-            return 'release'
+        if p.netloc.startswith("raw.githubusercontent.com"):
+            return "raw"
+        if url.endswith(".git"):
+            return "clone"
+        if "/issues/" in path:
+            return "issue"
+        if "/pull/" in path or "/pulls/" in path:
+            return "pull"
+        if "/releases" in path:
+            return "release"
 
-        parts = [x for x in path.split('/') if x]
+        parts = [x for x in path.split("/") if x]
         if len(parts) >= 2:
-            return 'repo'
+            return "repo"
 
-        return 'other'
+        return "other"
     except Exception:
-        return 'other'
+        return "other"
 
 
 def extract_urls_from_bytes(data: bytes) -> Set[str]:
     try:
-        text = data.decode('utf-8', errors='ignore')
+        text = data.decode("utf-8", errors="ignore")
         return {normalize_url(u) for u in URL_RE.findall(text)}
     except Exception:
         return set()
@@ -110,7 +110,7 @@ def handle_file_bytes(data: bytes) -> None:
 
 def process_regular_file(path: str) -> None:
     try:
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             handle_file_bytes(f.read())
     except Exception:
         pass
@@ -130,7 +130,7 @@ def process_zip(path: str) -> None:
 
 def process_tar(path: str) -> None:
     try:
-        with tarfile.open(path, 'r:*') as t:
+        with tarfile.open(path, "r:*") as t:
             for m in t.getmembers():
                 if m.isfile():
                     try:
@@ -148,10 +148,10 @@ def process_tar_zst(path: str) -> None:
         return
 
     try:
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             dctx = zstd.ZstdDecompressor()
             stream = dctx.stream_reader(f)
-            with tarfile.open(fileobj=stream, mode='r|*') as t:
+            with tarfile.open(fileobj=stream, mode="r|*") as t:
                 for m in t:
                     if m.isfile():
                         try:
@@ -167,11 +167,11 @@ def process_tar_zst(path: str) -> None:
 def process_path(path: str) -> None:
     p = path.lower()
 
-    if p.endswith(('.zip', '.whl')):
+    if p.endswith((".zip", ".whl")):
         process_zip(path)
-    elif p.endswith(('.tar.gz', '.tgz', '.tar.xz', '.tar.bz2')):
+    elif p.endswith((".tar.gz", ".tgz", ".tar.xz", ".tar.bz2")):
         process_tar(path)
-    elif p.endswith('.tar.zst'):
+    elif p.endswith(".tar.zst"):
         process_tar_zst(path)
     else:
         process_regular_file(path)
@@ -184,26 +184,26 @@ def iter_files(root: str) -> Iterable[str]:
 
 
 def main() -> None:
-    files = list(iter_files('.'))
+    files = list(iter_files("."))
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
         futures = [ex.submit(process_path, f) for f in files]
         for _ in as_completed(futures):
             pass
 
-    with open('/sdcard/urls.txt', 'a', encoding='utf-8') as f:
+    with open("/sdcard/urls.txt", "a", encoding="utf-8") as f:
         for u in sorted(all_urls):
-            f.write(u + '\n')
+            f.write(u + "\n")
 
-    with open('/sdcard/giturls.txt', 'a', encoding='utf-8') as f:
+    with open("/sdcard/giturls.txt", "a", encoding="utf-8") as f:
         for u in sorted(git_urls):
-            f.write(u + '\n')
+            f.write(u + "\n")
 
-    with open('/sdcard/giturls_classified.txt', 'a', encoding='utf-8') as f:
+    with open("/sdcard/giturls_classified.txt", "a", encoding="utf-8") as f:
         for cat, urls in git_urls_classified.items():
             for u in sorted(urls):
-                f.write(f'{cat}\t{u}\n')
+                f.write(f"{cat}\t{u}\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

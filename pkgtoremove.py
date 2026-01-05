@@ -9,7 +9,7 @@ from collections import defaultdict
 def get_installed_packages():
     installed_packages = []
     result = subprocess.run(
-        ['dpkg-query', '-W', '-f=${binary:Package} ${Installed-Size}\n'],
+        ["dpkg-query", "-W", "-f=${binary:Package} ${Installed-Size}\n"],
         check=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -23,11 +23,11 @@ def get_installed_packages():
 
 # Function to get bash history commands
 def get_bash_history():
-    history_file = os.path.expanduser('~/.bash_history')
+    history_file = os.path.expanduser("~/.bash_history")
     if not os.path.exists(history_file):
         return []
 
-    with open(history_file, 'r') as f:
+    with open(history_file, "r") as f:
         history = f.read().splitlines()
     return history
 
@@ -40,7 +40,7 @@ def get_used_packages(history, installed_packages):
     # Search for package names in bash history
     for line in history:
         for pkg in package_names:
-            if re.search(rf'\b{pkg}\b', line):
+            if re.search(rf"\b{pkg}\b", line):
                 used_packages.add(pkg)
 
     return used_packages
@@ -49,17 +49,21 @@ def get_used_packages(history, installed_packages):
 # Function to exclude build-essential packages
 def exclude_build_packages(installed_packages):
     build_essential_packages = {
-        'build-essential',
-        'gcc',
-        'make',
-        'libc6-dev',
-        'pkg-config',
-        'libtool',
-        'dpkg-dev',
-        'autoconf',
-        'automake',
+        "build-essential",
+        "gcc",
+        "make",
+        "libc6-dev",
+        "pkg-config",
+        "libtool",
+        "dpkg-dev",
+        "autoconf",
+        "automake",
     }
-    return [(pkg, size) for pkg, size in installed_packages if pkg not in build_essential_packages]
+    return [
+        (pkg, size)
+        for pkg, size in installed_packages
+        if pkg not in build_essential_packages
+    ]
 
 
 # Function to suggest largest unused packages
@@ -86,11 +90,15 @@ def main():
     # Suggest top 10 largest unused packages
     suggestions = suggest_unused_packages(installed_packages, used_packages, top_n=100)
 
-    print('Top unused packages (sorted by size):')
+    print("Top unused packages (sorted by size):")
     for pkg, size in suggestions:
-        if (not 'python' in str(pkg)) and (not 'l8b' in str(pkg)) and (not 'static' in str(pkg)):
-            print(f'{pkg}: {size / 1024} MB')
+        if (
+            (not "python" in str(pkg))
+            and (not "l8b" in str(pkg))
+            and (not "static" in str(pkg))
+        ):
+            print(f"{pkg}: {size / 1024} MB")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

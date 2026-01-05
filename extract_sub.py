@@ -7,7 +7,9 @@ from pathlib import Path
 
 
 def run(cmd):
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    result = subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip())
     return result.stdout
@@ -15,18 +17,18 @@ def run(cmd):
 
 def probe_subtitles(video_path):
     cmd = [
-        'ffprobe',
-        '-v',
-        'error',
-        '-select_streams',
-        's',
-        '-show_entries',
-        'stream=index,codec_name:stream_tags=language,title',
-        '-of',
-        'json',
+        "ffprobe",
+        "-v",
+        "error",
+        "-select_streams",
+        "s",
+        "-show_entries",
+        "stream=index,codec_name:stream_tags=language,title",
+        "-of",
+        "json",
         video_path,
     ]
-    return json.loads(run(cmd)).get('streams', [])
+    return json.loads(run(cmd)).get("streams", [])
 
 
 def extract_subtitles(video_path, output_dir):
@@ -34,38 +36,48 @@ def extract_subtitles(video_path, output_dir):
     subs = probe_subtitles(video_path)
 
     if not subs:
-        print('No embedded subtitle streams found.')
+        print("No embedded subtitle streams found.")
         return
 
     base = video_path.stem
 
     for s in subs:
-        idx = s['index']
-        codec = s.get('codec_name', 'sub')
-        lang = s.get('tags', {}).get('language', 'und')
-        title = s.get('tags', {}).get('title', '').replace(' ', '_')
+        idx = s["index"]
+        codec = s.get("codec_name", "sub")
+        lang = s.get("tags", {}).get("language", "und")
+        title = s.get("tags", {}).get("title", "").replace(" ", "_")
 
-        suffix = f'.{lang}'
+        suffix = f".{lang}"
         if title:
-            suffix += f'.{title}'
+            suffix += f".{title}"
 
         # Prefer SRT output when possible
-        out_ext = 'srt' if codec in {'subrip', 'srt'} else codec
-        out_file = output_dir / f'{base}{suffix}.{out_ext}'
+        out_ext = "srt" if codec in {"subrip", "srt"} else codec
+        out_file = output_dir / f"{base}{suffix}.{out_ext}"
 
-        cmd = ['ffmpeg', '-y', '-i', str(video_path), '-map', f'0:s:{subs.index(s)}', str(out_file)]
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            str(video_path),
+            "-map",
+            f"0:s:{subs.index(s)}",
+            str(out_file),
+        ]
 
         try:
             run(cmd)
-            print(f'Extracted: {out_file}')
+            print(f"Extracted: {out_file}")
         except RuntimeError as e:
-            print(f'Failed to extract subtitle stream {idx}: {e}')
+            print(f"Failed to extract subtitle stream {idx}: {e}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Extract embedded subtitles from a movie file')
-    parser.add_argument('movie', help='Path to movie file')
-    parser.add_argument('-o', '--output', default='subtitles', help='Output directory')
+    parser = argparse.ArgumentParser(
+        description="Extract embedded subtitles from a movie file"
+    )
+    parser.add_argument("movie", help="Path to movie file")
+    parser.add_argument("-o", "--output", default="subtitles", help="Output directory")
 
     args = parser.parse_args()
     video_path = Path(args.movie).resolve()
@@ -77,5 +89,5 @@ def main():
     extract_subtitles(video_path, output_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

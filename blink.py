@@ -16,6 +16,6 @@ for root, _dirs, files in os.walk(current_dir):
                 try:
                     # Delete the broken link
                     os.remove(file_path)
-                    print(f'Deleted broken link: {file_path}')
+                    print(f"Deleted broken link: {file_path}")
                 except Exception as e:
-                    print(f'Error deleting {file_path}: {e}')
+                    print(f"Error deleting {file_path}: {e}")

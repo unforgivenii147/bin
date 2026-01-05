@@ -5,8 +5,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from deep_translator import GoogleTranslator
 
-INPUT_FILE = 'words.txt'
-OUTPUT_FILE = 'dic_mp.json'
+INPUT_FILE = "words.txt"
+OUTPUT_FILE = "dic_mp.json"
 MAX_WORKERS = 16  # Increase for more speed
 
 
@@ -14,7 +14,7 @@ def translate_word(word):
     """Translate a single Persian word to English with retry."""
     for attempt in range(3):
         try:
-            translated = GoogleTranslator(source='auto', target='en').translate(word)
+            translated = GoogleTranslator(source="auto", target="en").translate(word)
             return translated
         except Exception as e:
             print(f"[WARN] Failed '{word}' (attempt {attempt + 1}): {e}")
@@ -24,15 +24,15 @@ def translate_word(word):
 
 def main():
     # Load Persian words
-    with open(INPUT_FILE, 'r', encoding='utf-8') as f:
+    with open(INPUT_FILE, "r", encoding="utf-8") as f:
         words = [w.strip() for w in f if w.strip()]
 
-    print(f'[INFO] Loaded {len(words)} Persian words')
+    print(f"[INFO] Loaded {len(words)} Persian words")
 
     results = {}
 
     # Parallel translation
-    print('[INFO] Translating in parallel...')
+    print("[INFO] Translating in parallel...")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         future_map = {executor.submit(translate_word, w): w for w in words}
 
@@ -42,18 +42,18 @@ def main():
                 english = future.result()
                 if english:
                     results[persian_word] = english
-                    print(f'{persian_word} → {english}')
+                    print(f"{persian_word} → {english}")
                 else:
-                    print(f'[FAIL] Could not translate: {persian_word}')
+                    print(f"[FAIL] Could not translate: {persian_word}")
             except Exception as e:
                 print(f"[ERROR] Unexpected error for '{persian_word}': {e}")
 
     # Save JSON
-    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
-    print(f'\n[SAVED] Translation dictionary saved to {OUTPUT_FILE}')
+    print(f"\n[SAVED] Translation dictionary saved to {OUTPUT_FILE}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

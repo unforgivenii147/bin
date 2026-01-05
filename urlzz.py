@@ -10,7 +10,7 @@ import regex as re
 url_pattern = re.compile(r'https?://[^\s"\']+')
 
 # Read allowed extensions from file
-with open('/sdcard/ext', 'r', encoding='utf-8') as f:
+with open("/sdcard/ext", "r", encoding="utf-8") as f:
     allowed_exts = set(line.strip().lower() for line in f if line.strip())
 
 
@@ -23,11 +23,11 @@ def extract_urls_from_text(content):
 def extract_urls_from_file(filepath):
     urls = set()
     try:
-        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
             urls.update(extract_urls_from_text(content))
     except Exception as e:
-        print(f'Failed to read {filepath}: {e}')
+        print(f"Failed to read {filepath}: {e}")
     return urls
 
 
@@ -35,19 +35,19 @@ def extract_urls_from_file(filepath):
 def extract_urls_from_tar(filepath):
     urls = set()
     try:
-        mode = 'r:*'  # detect compression automatically
+        mode = "r:*"  # detect compression automatically
         with tarfile.open(filepath, mode) as tar:
             for member in tar.getmembers():
                 if member.isfile():
                     f = tar.extractfile(member)
                     if f:
                         try:
-                            content = f.read().decode('utf-8', errors='ignore')
+                            content = f.read().decode("utf-8", errors="ignore")
                             urls.update(extract_urls_from_text(content))
                         except:
                             pass
     except Exception as e:
-        print(f'Failed to read tar {filepath}: {e}')
+        print(f"Failed to read tar {filepath}: {e}")
     return urls
 
 
@@ -55,16 +55,16 @@ def extract_urls_from_tar(filepath):
 def extract_urls_from_zip(filepath):
     urls = set()
     try:
-        with zipfile.ZipFile(filepath, 'r') as zf:
+        with zipfile.ZipFile(filepath, "r") as zf:
             for name in zf.namelist():
                 try:
                     with zf.open(name) as f:
-                        content = f.read().decode('utf-8', errors='ignore')
+                        content = f.read().decode("utf-8", errors="ignore")
                         urls.update(extract_urls_from_text(content))
                 except:
                     pass
     except Exception as e:
-        print(f'Failed to read zip {filepath}: {e}')
+        print(f"Failed to read zip {filepath}: {e}")
     return urls
 
 
@@ -92,9 +92,9 @@ def extract_urls(filepath):
     ext = os.path.splitext(filepath)[1].lower()
     if ext in allowed_exts:
         return extract_urls_from_file(filepath)
-    elif ext in ['.zip', '.whl']:
+    elif ext in [".zip", ".whl"]:
         return extract_urls_from_zip(filepath)
-    elif ext.startswith('.tar') or ext in ['.tar.gz', '.tar.xz', '.tar.zst', '.tar.7z']:
+    elif ext.startswith(".tar") or ext in [".tar.gz", ".tar.xz", ".tar.zst", ".tar.7z"]:
         return extract_urls_from_tar(filepath)
     #    elif ext == '.7z':
     #        return extract_urls_from_7z(filepath)
@@ -103,8 +103,8 @@ def extract_urls(filepath):
 
 # Gather all files recursively, skipping hidden dirs
 file_paths = []
-for root, dirs, files in os.walk('.'):
-    dirs[:] = [d for d in dirs if not d.startswith('.')]
+for root, dirs, files in os.walk("."):
+    dirs[:] = [d for d in dirs if not d.startswith(".")]
     for file in files:
         file_paths.append(os.path.join(root, file))
 
@@ -116,8 +116,8 @@ with ThreadPoolExecutor() as executor:
         all_urls.update(future.result())
 
 # Save unique URLs to urls.txt
-with open('urls.txt', 'w', encoding='utf-8') as f:
+with open("urls.txt", "w", encoding="utf-8") as f:
     for url in sorted(all_urls):
-        f.write(url + '\n')
+        f.write(url + "\n")
 
-print(f'Extracted {len(all_urls)} unique URLs to urls.txt')
+print(f"Extracted {len(all_urls)} unique URLs to urls.txt")

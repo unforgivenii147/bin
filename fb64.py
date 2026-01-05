@@ -13,11 +13,11 @@ for root, _dirs, files in os.walk(current_dir):
     for file in files:
         file_path = os.path.join(root, file)
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 # Read the file and search for the string
                 content = f.read()
                 if search_string in content:
-                    print(f'Found in file: {file_path}')
+                    print(f"Found in file: {file_path}")
         except (UnicodeDecodeError, PermissionError):
             # Skip files that can't be opened or read
             continue

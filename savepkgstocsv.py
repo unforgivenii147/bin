@@ -5,58 +5,58 @@ import subprocess
 import sys
 import csv
 
-OUTPUT_DIR = Path('/sdcard/backups')
-TSV_FILE = OUTPUT_DIR / 'installed.tsv'
-CSV_FILE = OUTPUT_DIR / 'installed.csv'
+OUTPUT_DIR = Path("/sdcard/backups")
+TSV_FILE = OUTPUT_DIR / "installed.tsv"
+CSV_FILE = OUTPUT_DIR / "installed.csv"
 
 FIELDS = [
-    'Package',
-    'Version',
-    'Architecture',
-    'Status',
-    'Priority',
-    'Section',
-    'Installed-Size',
-    'Maintainer',
-    'Homepage',
-    'Description',
-    'Source',
-    'Essential',
-    'Multi-Arch',
-    'Origin',
-    'Bugs',
+    "Package",
+    "Version",
+    "Architecture",
+    "Status",
+    "Priority",
+    "Section",
+    "Installed-Size",
+    "Maintainer",
+    "Homepage",
+    "Description",
+    "Source",
+    "Essential",
+    "Multi-Arch",
+    "Origin",
+    "Bugs",
 ]
 
 FORMAT = (
-    '${binary:Package}\t'
-    '${Version}\t'
-    '${Architecture}\t'
-    '${Status}\t'
-    '${Priority}\t'
-    '${Section}\t'
-    '${Installed-Size}\t'
-    '${Maintainer}\t'
-    '${Homepage}\t'
-    '${binary:Summary}\t'
-    '${Source}\t'
-    '${Essential}\t'
-    '${Multi-Arch}\t'
-    '${Origin}\t'
-    '${Bugs}\n'
+    "${binary:Package}\t"
+    "${Version}\t"
+    "${Architecture}\t"
+    "${Status}\t"
+    "${Priority}\t"
+    "${Section}\t"
+    "${Installed-Size}\t"
+    "${Maintainer}\t"
+    "${Homepage}\t"
+    "${binary:Summary}\t"
+    "${Source}\t"
+    "${Essential}\t"
+    "${Multi-Arch}\t"
+    "${Origin}\t"
+    "${Bugs}\n"
 )
 
 
 def query_packages() -> list[list[str]]:
     try:
         proc = subprocess.run(
-            ['dpkg-query', '-W', f'-f={FORMAT}'],
+            ["dpkg-query", "-W", f"-f={FORMAT}"],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
         )
     except FileNotFoundError:
-        sys.exit('dpkg-query not found (not a Debian-based system)')
+        sys.exit("dpkg-query not found (not a Debian-based system)")
     except subprocess.CalledProcessError as exc:
         sys.exit(exc.stderr.strip())
 
@@ -64,7 +64,7 @@ def query_packages() -> list[list[str]]:
     for line in proc.stdout.splitlines():
         if not line.strip():
             continue
-        cols = line.split('\t')
+        cols = line.split("\t")
         if len(cols) != len(FIELDS):
             continue
         print(cols)
@@ -76,14 +76,14 @@ def query_packages() -> list[list[str]]:
 
 
 def save_tsv(rows: list[list[str]]) -> None:
-    with TSV_FILE.open('w', encoding='utf-8') as f:
-        f.write('\t'.join(FIELDS) + '\n')
+    with TSV_FILE.open("w", encoding="utf-8") as f:
+        f.write("\t".join(FIELDS) + "\n")
         for row in rows:
-            f.write('\t'.join(row) + '\n')
+            f.write("\t".join(row) + "\n")
 
 
 def save_csv(rows: list[list[str]]) -> None:
-    with CSV_FILE.open('w', encoding='utf-8', newline='') as f:
+    with CSV_FILE.open("w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(FIELDS)
         writer.writerows(rows)
@@ -93,10 +93,10 @@ def main() -> None:
     rows = query_packages()
     save_tsv(rows)
     save_csv(rows)
-    print(f'Saved {len(rows)} packages')
-    print(f'TSV: {TSV_FILE}')
-    print(f'CSV: {CSV_FILE}')
+    print(f"Saved {len(rows)} packages")
+    print(f"TSV: {TSV_FILE}")
+    print(f"CSV: {CSV_FILE}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

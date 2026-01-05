@@ -3,20 +3,20 @@ from pathlib import Path
 import subprocess
 import sys
 
-OUTPUT_FILE = Path('/sdcard/installed_packages.txt')
+OUTPUT_FILE = Path("/sdcard/installed_packages.txt")
 
 
 def get_installed_debian_packages() -> list[str]:
     try:
         result = subprocess.run(
-            ['dpkg-query', '-W', '-f=${binary:Package}\n'],
+            ["dpkg-query", "-W", "-f=${binary:Package}\n"],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
         )
     except FileNotFoundError:
-        sys.exit('dpkg-query not found. Are you on a Debian-based system?')
+        sys.exit("dpkg-query not found. Are you on a Debian-based system?")
     except subprocess.CalledProcessError as exc:
         sys.exit(exc.stderr.strip())
 
@@ -24,14 +24,14 @@ def get_installed_debian_packages() -> list[str]:
 
 
 def save_packages(packages: list[str], path: Path) -> None:
-    path.write_text('\n'.join(packages) + '\n', encoding='utf-8')
+    path.write_text("\n".join(packages) + "\n", encoding="utf-8")
 
 
 def main() -> None:
     packages = get_installed_debian_packages()
     save_packages(packages, OUTPUT_FILE)
-    print(f'Saved {len(packages)} packages to {OUTPUT_FILE.resolve()}')
+    print(f"Saved {len(packages)} packages to {OUTPUT_FILE.resolve()}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

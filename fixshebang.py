@@ -6,12 +6,12 @@ from pathlib import Path
 
 import regex as re
 
-TERMUX_SHEBANG = '#!/data/data/com.termux/files/usr/bin/env python3'
-SHEBANG_RE = re.compile(r'^#!.*python[0-9.]*.*$')
+TERMUX_SHEBANG = "#!/data/data/com.termux/files/usr/bin/env python3"
+SHEBANG_RE = re.compile(r"^#!.*python[0-9.]*.*$")
 
 
 def fix_file(path: Path) -> bool:
-    text = path.read_text(encoding='utf-8', errors='ignore')
+    text = path.read_text(encoding="utf-8", errors="ignore")
     lines = text.splitlines()
 
     if not lines:
@@ -22,7 +22,7 @@ def fix_file(path: Path) -> bool:
             return False
 
         lines[0] = TERMUX_SHEBANG
-        path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return True
 
     return False
@@ -30,13 +30,13 @@ def fix_file(path: Path) -> bool:
 
 def main() -> None:
     fixed = 0
-    for file in Path('.').rglob('*.py'):
+    for file in Path(".").rglob("*.py"):
         if fix_file(file):
             fixed += 1
-            print(f'Updated: {file}')
+            print(f"Updated: {file}")
 
-    print(f'\nDone. Updated {fixed} files.')
+    print(f"\nDone. Updated {fixed} files.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

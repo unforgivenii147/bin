@@ -18,16 +18,16 @@ from pathlib import Path
 
 # ---------- Utilities ----------
 def prefix_path():
-    p = os.environ.get('PREFIX')
+    p = os.environ.get("PREFIX")
     if p:
         return Path(p)
-    Path(sysconfig.get_paths()['purelib'])
-    return Path(os.environ.get('PREFIX', sys.base_prefix))
+    Path(sysconfig.get_paths()["purelib"])
+    return Path(os.environ.get("PREFIX", sys.base_prefix))
 
 
 def site_packages_paths(prefix):
-    pyver = f'python{sys.version_info.major}.{sys.version_info.minor}'
-    candidates = [prefix / 'lib' / pyver / 'site-packages']
+    pyver = f"python{sys.version_info.major}.{sys.version_info.minor}"
+    candidates = [prefix / "lib" / pyver / "site-packages"]
     for p in sys.path:
         try:
             ppath = Path(p)
@@ -49,75 +49,79 @@ def find_distributions(site_dirs):
     dists = {}
     for sd in site_dirs:
         for p in sd.iterdir():
-            if p.is_dir() and (p.name.endswith('.dist-info') or p.name.endswith('.egg-info')):
-                key = p.name.rsplit('.', 1)[0].lower()
+            if p.is_dir() and (
+                p.name.endswith(".dist-info") or p.name.endswith(".egg-info")
+            ):
+                key = p.name.rsplit(".", 1)[0].lower()
                 dists[key] = p
     return dists
 
 
 def parse_metadata_from_distinfo(distinfo_dir):
     md = {}
-    for candidate in ('METADATA', 'PKG-INFO'):
+    for candidate in ("METADATA", "PKG-INFO"):
         p = distinfo_dir / candidate
         if p.exists():
-            txt = p.read_text(encoding='utf-8', errors='ignore')
+            txt = p.read_text(encoding="utf-8", errors="ignore")
             parsed = Parser().parsestr(txt)
-            md['Name'] = parsed.get('Name')
-            md['Version'] = parsed.get('Version')
-            md['Summary'] = parsed.get('Summary')
+            md["Name"] = parsed.get("Name")
+            md["Version"] = parsed.get("Version")
+            md["Summary"] = parsed.get("Summary")
             break
-    ep = distinfo_dir / 'entry_points.txt'
+    ep = distinfo_dir / "entry_points.txt"
     if ep.exists():
         config = ConfigParser()
         try:
-            config.read_string('[DEFAULT]\n' + ep.read_text(encoding='utf-8', errors='ignore'))
+            config.read_string(
+                "[DEFAULT]\n" + ep.read_text(encoding="utf-8", errors="ignore")
+            )
         except Exception:
             config.read(ep)
-        lines = ep.read_text(encoding='utf-8', errors='ignore').splitlines()
+        lines = ep.read_text(encoding="utf-8", errors="ignore").splitlines()
         section = None
         console = []
         for ln in lines:
             ln = ln.strip()
-            if ln.startswith('[') and ln.endswith(']'):
+            if ln.startswith("[") and ln.endswith("]"):
                 section = ln[1:-1].strip()
                 continue
-            if section == 'console_scripts' and ln and not ln.startswith('#'):
-                left = ln.split('=', 1)[0].strip()
+            if section == "console_scripts" and ln and not ln.startswith("#"):
+                left = ln.split("=", 1)[0].strip()
                 console.append(left)
-        md['console_scripts'] = console
+        md["console_scripts"] = console
     return md
 
 
 def read_record_list(distinfo_dir):
-    rec = distinfo_dir / 'RECORD'
+    rec = distinfo_dir / "RECORD"
     if rec.exists():
         return [
-            l.strip().split(',', 1)[0]
-            for l in rec.read_text(encoding='utf-8', errors='ignore').splitlines()
+            l.strip().split(",", 1)[0]
+            for l in rec.read_text(encoding="utf-8", errors="ignore").splitlines()
             if l.strip()
         ]
     for p in (
-        distinfo_dir / 'installed-files.txt',
-        distinfo_dir / 'installed_files.txt',
+        distinfo_dir / "installed-files.txt",
+        distinfo_dir / "installed_files.txt",
     ):
         if p.exists():
             return [
                 l.strip()
-                for l in p.read_text(encoding='utf-8', errors='ignore').splitlines()
+                for l in p.read_text(encoding="utf-8", errors="ignore").splitlines()
                 if l.strip()
             ]
-    tt = distinfo_dir / 'top_level.txt'
+    tt = distinfo_dir / "top_level.txt"
     if tt.exists():
         return [
             l.strip()
-            for l in tt.read_text(encoding='utf-8', errors='ignore').splitlines()
+            for l in tt.read_text(encoding="utf-8", errors="ignore").splitlines()
             if l.strip()
         ]
     return None
 
 
 def find_script_paths(prefix, script_names):
-    bin_dir = prefix / 'bin'
+    bin_dir = prefix / "bin"
     out = []
     if not bin_dir.exists():
         return out
@@ -126,7 +130,7 @@ def find_script_paths(prefix, script_names):
         if sp.exists():
             out.append(sp)
         else:
-            for alt in (s, s + '.py', s + '-script.py', s + '.sh'):
+            for alt in (s, s + ".py", s + "-script.py", s + ".sh"):
                 ap = bin_dir / alt
                 if ap.exists():
                     out.append(ap)
@@ -141,11 +145,11 @@ def safe_copy(src, dest) -> None:
 
 def compute_hash_and_size(path):
     h = hashlib.sha256()
-    with Path(path).open('rb') as f:
-        for chunk in iter(lambda: f.read(8192), b''):
+    with Path(path).open("rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
             h.update(chunk)
-    digest = base64.urlsafe_b64encode(h.digest()).rstrip(b'=').decode('ascii')
-    return 'sha256=' + digest, str(path.stat().st_size)
+    digest = base64.urlsafe_b64encode(h.digest()).rstrip(b"=").decode("ascii")
+    return "sha256=" + digest, str(path.stat().st_size)
 
 
 # ---------- Wheel tag detection ----------
@@ -154,18 +158,18 @@ def detect_wheel_tags():
     impl = sys.implementation.name
     mj = sys.version_info.major
     mn = sys.version_info.minor
-    if impl == 'cpython':
-        py_tag = f'cp{mj}{mn}'
-        abi_tag = f'cp{mj}{mn}'
+    if impl == "cpython":
+        py_tag = f"cp{mj}{mn}"
+        abi_tag = f"cp{mj}{mn}"
     else:
-        cache = getattr(sys.implementation, 'cache_tag', None)
-        if cache and '-' in cache:
-            py_tag, abi_tag = cache.split('-', 1)
+        cache = getattr(sys.implementation, "cache_tag", None)
+        if cache and "-" in cache:
+            py_tag, abi_tag = cache.split("-", 1)
         else:
             # fallback, treat as py3 wheel
-            py_tag = f'py{mj}'
-            abi_tag = 'none'
-    plat = sysconfig.get_platform().replace('-', '_').replace('.', '_')
+            py_tag = f"py{mj}"
+            abi_tag = "none"
+    plat = sysconfig.get_platform().replace("-", "_").replace(".", "_")
     return py_tag, abi_tag, plat
 
 
@@ -176,16 +180,16 @@ def collect_files_for_dist(distinfo_path, site_dirs, prefix):
     base = distinfo_path.parent
     rec_list = read_record_list(distinfo_path)
     if rec_list:
-        if all('/' not in p and '\\' not in p for p in rec_list):
+        if all("/" not in p and "\\" not in p for p in rec_list):
             for name in rec_list:
                 candidates = [
                     base / name,
-                    base / (name + '.py'),
+                    base / (name + ".py"),
                 ]
-                if '-' in name:
+                if "-" in name:
                     candidates += [
-                        base / name.replace('-', '_'),
-                        base / (name.replace('-', '_') + '.py'),
+                        base / name.replace("-", "_"),
+                        base / (name.replace("-", "_") + ".py"),
                     ]
                 for c in candidates:
                     if c.exists():
@@ -199,7 +203,7 @@ def collect_files_for_dist(distinfo_path, site_dirs, prefix):
                             collected.append((c, c.relative_to(base)))
         else:
             for rel in rec_list:
-                if not rel or rel.startswith(('..', '/')):
+                if not rel or rel.startswith(("..", "/")):
                     continue
                 src = base / rel
                 if src.exists():
@@ -227,8 +231,8 @@ def collect_files_for_dist(distinfo_path, site_dirs, prefix):
         if item.is_file():
             rel = item.relative_to(base)
             collected.append((item, rel))
-    if 'console_scripts' in md:
-        for sp in find_script_paths(prefix, md['console_scripts']):
+    if "console_scripts" in md:
+        for sp in find_script_paths(prefix, md["console_scripts"]):
             rel = sp.relative_to(prefix)
             collected.append((sp, rel))
     seen = set()
@@ -243,7 +247,7 @@ def collect_files_for_dist(distinfo_path, site_dirs, prefix):
 
 def _has_native_extensions(tree_items) -> bool:
     """Why: determine whether wheel must be platform-specific by checking file extensions."""
-    native_exts = {'.so', '.pyd', '.dll', '.dylib', '.sl'}
+    native_exts = {".so", ".pyd", ".dll", ".dylib", ".sl"}
     return any(src.suffix.lower() in native_exts for src, _ in tree_items)
 
 
@@ -255,9 +259,9 @@ def build_wheel_from_tree(tree_items, dist_name, version, workdir, wheel_out_pat
         if src.is_file():
             shutil.move(src, dest)
     # ensure dist-info directory
-    distinfo_dirs = list(workdir.glob('*.dist-info'))
+    distinfo_dirs = list(workdir.glob("*.dist-info"))
     if not distinfo_dirs:
-        dinfo = f'{dist_name}-{version}.dist-info'
+        dinfo = f"{dist_name}-{version}.dist-info"
         distinfo_dir = workdir / dinfo
         distinfo_dir.mkdir(parents=True, exist_ok=True)
     else:
@@ -266,21 +270,21 @@ def build_wheel_from_tree(tree_items, dist_name, version, workdir, wheel_out_pat
     py_tag, abi_tag, plat_tag = detect_wheel_tags()
     is_platform_specific = _has_native_extensions(tree_items)
     if is_platform_specific:
-        wheel_tag = f'{py_tag}-{abi_tag}-{plat_tag}'
-        root_is_purelib = 'false'
+        wheel_tag = f"{py_tag}-{abi_tag}-{plat_tag}"
+        root_is_purelib = "false"
     else:
-        wheel_tag = 'py3-none-any'
-        root_is_purelib = 'true'
-    wheel_file = distinfo_dir / 'WHEEL'
+        wheel_tag = "py3-none-any"
+        root_is_purelib = "true"
+    wheel_file = distinfo_dir / "WHEEL"
     if not wheel_file.exists():
         content = [
-            'Wheel-Version: 1.0',
-            'Generator: repack_wheels/1.0',
-            f'Root-Is-Purelib: {root_is_purelib}',
-            f'Tag: {wheel_tag}',
-            '',
+            "Wheel-Version: 1.0",
+            "Generator: repack_wheels/1.0",
+            f"Root-Is-Purelib: {root_is_purelib}",
+            f"Tag: {wheel_tag}",
+            "",
         ]
-        wheel_file.write_text('\n'.join(content), encoding='utf-8')
+        wheel_file.write_text("\n".join(content), encoding="utf-8")
     # build RECORD (skip RECORD itself)
     record_lines = []
     all_files = []
@@ -290,16 +294,16 @@ def build_wheel_from_tree(tree_items, dist_name, version, workdir, wheel_out_pat
             rel = full.relative_to(workdir).as_posix()
             all_files.append((full, rel))
     for full, rel in sorted(all_files, key=operator.itemgetter(1)):
-        if rel.endswith('/RECORD') or rel == 'RECORD':
+        if rel.endswith("/RECORD") or rel == "RECORD":
             continue
         h, size = compute_hash_and_size(full)
-        record_lines.append(f'{rel},{h},{size}')
+        record_lines.append(f"{rel},{h},{size}")
     record_lines.append(f'{distinfo_dir.name + "/RECORD"},,')
-    rec = distinfo_dir / 'RECORD'
-    rec.write_text('\n'.join(record_lines) + '\n', encoding='utf-8')
+    rec = distinfo_dir / "RECORD"
+    rec.write_text("\n".join(record_lines) + "\n", encoding="utf-8")
     # write zip
     wheel_out_path.parent.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(wheel_out_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(wheel_out_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for root, _, files in os.walk(workdir):
             for fn in files:
                 full = Path(root) / fn
@@ -310,29 +314,29 @@ def build_wheel_from_tree(tree_items, dist_name, version, workdir, wheel_out_pat
 
 # ---------- CLI ----------
 def main() -> None:
-    with open('all.xtx', 'r') as f:
+    with open("all.xtx", "r") as f:
         lines = f.readlines()
         allxtx = []
         for line in lines:
             cleaned = line.strip()
-            cleaned = cleaned.strip('\n')
+            cleaned = cleaned.strip("\n")
             if cleaned:
                 allxtx.append(cleaned)
 
     parser = argparse.ArgumentParser(
-        description='Repack installed packages into .whl files (Termux-aware).'
+        description="Repack installed packages into .whl files (Termux-aware)."
     )
     parser.add_argument(
-        'packages',
-        nargs='*',
+        "packages",
+        nargs="*",
         default=allxtx,
-        help='Package names (distribution names). If none given, repack all.',
+        help="Package names (distribution names). If none given, repack all.",
     )
     parser.add_argument(
-        '-a',
-        '--all',
-        action='store_true',
-        help='Repack all installed packages',
+        "-a",
+        "--all",
+        action="store_true",
+        help="Repack all installed packages",
     )
     args = parser.parse_args()
     if not args.packages and not args.all:
@@ -348,33 +352,35 @@ def main() -> None:
             key = name.lower()
             found = None
             for k, p in dists.items():
-                if k == key or k.startswith(key + '-') or k.split('-')[0] == key:
+                if k == key or k.startswith(key + "-") or k.split("-")[0] == key:
                     found = p
                     break
             if not found:
                 pass
             else:
                 to_do.append(found)
-    repack_root = Path.home() / 'tmp' / 'repack'
-    wheel_dir = Path.home() / 'tmp' / 'wheels'
+    repack_root = Path.home() / "tmp" / "repack"
+    wheel_dir = Path.home() / "tmp" / "wheels"
     repack_root.mkdir(parents=True, exist_ok=True)
     wheel_dir.mkdir(parents=True, exist_ok=True)
     for distinfo in to_do:
         try:
             base_name = distinfo.name
-            if base_name.endswith('.dist-info'):
+            if base_name.endswith(".dist-info"):
                 base = base_name[:-10]
-            elif base_name.endswith('.egg-info'):
+            elif base_name.endswith(".egg-info"):
                 base = base_name[:-9]
             else:
                 base = base_name
             md = parse_metadata_from_distinfo(distinfo)
-            dist_name = md.get('Name') or base.split('-', 1)[0]
-            version = md.get('Version') or (base.split('-', 1)[1] if '-' in base else '0')
+            dist_name = md.get("Name") or base.split("-", 1)[0]
+            version = md.get("Version") or (
+                base.split("-", 1)[1] if "-" in base else "0"
+            )
             items, md = collect_files_for_dist(distinfo, site_dirs, prefix)
             if not items:
                 continue
-            workdir = repack_root / f'{dist_name}-{version}'
+            workdir = repack_root / f"{dist_name}-{version}"
             if workdir.exists():
                 shutil.rmtree(workdir)
             workdir.mkdir(parents=True, exist_ok=True)
@@ -382,9 +388,7 @@ def main() -> None:
             py_tag, abi_tag, plat_tag = detect_wheel_tags()
             is_platform_specific = _has_native_extensions(items)
             if is_platform_specific:
-                wheel_name = (
-                    f'{dist_name.replace("-", "_")}-{version}-{py_tag}-{abi_tag}-{plat_tag}.whl'
-                )
+                wheel_name = f'{dist_name.replace("-", "_")}-{version}-{py_tag}-{abi_tag}-{plat_tag}.whl'
             else:
                 wheel_name = f'{dist_name.replace("-", "_")}-{version}-py3-none-any.whl'
             wheel_out = wheel_dir / wheel_name
@@ -393,5 +397,5 @@ def main() -> None:
             pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -5,7 +5,7 @@ import pytesseract
 from pathlib import Path
 
 # Supported formats for OpenCV
-SUPPORTED_FORMATS = {'.png', '.bmp', '.tiff', '.webp', '.jpg', '.jpeg'}
+SUPPORTED_FORMATS = {".png", ".bmp", ".tiff", ".webp", ".jpg", ".jpeg"}
 
 
 def extract_text(file_path: str) -> bool:
@@ -16,14 +16,14 @@ def extract_text(file_path: str) -> bool:
         print(f"Error: '{path.name}' is not a supported image file.")
         return False
 
-    output_path = path.with_suffix('.txt')
+    output_path = path.with_suffix(".txt")
 
     try:
         # Load image using OpenCV
         img = cv2.imread(str(path))
 
         if img is None:
-            print(f'Error: Could not read {path.name}')
+            print(f"Error: Could not read {path.name}")
             return False
 
         # Preprocessing: Convert to Grayscale for better OCR accuracy
@@ -41,20 +41,20 @@ def extract_text(file_path: str) -> bool:
             # We still save an empty file or you can choose to return False here
 
         # Save to text file
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(text)
 
         print(f"Success! Text saved to '{output_path.name}'")
         return True
 
     except Exception as e:
-        print(f'An error occurred: {e}')
+        print(f"An error occurred: {e}")
         return False
 
 
 def main():
     if len(sys.argv) != 2:
-        print(f'Usage: {sys.argv[0]} <image_file>')
+        print(f"Usage: {sys.argv[0]} <image_file>")
         sys.exit(1)
 
     if extract_text(sys.argv[1]):
@@ -63,5 +63,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -12,18 +12,18 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 # Standard library imports remain at top
-IGNORED_DIRS = {'.git', 'dist', 'build', '__pycache__', '.venv', 'node_modules'}
+IGNORED_DIRS = {".git", "dist", "build", "__pycache__", ".venv", "node_modules"}
 
 # ---------- UTILS ----------
 
 
 def is_python_file(path: Path) -> bool:
-    if path.suffix in {'.py', '.pyi', '.pyx'}:
+    if path.suffix in {".py", ".pyi", ".pyx"}:
         return True
     try:
-        with path.open('rb') as f:
+        with path.open("rb") as f:
             line = f.readline(100)
-            return line.startswith(b'#!') and b'python' in line.lower()
+            return line.startswith(b"#!") and b"python" in line.lower()
     except Exception:
         return False
 
@@ -32,10 +32,10 @@ def is_python_file(path: Path) -> bool:
 
 
 def format_single_file(file: Path, args) -> bool:
-    print(f'processing {file.name}')
+    print(f"processing {file.name}")
     """Core formatting logic using Lazy Imports."""
     try:
-        original_code = file.read_text(encoding='utf-8')
+        original_code = file.read_text(encoding="utf-8")
         code = original_code
 
         # 1. Remove Unused Imports/Variables
@@ -63,7 +63,7 @@ def format_single_file(file: Path, args) -> bool:
         elif args.autopep:
             import autopep8
 
-            code = autopep8.fix_code(code, options={'aggressive': 2})
+            code = autopep8.fix_code(code, options={"aggressive": 2})
         else:
             # Lazy import for yapf
             from yapf.yapflib import yapf_api
@@ -72,11 +72,11 @@ def format_single_file(file: Path, args) -> bool:
 
         # 4. Write back only if changed
         if code != original_code:
-            file.write_text(code, encoding='utf-8')
+            file.write_text(code, encoding="utf-8")
             return True
         return False
     except Exception as e:
-        print(f'Error processing {file.name}: {e}')
+        print(f"Error processing {file.name}: {e}")
         return False
 
 
@@ -84,36 +84,43 @@ def format_single_file(file: Path, args) -> bool:
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description='Fast Python API-based formatter (Lazy Loading)')
-    p.add_argument('files', nargs='*', help='Specific files to format (optional)')
-    p.add_argument('-b', '--black', action='store_true', help='Use black style')
-    p.add_argument('-a', '--autopep', action='store_true', help='Use autopep8 style')
-    p.add_argument('-i', '--isort', action='store_true', help='Sort imports')
-    p.add_argument(
-        '-r', '--remove-all-unused-imports', action='store_true', help='Autoflake cleanup'
+    p = argparse.ArgumentParser(
+        description="Fast Python API-based formatter (Lazy Loading)"
     )
-    p.add_argument('-t', '--time', action='store_true', help='Show overall runtime')
+    p.add_argument("files", nargs="*", help="Specific files to format (optional)")
+    p.add_argument("-b", "--black", action="store_true", help="Use black style")
+    p.add_argument("-a", "--autopep", action="store_true", help="Use autopep8 style")
+    p.add_argument("-i", "--isort", action="store_true", help="Sort imports")
+    p.add_argument(
+        "-r",
+        "--remove-all-unused-imports",
+        action="store_true",
+        help="Autoflake cleanup",
+    )
+    p.add_argument("-t", "--time", action="store_true", help="Show overall runtime")
     args = p.parse_args()
 
     start_time = time.perf_counter()
 
     # Step 1: Collect Files
     if args.files:
-        files = [Path(f) for f in args.files if Path(f).is_file() and is_python_file(Path(f))]
+        files = [
+            Path(f) for f in args.files if Path(f).is_file() and is_python_file(Path(f))
+        ]
     else:
         files = [
             f
-            for f in Path('.').rglob('*')
+            for f in Path(".").rglob("*")
             if f.is_file()
             and not any(part in IGNORED_DIRS for part in f.parts)
             and is_python_file(f)
         ]
 
     if not files:
-        print('No Python files detected.')
+        print("No Python files detected.")
         return
 
-    print(f'Formatting {len(files)} files...')
+    print(f"Formatting {len(files)} files...")
 
     # Step 2: Parallel Execution
     # map handles the distribution; lambda passes the context
@@ -122,12 +129,12 @@ def main() -> None:
 
     # Step 3: Reporting
     changed_count = sum(1 for r in results if r)
-    print(f'Done. {changed_count} files modified.')
+    print(f"Done. {changed_count} files modified.")
 
     if args.time:
         duration = time.perf_counter() - start_time
-        print(f'Total Runtime: {duration:.4f} seconds')
+        print(f"Total Runtime: {duration:.4f} seconds")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

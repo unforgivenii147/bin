@@ -13,17 +13,17 @@ from pathlib import Path
 # =============================
 
 COLORS = {
-    'dir': '\033[34m',
-    'link': '\033[36m',
-    'exec': '\033[32m',
-    'reset': '\033[0m',
+    "dir": "\033[34m",
+    "link": "\033[36m",
+    "exec": "\033[32m",
+    "reset": "\033[0m",
 }
 
 
 def use_color(mode: str) -> bool:
-    if mode == 'always':
+    if mode == "always":
         return True
-    if mode == 'never':
+    if mode == "never":
         return False
     return sys.stdout.isatty()
 
@@ -46,26 +46,26 @@ def colorize(name, st, enabled):
 
 
 def human_size(size):
-    for unit in ('B', 'K', 'M', 'G', 'T'):
+    for unit in ("B", "K", "M", "G", "T"):
         if size < 1024:
-            return f'{size}{unit}'
+            return f"{size}{unit}"
         size //= 1024
-    return f'{size}P'
+    return f"{size}P"
 
 
 def indicator(path, st):
     if stat.S_ISDIR(st.st_mode):
-        return '/'
+        return "/"
     if stat.S_ISLNK(st.st_mode):
-        return '@'
+        return "@"
     if st.st_mode & stat.S_IXUSR:
-        return '*'
-    return ''
+        return "*"
+    return ""
 
 
 def format_time(ts, full):
     dt = datetime.datetime.fromtimestamp(ts)
-    return dt.strftime('%Y-%m-%d %H:%M:%S' if full else '%b %d %H:%M')
+    return dt.strftime("%Y-%m-%d %H:%M:%S" if full else "%b %d %H:%M")
 
 
 # =============================
@@ -77,21 +77,21 @@ def format_entry(entry, args, color_enabled):
     try:
         st = entry.stat(follow_symlinks=args.L)
     except FileNotFoundError:
-        return ''
+        return ""
 
     name = entry.name
     name = colorize(name, st, color_enabled)
 
     if args.p and entry.is_dir():
-        name += '/'
+        name += "/"
     if args.F:
         name += indicator(entry, st)
 
-    inode = f'{st.st_ino} ' if args.i else ''
-    blocks = f'{st.st_blocks} ' if args.s else ''
+    inode = f"{st.st_ino} " if args.i else ""
+    blocks = f"{st.st_blocks} " if args.s else ""
 
     if not args.l:
-        return f'{inode}{blocks}{name}'
+        return f"{inode}{blocks}{name}"
 
     perms = stat.filemode(st.st_mode)
     nlink = st.st_nlink
@@ -103,7 +103,7 @@ def format_entry(entry, args, color_enabled):
 
     time_str = format_time(ts, args.full_time)
 
-    return f'{inode}{blocks}{perms} {nlink} {uid} {gid} {size:>6} {time_str} {name}'
+    return f"{inode}{blocks}{perms} {nlink} {uid} {gid} {size:>6} {time_str} {name}"
 
 
 # =============================
@@ -122,10 +122,12 @@ def scan_dir(path, args):
     if not args.a:
         if args.A:
             entries = [
-                e for e in entries if e.name not in ('.', '..') and not e.name.startswith('.')
+                e
+                for e in entries
+                if e.name not in (".", "..") and not e.name.startswith(".")
             ]
         else:
-            entries = [e for e in entries if not e.name.startswith('.')]
+            entries = [e for e in entries if not e.name.startswith(".")]
 
     def key(p):
         try:
@@ -169,7 +171,7 @@ def print_columns(items, width, by_row):
         for c in range(cols):
             idx = r * cols + c if by_row else c * rows + r
             if idx < len(items):
-                print(items[idx].ljust(max_len), end='')
+                print(items[idx].ljust(max_len), end="")
         print()
 
 
@@ -182,46 +184,46 @@ def main():
     p = argparse.ArgumentParser(add_help=False)
 
     # basic listing
-    p.add_argument('-1', dest='one', action='store_true')
-    p.add_argument('-a', action='store_true')
-    p.add_argument('-A', action='store_true')
-    p.add_argument('-x', action='store_true')
-    p.add_argument('-d', action='store_true')
+    p.add_argument("-1", dest="one", action="store_true")
+    p.add_argument("-a", action="store_true")
+    p.add_argument("-A", action="store_true")
+    p.add_argument("-x", action="store_true")
+    p.add_argument("-d", action="store_true")
 
     # symlinks / recursion
-    p.add_argument('-L', action='store_true')
-    p.add_argument('-H', action='store_true')
-    p.add_argument('-R', action='store_true')
+    p.add_argument("-L", action="store_true")
+    p.add_argument("-H", action="store_true")
+    p.add_argument("-R", action="store_true")
 
     # formatting
-    p.add_argument('-p', action='store_true')
-    p.add_argument('-F', action='store_true')
-    p.add_argument('-l', action='store_true')
-    p.add_argument('-i', action='store_true')
-    p.add_argument('-n', action='store_true')
-    p.add_argument('-s', action='store_true')
-    p.add_argument('-h', action='store_true')
+    p.add_argument("-p", action="store_true")
+    p.add_argument("-F", action="store_true")
+    p.add_argument("-l", action="store_true")
+    p.add_argument("-i", action="store_true")
+    p.add_argument("-n", action="store_true")
+    p.add_argument("-s", action="store_true")
+    p.add_argument("-h", action="store_true")
 
     # time options
-    p.add_argument('-lc', action='store_true')
-    p.add_argument('-lu', action='store_true')
-    p.add_argument('--full-time', action='store_true')
+    p.add_argument("-lc", action="store_true")
+    p.add_argument("-lu", action="store_true")
+    p.add_argument("--full-time", action="store_true")
 
     # sorting
-    p.add_argument('-S', action='store_true')
-    p.add_argument('-X', action='store_true')
-    p.add_argument('-v', action='store_true')
-    p.add_argument('-t', action='store_true')
-    p.add_argument('-tc', action='store_true')
-    p.add_argument('-tu', action='store_true')
-    p.add_argument('-r', action='store_true')
+    p.add_argument("-S", action="store_true")
+    p.add_argument("-X", action="store_true")
+    p.add_argument("-v", action="store_true")
+    p.add_argument("-t", action="store_true")
+    p.add_argument("-tc", action="store_true")
+    p.add_argument("-tu", action="store_true")
+    p.add_argument("-r", action="store_true")
 
     # layout / misc
-    p.add_argument('-w', type=int, default=80)
-    p.add_argument('--group-directories-first', action='store_true')
-    p.add_argument('--color', nargs='?', const='auto', default='auto')
+    p.add_argument("-w", type=int, default=80)
+    p.add_argument("--group-directories-first", action="store_true")
+    p.add_argument("--color", nargs="?", const="auto", default="auto")
 
-    p.add_argument('paths', nargs='*', default=['.'])
+    p.add_argument("paths", nargs="*", default=["."])
 
     args = p.parse_args()
     color_enabled = use_color(args.color)
@@ -240,16 +242,16 @@ def main():
             for f in formatted:
                 print(f)
         elif args._1:
-            print('\n'.join(formatted))
+            print("\n".join(formatted))
         else:
             print_columns(formatted, args.w, args.x)
 
         if args.R:
             for e in entries:
                 if e.is_dir() and not e.is_symlink():
-                    print(f'\n{e}:')
+                    print(f"\n{e}:")
                     main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

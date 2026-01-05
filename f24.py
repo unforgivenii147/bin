@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 SECONDS_24H = 24 * 60 * 60
 NOW = time.time()
-EXCLUDE_DIRS = {'.git'}
+EXCLUDE_DIRS = {".git"}
 
 
 def iter_files(root: Path) -> List[Path]:
@@ -49,8 +49,8 @@ def main() -> None:
         for fut in tqdm(
             as_completed(futures),
             total=len(futures),
-            desc='Scanning',
-            unit='file',
+            desc="Scanning",
+            unit="file",
         ):
             result = fut.result()
             if result is not None:
@@ -63,5 +63,5 @@ def main() -> None:
         print(path.relative_to(root))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

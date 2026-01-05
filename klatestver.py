@@ -6,15 +6,15 @@ import regex as re
 from packaging.version import Version
 
 # Regex to extract name and version from wheel filename
-wheel_pattern = re.compile(r'^(?P<name>.+)-(?P<version>\d+(\.\d+)+).*\.whl$')
-files = [f for f in os.listdir('.') if f.endswith('.whl')]
+wheel_pattern = re.compile(r"^(?P<name>.+)-(?P<version>\d+(\.\d+)+).*\.whl$")
+files = [f for f in os.listdir(".") if f.endswith(".whl")]
 packages = {}
 for f in files:
     match = wheel_pattern.match(f)
     if not match:
         continue
-    name = match.group('name')
-    version = Version(match.group('version'))
+    name = match.group("name")
+    version = Version(match.group("version"))
     if name not in packages:
         packages[name] = []
     packages[name].append((version, f))

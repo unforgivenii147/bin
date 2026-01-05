@@ -9,55 +9,55 @@ from tqdm import tqdm
 # Extensions to exclude (no dot, lowercase)
 EXCLUDED_EXTENSIONS = {
     # compressed / archives
-    'zip',
-    'tar',
-    'gz',
-    'bz2',
-    'xz',
-    '7z',
-    'rar',
-    'tgz',
-    'zst',
-    'whl',
-    'tar.gz',
-    'tar.zst',
+    "zip",
+    "tar",
+    "gz",
+    "bz2",
+    "xz",
+    "7z",
+    "rar",
+    "tgz",
+    "zst",
+    "whl",
+    "tar.gz",
+    "tar.zst",
     # images
-    'jpg',
-    'jpeg',
-    'png',
-    'gif',
-    'bmp',
-    'svg',
-    'webp',
-    'ico',
-    'tiff',
+    "jpg",
+    "jpeg",
+    "png",
+    "gif",
+    "bmp",
+    "svg",
+    "webp",
+    "ico",
+    "tiff",
     # audio
-    'mp3',
-    'wav',
-    'flac',
-    'aac',
-    'ogg',
-    'm4a',
-    'wma',
+    "mp3",
+    "wav",
+    "flac",
+    "aac",
+    "ogg",
+    "m4a",
+    "wma",
     # video
-    'mp4',
-    'mkv',
-    'avi',
-    'mov',
-    'wmv',
-    'flv',
-    'webm',
-    'mpeg',
-    'mpg',
+    "mp4",
+    "mkv",
+    "avi",
+    "mov",
+    "wmv",
+    "flv",
+    "webm",
+    "mpeg",
+    "mpg",
     # binaries / compiled
-    'exe',
-    'dll',
-    'so',
-    'bin',
-    'class',
-    'pyc',
-    'o',
-    'a',
+    "exe",
+    "dll",
+    "so",
+    "bin",
+    "class",
+    "pyc",
+    "o",
+    "a",
 }
 
 
@@ -65,13 +65,13 @@ def process_file(filepath):
     """Read lines from a file and return a Counter of lines."""
     counter = Counter()
     try:
-        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
             for line in f:
                 line = line.strip()
                 if line:
                     counter[line] += 1
     except Exception as e:
-        print(f'Error reading {filepath}: {e}')
+        print(f"Error reading {filepath}: {e}")
     return counter
 
 
@@ -85,17 +85,17 @@ def collect_files_by_extension():
 
     for root, _, filenames in os.walk(os.getcwd()):
         for fname in filenames:
-            if fname.startswith('.'):
+            if fname.startswith("."):
                 continue
 
             full_path = os.path.join(root, fname)
-            ext = os.path.splitext(fname)[1].lower().lstrip('.')
+            ext = os.path.splitext(fname)[1].lower().lstrip(".")
 
             if ext in EXCLUDED_EXTENSIONS:
                 continue
 
             if not ext:
-                ext = 'no_ext'
+                ext = "no_ext"
 
             ext_map.setdefault(ext, []).append(full_path)
 
@@ -112,31 +112,31 @@ def collect_lines_for_extension(ext, files):
     with ThreadPoolExecutor() as executor:
         futures = {executor.submit(process_file, f): f for f in files}
         for future in tqdm(
-            as_completed(futures), total=len(futures), desc=f'Processing .{ext} files'
+            as_completed(futures), total=len(futures), desc=f"Processing .{ext} files"
         ):
             global_counter.update(future.result())
 
-    output_file = f'{ext}.csv'
-    with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
+    output_file = f"{ext}.csv"
+    with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['number_of_appearance', 'line'])
+        writer.writerow(["number_of_appearance", "line"])
         for line, count in global_counter.most_common():
             if count >= 5:
                 writer.writerow([count, line])
 
-    print(f'Saved results to {output_file}')
+    print(f"Saved results to {output_file}")
 
 
 def main():
     ext_map = collect_files_by_extension()
 
     if not ext_map:
-        print('No eligible files found.')
+        print("No eligible files found.")
         return
 
     for ext, files in ext_map.items():
         collect_lines_for_extension(ext, files)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

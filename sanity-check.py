@@ -3,6 +3,7 @@ import subprocess
 import re
 import sys
 
+
 def get_installed_packages():
     """Return a list of installed packages using dpkg-query."""
     try:
@@ -16,6 +17,7 @@ def get_installed_packages():
     except subprocess.CalledProcessError as e:
         print(f"Error listing installed packages: {e.stderr}")
         sys.exit(1)
+
 
 def check_package_health(package_name):
     """Check if a package is properly installed and configured."""
@@ -37,6 +39,7 @@ def check_package_health(package_name):
     except subprocess.CalledProcessError as e:
         return False, f"Error checking package: {e.stderr}"
 
+
 def check_for_updates():
     """Check for available updates using apt-get."""
     try:
@@ -49,6 +52,7 @@ def check_for_updates():
         return result.stdout
     except subprocess.CalledProcessError as e:
         return f"Error checking for updates: {e.stderr}"
+
 
 def main():
     print("=== Installed Packages Sanity Check ===")
@@ -79,6 +83,7 @@ def main():
         print("All packages are properly installed.")
     else:
         print("Some packages may need attention.")
+
 
 if __name__ == "__main__":
     main()

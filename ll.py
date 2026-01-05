@@ -4,25 +4,25 @@ import stat
 import sys
 
 # ANSI color codes
-CYAN = '\033[36m'  # files
-BLUE = '\033[34m'  # directories
-GREEN = '\033[32m'  # executables
-RED = '\033[31m'  # compressed files
-RESET = '\033[0m'
+CYAN = "\033[36m"  # files
+BLUE = "\033[34m"  # directories
+GREEN = "\033[32m"  # executables
+RED = "\033[31m"  # compressed files
+RESET = "\033[0m"
 
-COMPRESSED_EXTS = {'.zip', '.tar', '.gz', '.bz2', '.xz', '.rar', '.7z'}
+COMPRESSED_EXTS = {".zip", ".tar", ".gz", ".bz2", ".xz", ".rar", ".7z"}
 
 
 def human_readable_size(size_bytes):
     """Convert bytes to KB/MB/GB with formatting."""
     if size_bytes < 1024:
-        return f'{size_bytes} B'
+        return f"{size_bytes} B"
     elif size_bytes < 1024**2:
-        return f'{size_bytes / 1024:.1f} KB'
+        return f"{size_bytes / 1024:.1f} KB"
     elif size_bytes < 1024**3:
-        return f'{size_bytes / 1024**2:.1f} MB'
+        return f"{size_bytes / 1024**2:.1f} MB"
     else:
-        return f'{size_bytes / 1024**3:.1f} GB'
+        return f"{size_bytes / 1024**3:.1f} GB"
 
 
 def get_dir_size(path):
@@ -39,11 +39,11 @@ def get_dir_size(path):
     return total
 
 
-def list_dir(path='.'):
+def list_dir(path="."):
     try:
         entries = os.listdir(path)
     except Exception as e:
-        print(f'Error accessing {path}: {e}')
+        print(f"Error accessing {path}: {e}")
         return
 
     items = []
@@ -76,18 +76,18 @@ def list_dir(path='.'):
 
     # Print header
     print(f'{"size".ljust(size_col_width)}  {"name"}')
-    print('-' * (size_col_width + name_col_width + 2))
+    print("-" * (size_col_width + name_col_width + 2))
 
     if not items:
-        print('(directory is empty)')
+        print("(directory is empty)")
         return
 
     # Sort by size ascending
     for size, name, color in sorted(items, key=lambda x: x[0]):
         size_str = human_readable_size(size).ljust(size_col_width)
-        print(f'{size_str}  {color}{name}{RESET}')
+        print(f"{size_str}  {color}{name}{RESET}")
 
 
-if __name__ == '__main__':
-    target = sys.argv[1] if len(sys.argv) > 1 else '.'
+if __name__ == "__main__":
+    target = sys.argv[1] if len(sys.argv) > 1 else "."
     list_dir(target)

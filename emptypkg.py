@@ -6,10 +6,10 @@ import sysconfig
 
 def is_empty_package(dist_info_path) -> bool:
     """Return True if all files listed in RECORD are inside the dist-info dir."""
-    record_file = os.path.join(dist_info_path, 'RECORD')
+    record_file = os.path.join(dist_info_path, "RECORD")
     if not pathlib.Path(record_file).is_file():
         return False  # no RECORD = can't inspect, assume not empty
-    with pathlib.Path(record_file).open(newline='', encoding='utf-8') as f:
+    with pathlib.Path(record_file).open(newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
         for row in reader:
             if not row:
@@ -27,7 +27,7 @@ def is_empty_package(dist_info_path) -> bool:
 def find_empty_packages(site_packages):
     empty = []
     for entry in os.listdir(site_packages):
-        if entry.endswith('.dist-info'):
+        if entry.endswith(".dist-info"):
             dist_info_path = os.path.join(site_packages, entry)
             if is_empty_package(dist_info_path):
                 empty.append(dist_info_path)
@@ -35,7 +35,7 @@ def find_empty_packages(site_packages):
 
 
 def main() -> None:
-    site_packages = sysconfig.get_paths()['purelib']
+    site_packages = sysconfig.get_paths()["purelib"]
     empty = find_empty_packages(site_packages)
     if not empty:
         return
@@ -43,5 +43,5 @@ def main() -> None:
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
