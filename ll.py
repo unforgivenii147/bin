@@ -71,7 +71,8 @@ def list_dir(path='.'):
         items.append((size, entry, color))
 
     # --- FIX: Added 'default' to handle empty lists ---
-    size_col_width = max((len(human_readable_size(s)) for s, _, _ in items), default=4)
+    size_col_width = max((len(human_readable_size(s)) for s, _, _ in items),
+                         default=4)
     name_col_width = max((len(n) for _, n, _ in items), default=4)
 
     # Print header

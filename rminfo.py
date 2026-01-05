@@ -20,7 +20,8 @@ def is_python_file(path: str) -> bool:
             if first.startswith('#!') and 'python' in first:
                 return True
             sample = f.read(200)
-            return any(tok in sample for tok in ('def ', 'class ', 'import ', 'from '))
+            return any(tok in sample
+                       for tok in ('def ', 'class ', 'import ', 'from '))
     except Exception:
         return False
 
@@ -35,11 +36,8 @@ def remove_header(path) -> None:
         return
 
     for line in original:
-        if not (
-            line.startswith('# Author ')
-            or line.startswith('# Email ')
-            or line.startswith('# Time ')
-        ):
+        if not (line.startswith('# Author ') or line.startswith('# Email ')
+                or line.startswith('# Time ')):
             cleaned.append(line)
     print(f'{len(original)}=={len(cleaned)}')
     if cleaned != original:

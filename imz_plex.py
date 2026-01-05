@@ -26,7 +26,9 @@ SHEBANG_PATTERNS = [
 ]
 
 # Compressed file extensions
-COMPRESSED_EXTS = {'.tar.gz', '.tgz', '.tar.xz', '.tar.bz2', '.tar.zst', '.zip', '.whl', '.7z'}
+COMPRESSED_EXTS = {
+    '.tar.gz', '.tgz', '.tar.xz', '.tar.bz2', '.tar.zst', '.zip', '.whl', '.7z'
+}
 
 # Pip packages list path and stdlib path
 PIP_LIST_PATH = Path('/sdcard/pip.txt')
@@ -42,9 +44,9 @@ def load_known_packages():
         try:
             with open(PIP_LIST_PATH, 'r') as f:
                 KNOWN_PACKAGES = {
-                    line.strip().split('==')[0].split('>')[0].split('<')[0].lower()
-                    for line in f
-                    if line.strip()
+                    line.strip().split('==')[0].split('>')[0].split('<')
+                    [0].lower()
+                    for line in f if line.strip()
                 }
         except Exception:
             pass
@@ -56,7 +58,10 @@ def load_stdlib_modules():
     if STDLIB_PATH.exists():
         try:
             with open(STDLIB_PATH, 'r') as f:
-                STDLIB_MODULES = {line.strip().lower() for line in f if line.strip()}
+                STDLIB_MODULES = {
+                    line.strip().lower()
+                    for line in f if line.strip()
+                }
         except Exception:
             pass
 
@@ -148,10 +153,10 @@ def handle_compressed_file(archive_path):
             with zipfile.ZipFile(path, 'r') as zf:
                 for name in zf.namelist():
                     if is_python_file(name):
-                        content = zf.read(name).decode('utf-8', errors='ignore')
-                        imports = extract_imports_from_ast(content) or extract_imports_regex(
-                            content
-                        )
+                        content = zf.read(name).decode('utf-8',
+                                                       errors='ignore')
+                        imports = extract_imports_from_ast(
+                            content) or extract_imports_regex(content)
                         for imp in imports:
                             all_imports[imp] += 1
 
@@ -163,9 +168,8 @@ def handle_compressed_file(archive_path):
                         f = tf.extractfile(member)
                         if f:
                             content = f.read().decode('utf-8', errors='ignore')
-                            imports = extract_imports_from_ast(content) or extract_imports_regex(
-                                content
-                            )
+                            imports = extract_imports_from_ast(
+                                content) or extract_imports_regex(content)
                             for imp in imports:
                                 all_imports[imp] += 1
 
@@ -177,9 +181,8 @@ def handle_compressed_file(archive_path):
                         f = tf.extractfile(member)
                         if f:
                             content = f.read().decode('utf-8', errors='ignore')
-                            imports = extract_imports_from_ast(content) or extract_imports_regex(
-                                content
-                            )
+                            imports = extract_imports_from_ast(
+                                content) or extract_imports_regex(content)
                             for imp in imports:
                                 all_imports[imp] += 1
 
@@ -191,9 +194,8 @@ def handle_compressed_file(archive_path):
                         f = tf.extractfile(member)
                         if f:
                             content = f.read().decode('utf-8', errors='ignore')
-                            imports = extract_imports_from_ast(content) or extract_imports_regex(
-                                content
-                            )
+                            imports = extract_imports_from_ast(
+                                content) or extract_imports_regex(content)
                             for imp in imports:
                                 all_imports[imp] += 1
 
@@ -207,13 +209,15 @@ def handle_compressed_file(archive_path):
                     with dctx.stream_reader(f) as reader:
                         with tarfile.open(fileobj=reader, mode='r') as tf:
                             for member in tf.getmembers():
-                                if is_python_file(member.name) and not member.isdir():
+                                if is_python_file(
+                                        member.name) and not member.isdir():
                                     f = tf.extractfile(member)
                                     if f:
-                                        content = f.read().decode('utf-8', errors='ignore')
+                                        content = f.read().decode(
+                                            'utf-8', errors='ignore')
                                         imports = extract_imports_from_ast(
-                                            content
-                                        ) or extract_imports_regex(content)
+                                            content) or extract_imports_regex(
+                                                content)
                                         for imp in imports:
                                             all_imports[imp] += 1
             except ImportError:
@@ -224,9 +228,12 @@ def handle_compressed_file(archive_path):
             try:
                 import subprocess
 
-                result = subprocess.run(['7z', 'l', str(path)], capture_output=True, text=True)
+                result = subprocess.run(['7z', 'l', str(path)],
+                                        capture_output=True,
+                                        text=True)
                 for line in result.stdout.splitlines():
-                    if '.py' in line or ('python' in line.lower() and 'bin' not in line.lower()):
+                    if '.py' in line or ('python' in line.lower()
+                                         and 'bin' not in line.lower()):
                         pass  # Would need extraction, skipping for offline
             except:
                 pass
@@ -283,7 +290,9 @@ def generate_requirements(imports_count):
             else:
                 f.write(f'{norm_pkg}\n')
 
-    print(f'Generated requirements.txt with {len(sorted_imports)} packages (stdlib excluded)')
+    print(
+        f'Generated requirements.txt with {len(sorted_imports)} packages (stdlib excluded)'
+    )
     print('Top 10 most used packages:')
     for pkg, count in sorted_imports[:10]:
         print(f'  {pkg}: {count} files')
@@ -301,7 +310,9 @@ def main():
     print('Scanning current directory...')
     imports_count = walk_directory('.')
 
-    print(f'Found {sum(imports_count.values())} total imports across {len(imports_count)} packages')
+    print(
+        f'Found {sum(imports_count.values())} total imports across {len(imports_count)} packages'
+    )
 
     generate_requirements(imports_count)
 

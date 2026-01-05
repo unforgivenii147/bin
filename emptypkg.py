@@ -16,10 +16,11 @@ def is_empty_package(dist_info_path) -> bool:
                 continue
             rel_path = row[0]  # RECORD lists relative paths
             abs_path = pathlib.Path(
-                os.path.join(pathlib.Path(dist_info_path).parent, rel_path)
-            ).resolve()
+                os.path.join(pathlib.Path(dist_info_path).parent,
+                             rel_path)).resolve()
             # If the file is outside the dist-info directory → not empty
-            if not abs_path.startswith(pathlib.Path(dist_info_path).resolve() + os.sep):
+            if not abs_path.startswith(
+                    pathlib.Path(dist_info_path).resolve() + os.sep):
                 return False
     return True
 

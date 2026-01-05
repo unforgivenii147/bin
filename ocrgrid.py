@@ -36,7 +36,8 @@ def to_grayscale(img: np.ndarray) -> np.ndarray:
 
 def rescale(img: np.ndarray, scale: float = 2.0) -> np.ndarray:
     h, w = img.shape[:2]
-    return cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_CUBIC)
+    return cv2.resize(img, (int(w * scale), int(h * scale)),
+                      interpolation=cv2.INTER_CUBIC)
 
 
 def deskew(img: np.ndarray) -> np.ndarray:
@@ -52,7 +53,10 @@ def deskew(img: np.ndarray) -> np.ndarray:
     (h, w) = img.shape[:2]
     center = (w // 2, h // 2)
     m = cv2.getRotationMatrix2D(center, angle, 1.0)
-    return cv2.warpAffine(img, m, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+    return cv2.warpAffine(img,
+                          m, (w, h),
+                          flags=cv2.INTER_CUBIC,
+                          borderMode=cv2.BORDER_REPLICATE)
 
 
 def rotate(img: np.ndarray, angle: int) -> np.ndarray:
@@ -141,15 +145,13 @@ def main() -> None:
                         encoding='utf-8',
                     )
 
-                    report_index.append(
-                        {
-                            'variant': variant_name,
-                            'psm': psm,
-                            'oem': oem,
-                            'dpi': dpi,
-                            'text_file': str(txt_path),
-                        }
-                    )
+                    report_index.append({
+                        'variant': variant_name,
+                        'psm': psm,
+                        'oem': oem,
+                        'dpi': dpi,
+                        'text_file': str(txt_path),
+                    })
 
     (args.out / 'index.json').write_text(
         json.dumps(report_index, indent=2),

@@ -41,7 +41,8 @@ def iter_html_files(root: Path) -> Iterable[Path]:
 
 
 def infer_extension(mime: str) -> str:
-    return MIME_EXTENSION_MAP.get(mime.lower(), mime.rsplit('/', maxsplit=1)[-1])
+    return MIME_EXTENSION_MAP.get(mime.lower(),
+                                  mime.rsplit('/', maxsplit=1)[-1])
 
 
 def decode_base64(data: str) -> bytes:

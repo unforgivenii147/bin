@@ -11,14 +11,18 @@ from cryptography.hazmat.backends import default_backend
 
 def random_key(length=32):
     # AES requires 16, 24, or 32 bytes
-    return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
+    return ''.join(
+        random.choice(string.ascii_letters + string.digits)
+        for _ in range(length))
 
 
 def encrypt_file(file_path, key):
     backend = default_backend()
     iv = os.urandom(16)
 
-    cipher = Cipher(algorithms.AES(key.encode()), modes.CBC(iv), backend=backend)
+    cipher = Cipher(algorithms.AES(key.encode()),
+                    modes.CBC(iv),
+                    backend=backend)
     encryptor = cipher.encryptor()
 
     with open(file_path, 'rb') as f:

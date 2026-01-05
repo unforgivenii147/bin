@@ -79,23 +79,26 @@ def main():
 
     # 1. Local discovery
     local_names = {p.stem for p in current_dir.glob('*.py')}
-    local_names.update(
-        {p.name for p in current_dir.iterdir() if p.is_dir() and (p / '__init__.py').exists()}
-    )
+    local_names.update({
+        p.name
+        for p in current_dir.iterdir()
+        if p.is_dir() and (p / '__init__.py').exists()
+    })
 
     # 2. Stdlib discovery
     std_libs = getattr(sys, 'stdlib_module_names', set())
 
     # 3. Collection
     for path in current_dir.rglob('*'):
-        if is_python_file(path) and path.name not in ['importz.txt', 'install_deps.sh']:
+        if is_python_file(path) and path.name not in [
+                'importz.txt', 'install_deps.sh'
+        ]:
             all_imports.update(get_imports_from_file(path))
 
     # 4. Filtering & Mapping
     third_party = [
-        imp
-        for imp in all_imports
-        if imp not in std_libs and imp not in local_names and imp != '__future__'
+        imp for imp in all_imports if imp not in std_libs
+        and imp not in local_names and imp != '__future__'
     ]
 
     missing_for_pip = []
@@ -111,7 +114,8 @@ def main():
 
     # 5. Output
     if third_party:
-        output_file.write_text('\n'.join(sorted(third_party)), encoding='utf-8')
+        output_file.write_text('\n'.join(sorted(third_party)),
+                               encoding='utf-8')
         print(f'✅ Found {len(third_party)} 3rd-party dependencies.')
 
         if already_installed:
@@ -119,7 +123,8 @@ def main():
 
         if missing_for_pip:
             install_cmd = f'pip install {" ".join(missing_for_pip)}'
-            pip_script.write_text(f'#!/bin/sh\n{install_cmd}\n', encoding='utf-8')
+            pip_script.write_text(f'#!/bin/sh\n{install_cmd}\n',
+                                  encoding='utf-8')
             pip_script.chmod(pip_script.stat().st_mode | 0o111)
             print(f'⚠️  Missing: {", ".join(missing_for_pip)}')
             print(f'🚀 Run this to install missing: ./{pip_script.name}')

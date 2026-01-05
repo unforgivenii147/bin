@@ -8,7 +8,8 @@ def is_empty_wheel(wheel_path) -> bool:
     with zipfile.ZipFile(wheel_path, 'r') as z:
         # Find the dist-info directory inside the wheel
         dist_info_dirs = [
-            name for name in z.namelist() if name.endswith(('.dist-info/', '.dist-info'))
+            name for name in z.namelist()
+            if name.endswith(('.dist-info/', '.dist-info'))
         ]
         if not dist_info_dirs:
             return False  # malformed wheel; no dist-info

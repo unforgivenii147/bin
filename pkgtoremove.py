@@ -59,12 +59,15 @@ def exclude_build_packages(installed_packages):
         'autoconf',
         'automake',
     }
-    return [(pkg, size) for pkg, size in installed_packages if pkg not in build_essential_packages]
+    return [(pkg, size) for pkg, size in installed_packages
+            if pkg not in build_essential_packages]
 
 
 # Function to suggest largest unused packages
 def suggest_unused_packages(installed_packages, used_packages, top_n=200):
-    unused_packages = [pkg for pkg in installed_packages if pkg[0] not in used_packages]
+    unused_packages = [
+        pkg for pkg in installed_packages if pkg[0] not in used_packages
+    ]
     unused_packages = exclude_build_packages(unused_packages)
 
     # Sort by size (largest first)
@@ -84,11 +87,14 @@ def main():
     used_packages = get_used_packages(history, installed_packages)
 
     # Suggest top 10 largest unused packages
-    suggestions = suggest_unused_packages(installed_packages, used_packages, top_n=100)
+    suggestions = suggest_unused_packages(installed_packages,
+                                          used_packages,
+                                          top_n=100)
 
     print('Top unused packages (sorted by size):')
     for pkg, size in suggestions:
-        if (not 'python' in str(pkg)) and (not 'l8b' in str(pkg)) and (not 'static' in str(pkg)):
+        if (not 'python' in str(pkg)) and (not 'l8b' in str(pkg)) and (
+                not 'static' in str(pkg)):
             print(f'{pkg}: {size / 1024} MB')
 
 

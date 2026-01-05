@@ -13,20 +13,16 @@ def clean_terminal_transcript(path: str) -> None:
     """Clean tmux artifacts while preserving newlines and line structure."""
 
     # Comprehensive ANSI + tmux escape sequences [web:12][web:33]
-    ansi_tmux_re = re.compile(
-        rb'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])|'
-        rb'\x08|\x0C|\x0F|\x18|\x1C|'
-        rb'\(\d+[a-z]\(B|\(0[Bqtxl]\(B'
-    )
+    ansi_tmux_re = re.compile(rb'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])|'
+                              rb'\x08|\x0C|\x0F|\x18|\x1C|'
+                              rb'\(\d+[a-z]\(B|\(0[Bqtxl]\(B')
 
     # Tmux status lines / artifacts [web:31]
-    status_re = re.compile(
-        rb'\b\d{4}[MGB]\b|'
-        rb'\d{3,4}\s+\([^\)]+\)|'
-        rb'\[\^\]\(B\(0l\(B<\(0q\(B\s*\d+|'
-        rb'\~\\/[^\r\n]*?\s+\$|'
-        rb'\(0mqq\(B\s+\d+M\s*/\s*\d+G'
-    )
+    status_re = re.compile(rb'\b\d{4}[MGB]\b|'
+                           rb'\d{3,4}\s+\([^\)]+\)|'
+                           rb'\[\^\]\(B\(0l\(B<\(0q\(B\s*\d+|'
+                           rb'\~\\/[^\r\n]*?\s+\$|'
+                           rb'\(0mqq\(B\s+\d+M\s*/\s*\d+G')
 
     try:
         with open(path, 'rb') as f:
@@ -44,9 +40,11 @@ def clean_terminal_transcript(path: str) -> None:
         # Keep ALL newlines, tabs, spaces - remove only destructive controls
         # (BEL, VT, FF, etc. but NEVER touch \n, \r, \t, space)
         cleaned_lines = []
-        for line in text.splitlines(keepends=True):  # keepends=True preserves \n
+        for line in text.splitlines(
+                keepends=True):  # keepends=True preserves \n
             # Remove only specific destructive controls from each line
-            cleaned_line = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', line)
+            cleaned_line = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '',
+                                  line)
             cleaned_lines.append(cleaned_line)
 
         # Join preserving exact newline structure

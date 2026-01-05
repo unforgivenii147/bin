@@ -120,7 +120,8 @@ def translate_file(input_file, source_lang='auto'):
 
     # Check if chunking needed
     if content_length <= MAX_CHARS:
-        print(f'[INFO] Content fits in single request ({content_length} chars)')
+        print(
+            f'[INFO] Content fits in single request ({content_length} chars)')
         print(f'[INFO] Translating...')
         translated, detected_lang = translate_chunk(content, source_lang)
         print(f'[INFO] Detected language: {detected_lang}')
@@ -138,15 +139,19 @@ def translate_file(input_file, source_lang='auto'):
 
     try:
         for i, chunk in enumerate(chunks):
-            print(f'\n[INFO] Translating chunk {i + 1}/{total_chunks} ({len(chunk)} chars)...')
+            print(
+                f'\n[INFO] Translating chunk {i + 1}/{total_chunks} ({len(chunk)} chars)...'
+            )
             try:
-                translated_chunk, detected_lang = translate_chunk(chunk, source_lang)
+                translated_chunk, detected_lang = translate_chunk(
+                    chunk, source_lang)
                 translated_chunks.append(translated_chunk)
                 pbar.update(1)
             except Exception as e:
                 print(f'[ERROR] Failed to translate chunk {i + 1}: {e}')
                 pbar.update(1)
-                translated_chunks.append(chunk)  # Keep original if translation fails
+                translated_chunks.append(
+                    chunk)  # Keep original if translation fails
     finally:
         pbar.close()
 
@@ -159,12 +164,15 @@ def translate_file(input_file, source_lang='auto'):
 def main():
     # Parse arguments
     if len(sys.argv) < 2:
-        print('Usage:  python translate_file.py <input_file> [source_language]')
+        print(
+            'Usage:  python translate_file.py <input_file> [source_language]')
         print('\nExamples:')
         print('  python translate_file.py document.txt')
         print('  python translate_file.py document. fa')
         print('  python translate_file.py document.txt fa')
-        print('\nSupported languages:  auto, en, fa, fr, de, es, it, pt, ru, zh, ja, ko, ar, etc.')
+        print(
+            '\nSupported languages:  auto, en, fa, fr, de, es, it, pt, ru, zh, ja, ko, ar, etc.'
+        )
         sys.exit(1)
 
     input_file = sys.argv[1]
@@ -181,7 +189,9 @@ def main():
     # Check if output already exists
     if os.path.exists(output_file):
         print(f'[INFO] Output file already exists: {output_file}')
-        print(f'[INFO] Skipping translation (delete {output_file} to re-translate)')
+        print(
+            f'[INFO] Skipping translation (delete {output_file} to re-translate)'
+        )
         sys.exit(0)
 
     print(f'[INFO] Input:   {input_file}')

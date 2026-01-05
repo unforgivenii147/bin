@@ -111,9 +111,9 @@ def collect_lines_for_extension(ext, files):
 
     with ThreadPoolExecutor() as executor:
         futures = {executor.submit(process_file, f): f for f in files}
-        for future in tqdm(
-            as_completed(futures), total=len(futures), desc=f'Processing .{ext} files'
-        ):
+        for future in tqdm(as_completed(futures),
+                           total=len(futures),
+                           desc=f'Processing .{ext} files'):
             global_counter.update(future.result())
 
     output_file = f'{ext}.csv'

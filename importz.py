@@ -44,9 +44,11 @@ def main():
 
     # 1. Identify local modules and packages to trim them later
     local_names = {p.stem for p in current_dir.glob('*.py')}
-    local_names.update(
-        {p.name for p in current_dir.iterdir() if p.is_dir() and (p / '__init__.py').exists()}
-    )
+    local_names.update({
+        p.name
+        for p in current_dir.iterdir()
+        if p.is_dir() and (p / '__init__.py').exists()
+    })
 
     # 2. Get Standard Library names
     # sys.stdlib_module_names is available in Python 3.10+
@@ -58,13 +60,10 @@ def main():
             all_imports.update(get_imports_from_file(path))
 
     # 4. Filter: Trim standard libs, local files, and __future__
-    third_party = sorted(
-        [
-            imp
-            for imp in all_imports
-            if imp not in std_libs and imp not in local_names and imp != '__future__'
-        ]
-    )
+    third_party = sorted([
+        imp for imp in all_imports if imp not in std_libs
+        and imp not in local_names and imp != '__future__'
+    ])
 
     # 5. Save results
     if third_party:

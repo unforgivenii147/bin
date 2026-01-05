@@ -30,7 +30,8 @@ def minify_html_in_directory(root_dir='.') -> None:
                         do_not_minify_json_script=False,
                     )
                     # 3. Overwrite the original file (in-place)
-                    with pathlib.Path(file_path).open('w', encoding='utf-8') as f:
+                    with pathlib.Path(file_path).open('w',
+                                                      encoding='utf-8') as f:
                         f.write(minified_content)
                     minified_count += 1
                 except Exception:

@@ -105,7 +105,8 @@ def main() -> None:
             full_path = os.path.join(root, name)
             if name in TARGET_FILES:
                 clean_file(full_path)
-            elif name.lower().endswith(('.zip', '.whl', '.tar.gz', '.tgz', '.tar')):
+            elif name.lower().endswith(
+                ('.zip', '.whl', '.tar.gz', '.tgz', '.tar')):
                 dispatch_archive(full_path)
 
     # 2. Handle the collected output
@@ -115,9 +116,13 @@ def main() -> None:
             with open(LOG_FILE, 'a', encoding='utf-8') as f:
                 for line in removed_lines_accumulator:
                     f.write(line + '\n')
-            print(f'--- Saved {len(removed_lines_accumulator)} lines to {LOG_FILE} ---')
+            print(
+                f'--- Saved {len(removed_lines_accumulator)} lines to {LOG_FILE} ---'
+            )
         except PermissionError:
-            print(f'Warning: Could not write to {LOG_FILE}. Check Termux storage permissions.')
+            print(
+                f'Warning: Could not write to {LOG_FILE}. Check Termux storage permissions.'
+            )
 
         # Print to console
         print('\nRemoved Lines:')

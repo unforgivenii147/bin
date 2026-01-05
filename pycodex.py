@@ -18,7 +18,8 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -68,7 +69,8 @@ class CodeBlockExtractor:
     def __init__(self) -> None:
         self.http_session = HTTPSession()
 
-    def extract_from_html(self, html_content: str, source_file: str) -> list[CodeBlock]:
+    def extract_from_html(self, html_content: str,
+                          source_file: str) -> list[CodeBlock]:
         """Extract Python code blocks from HTML content."""
         soup = BeautifulSoup(html_content, 'html.parser')
         code_blocks = []
@@ -80,7 +82,8 @@ class CodeBlockExtractor:
         code_blocks.extend(self._extract_from_canvas(soup, source_file))
         return code_blocks
 
-    def _extract_from_pre_code(self, soup: BeautifulSoup, source_file: str) -> list[CodeBlock]:
+    def _extract_from_pre_code(self, soup: BeautifulSoup,
+                               source_file: str) -> list[CodeBlock]:
         """Extract from <pre><code> tags."""
         blocks = []
         for idx, pre in enumerate(soup.find_all('pre')):
@@ -93,12 +96,14 @@ class CodeBlockExtractor:
                         language='python',
                         source_file=source_file,
                         block_index=idx,
-                        suggested_name=self._extract_filename_from_code(content),
+                        suggested_name=self._extract_filename_from_code(
+                            content),
                     )
                     blocks.append(block)
         return blocks
 
-    def _extract_from_code_tags(self, soup: BeautifulSoup, source_file: str) -> list[CodeBlock]:
+    def _extract_from_code_tags(self, soup: BeautifulSoup,
+                                source_file: str) -> list[CodeBlock]:
         """Extract from standalone <code> tags."""
         blocks = []
         offset = len(soup.find_all('pre'))
@@ -118,15 +123,14 @@ class CodeBlockExtractor:
                 blocks.append(block)
         return blocks
 
-    def _extract_from_canvas(self, soup: BeautifulSoup, source_file: str) -> list[CodeBlock]:
+    def _extract_from_canvas(self, soup: BeautifulSoup,
+                             source_file: str) -> list[CodeBlock]:
         """Extract Python code from Canvas LMS embedded content."""
         blocks = []
         offset = len(soup.find_all('pre')) + len(soup.find_all('code'))
         for idx, script in enumerate(soup.find_all('script')):
-            if (
-                script.get('type') == 'application/json'
-                or 'canvas' in str(script.get('id', '')).lower()
-            ):
+            if (script.get('type') == 'application/json'
+                    or 'canvas' in str(script.get('id', '')).lower()):
                 try:
                     content = script.string
                     if content:
@@ -142,7 +146,8 @@ class CodeBlockExtractor:
                                         language='python',
                                         source_file=source_file,
                                         block_index=offset + idx,
-                                        suggested_name=self._extract_filename_from_code(py_code),
+                                        suggested_name=self.
+                                        _extract_filename_from_code(py_code),
                                     )
                                     blocks.append(block)
                 except (json.JSONDecodeError, TypeError):
@@ -156,13 +161,16 @@ class CodeBlockExtractor:
         python_codes = []
         if isinstance(data, dict):
             for value in data.values():
-                python_codes.extend(self._extract_from_json(value, depth + 1, max_depth))
+                python_codes.extend(
+                    self._extract_from_json(value, depth + 1, max_depth))
         elif isinstance(data, list):
             for item in data:
-                python_codes.extend(self._extract_from_json(item, depth + 1, max_depth))
+                python_codes.extend(
+                    self._extract_from_json(item, depth + 1, max_depth))
         elif isinstance(data, str):
             # Check if string contains Python code indicators
-            if any(keyword in data for keyword in ['def ', 'import ', 'class ', 'if __name__']):
+            if any(keyword in data for keyword in
+                   ['def ', 'import ', 'class ', 'if __name__']):
                 python_codes.append(data)
         return python_codes
 
@@ -192,7 +200,8 @@ class CodeBlockExtractor:
             'self.',
         ]
         content_lower = content.lower()
-        keyword_count = sum(1 for keyword in python_keywords if keyword.lower() in content_lower)
+        keyword_count = sum(1 for keyword in python_keywords
+                            if keyword.lower() in content_lower)
         # Also check for common Python syntax patterns
         python_patterns = [
             r'\bdef\s+\w+\s*\(',
@@ -203,7 +212,8 @@ class CodeBlockExtractor:
             r'\breturn\s+',
             r'\b(True|False|None)\b',
         ]
-        pattern_matches = sum(1 for pattern in python_patterns if re.search(pattern, content))
+        pattern_matches = sum(1 for pattern in python_patterns
+                              if re.search(pattern, content))
         return keyword_count >= 2 or pattern_matches >= 2
 
     def _extract_filename_from_code(self, content: str) -> str | None:
@@ -245,10 +255,13 @@ class FileProcessor:
                 return 0
             with open(file_path, encoding='utf-8', errors='ignore') as f:
                 html_content = f.read()
-            code_blocks = self.extractor.extract_from_html(html_content, str(file_path))
+            code_blocks = self.extractor.extract_from_html(
+                html_content, str(file_path))
             if code_blocks:
                 self._save_code_blocks(code_blocks, file_path)
-                logger.info(f'Extracted {len(code_blocks)} code blocks from {file_path}')
+                logger.info(
+                    f'Extracted {len(code_blocks)} code blocks from {file_path}'
+                )
             return len(code_blocks)
         except Exception as e:
             logger.error(f'Error processing {file_path}: {e}')
@@ -263,15 +276,18 @@ class FileProcessor:
             code_blocks = self.extractor.extract_from_html(html_content, url)
             if code_blocks:
                 self._save_code_blocks(code_blocks, url)
-                logger.info(f'Extracted {len(code_blocks)} code blocks from {url}')
+                logger.info(
+                    f'Extracted {len(code_blocks)} code blocks from {url}')
             return len(code_blocks)
         except Exception as e:
             logger.error(f'Error processing URL {url}: {e}')
             return 0
 
-    def _save_code_blocks(self, code_blocks: list[CodeBlock], source: str) -> None:
+    def _save_code_blocks(self, code_blocks: list[CodeBlock],
+                          source: str) -> None:
         """Save code blocks to separate files with intelligent naming."""
-        source_name = Path(source).stem if not source.startswith('http') else 'url_content'
+        source_name = Path(
+            source).stem if not source.startswith('http') else 'url_content'
         source_dir = self.output_dir / source_name
         source_dir.mkdir(parents=True, exist_ok=True)
         for block in code_blocks:
@@ -327,14 +343,20 @@ Examples:
   python script.py
         """,
     )
-    parser.add_argument('-f', '--file', type=str, help='Path to a single HTML file')
+    parser.add_argument('-f',
+                        '--file',
+                        type=str,
+                        help='Path to a single HTML file')
     parser.add_argument(
         '-p',
         '--path',
         type=str,
         help='Path to directory containing HTML files',
     )
-    parser.add_argument('-u', '--url', type=str, help='URL to fetch HTML content from')
+    parser.add_argument('-u',
+                        '--url',
+                        type=str,
+                        help='URL to fetch HTML content from')
     parser.add_argument(
         '-o',
         '--output',
@@ -369,7 +391,8 @@ Examples:
                 logger.info(f'Found {len(html_files)} HTML files')
                 with ThreadPoolExecutor(max_workers=args.jobs) as executor:
                     futures = {
-                        executor.submit(processor.process_file, file): file for file in html_files
+                        executor.submit(processor.process_file, file): file
+                        for file in html_files
                     }
                     for future in as_completed(futures):
                         total_blocks += future.result()
@@ -377,13 +400,15 @@ Examples:
                 logger.warning(f'No HTML files found in {args.path}')
         else:
             # Process current directory (default)
-            logger.info('Processing HTML files in current directory recursively')
+            logger.info(
+                'Processing HTML files in current directory recursively')
             html_files = find_html_files('.')
             if html_files:
                 logger.info(f'Found {len(html_files)} HTML files')
                 with ThreadPoolExecutor(max_workers=args.jobs) as executor:
                     futures = {
-                        executor.submit(processor.process_file, file): file for file in html_files
+                        executor.submit(processor.process_file, file): file
+                        for file in html_files
                     }
                     for future in as_completed(futures):
                         total_blocks += future.result()

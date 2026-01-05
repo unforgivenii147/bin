@@ -24,7 +24,8 @@ def convert_to_jpg(file_path: str) -> bool:
 
     # Ask before overwriting
     if output_path.exists():
-        response = input(f"'{output_path.name}' exists. Overwrite? (y/n): ").strip().lower()
+        response = input(f"'{output_path.name}' exists. Overwrite? (y/n): "
+                         ).strip().lower()
         if response != 'y':
             return False
 
@@ -47,15 +48,12 @@ def convert_to_jpg(file_path: str) -> bool:
             alpha = a.astype(float) / 255.0
 
             # Blend each channel with white background: (color * alpha) + (white * (1 - alpha))
-            img_b = (b.astype(float) * alpha + white_bg.astype(float) * (1 - alpha)).astype(
-                np.uint8
-            )
-            img_g = (g.astype(float) * alpha + white_bg.astype(float) * (1 - alpha)).astype(
-                np.uint8
-            )
-            img_r = (r.astype(float) * alpha + white_bg.astype(float) * (1 - alpha)).astype(
-                np.uint8
-            )
+            img_b = (b.astype(float) * alpha + white_bg.astype(float) *
+                     (1 - alpha)).astype(np.uint8)
+            img_g = (g.astype(float) * alpha + white_bg.astype(float) *
+                     (1 - alpha)).astype(np.uint8)
+            img_r = (r.astype(float) * alpha + white_bg.astype(float) *
+                     (1 - alpha)).astype(np.uint8)
 
             final_img = cv2.merge((img_b, img_g, img_r))
         else:
@@ -63,7 +61,8 @@ def convert_to_jpg(file_path: str) -> bool:
             final_img = img
 
         # Save as JPG (quality 95)
-        success = cv2.imwrite(str(output_path), final_img, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
+        success = cv2.imwrite(str(output_path), final_img,
+                              [int(cv2.IMWRITE_JPEG_QUALITY), 95])
 
         if success:
             path.unlink()  # Delete original file

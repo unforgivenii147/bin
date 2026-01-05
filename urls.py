@@ -49,9 +49,9 @@ def normalize_url(url: str) -> str:
         scheme = p.scheme.lower()
         netloc = p.netloc.lower()
 
-        if (scheme == 'http' and netloc.endswith(':80')) or (
-            scheme == 'https' and netloc.endswith(':443')
-        ):
+        if (scheme == 'http'
+                and netloc.endswith(':80')) or (scheme == 'https'
+                                                and netloc.endswith(':443')):
             netloc = netloc.rsplit(':', 1)[0]
 
         path = p.path.rstrip('/') or '/'

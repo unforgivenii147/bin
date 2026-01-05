@@ -64,7 +64,8 @@ def count_lines_of_code(file_path, lang):
         for line in file:
             if not line.strip():  # Blank line
                 blank_lines += 1
-            elif re.match(COMMENT_PATTERNS.get(lang, ''), line):  # Comment line
+            elif re.match(COMMENT_PATTERNS.get(lang, ''),
+                          line):  # Comment line
                 comment_lines += 1
             else:  # Code line
                 code_lines += 1
@@ -74,8 +75,19 @@ def count_lines_of_code(file_path, lang):
 def scan_directory(directory='.'):
     """Scan the directory for source code files and count lines."""
     stats = {
-        'total': {'code': 0, 'comments': 0, 'blank': 0},
-        'languages': {lang: {'code': 0, 'comments': 0, 'blank': 0} for lang in LANG_EXTENSIONS},
+        'total': {
+            'code': 0,
+            'comments': 0,
+            'blank': 0
+        },
+        'languages': {
+            lang: {
+                'code': 0,
+                'comments': 0,
+                'blank': 0
+            }
+            for lang in LANG_EXTENSIONS
+        },
     }
 
     for root, _, files in os.walk(directory):
@@ -88,7 +100,8 @@ def scan_directory(directory='.'):
                 lang = get_language_from_shebang(file_path)
                 if lang:
                     # Count lines for files with no extension based on shebang
-                    code, comments, blanks = count_lines_of_code(file_path, lang)
+                    code, comments, blanks = count_lines_of_code(
+                        file_path, lang)
                     stats['languages'][lang]['code'] += code
                     stats['languages'][lang]['comments'] += comments
                     stats['languages'][lang]['blank'] += blanks
@@ -100,7 +113,8 @@ def scan_directory(directory='.'):
             # Check for extension-based language detection
             for lang, extensions in LANG_EXTENSIONS.items():
                 if file_extension in extensions:
-                    code, comments, blanks = count_lines_of_code(file_path, lang)
+                    code, comments, blanks = count_lines_of_code(
+                        file_path, lang)
                     stats['languages'][lang]['code'] += code
                     stats['languages'][lang]['comments'] += comments
                     stats['languages'][lang]['blank'] += blanks

@@ -40,7 +40,9 @@ def load_patterns_from_file(path='/sdcard/all.xtx'):
         for gg in unique_patterns:
             fo.write(gg + '\n\n\n')
 
-    print(f'Filtered out {len(raw_groups) - len(unique_patterns)} short or duplicate patterns')
+    print(
+        f'Filtered out {len(raw_groups) - len(unique_patterns)} short or duplicate patterns'
+    )
     return unique_patterns
 
 
@@ -95,7 +97,10 @@ def clean_dir_concurrent(root, patterns) -> None:
     # Using ProcessPoolExecutor for CPU-bound string replacement tasks
     with ProcessPoolExecutor() as executor:
         # Map patterns to every file path for the worker
-        future_to_file = {executor.submit(process_file, f, patterns): f for f in files}
+        future_to_file = {
+            executor.submit(process_file, f, patterns): f
+            for f in files
+        }
 
         for future in as_completed(future_to_file):
             result = future.result()
@@ -105,8 +110,7 @@ def clean_dir_concurrent(root, patterns) -> None:
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(
-        description='Remove strings from text files recursively (Concurrent)'
-    )
+        description='Remove strings from text files recursively (Concurrent)')
     ap.add_argument('--path', default='.', help='Directory to clean')
     ap.add_argument(
         '--file',

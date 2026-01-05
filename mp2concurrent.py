@@ -31,7 +31,8 @@ def replace_multiprocessing_patterns(content):
         ),
         (r'with Pool\(\) as (\w+):', r'with ProcessPoolExecutor() as \1:'),
         # Pool initialization without context manager
-        (r'(\w+)\s*=\s*Pool\((\d+)\)', r'\1 = ProcessPoolExecutor(max_workers=\2)'),
+        (r'(\w+)\s*=\s*Pool\((\d+)\)',
+         r'\1 = ProcessPoolExecutor(max_workers=\2)'),
         (r'(\w+)\s*=\s*Pool\(\)', r'\1 = ProcessPoolExecutor()'),
         # Method calls - starmap to map with zip
         (r'\.starmap\((\w+),\s*(\w+)\)', r'.map(\1, *zip(*\2))'),
@@ -102,7 +103,9 @@ def find_and_replace_in_directory(directory='.'):
             modified_count += 1
 
     print(f'\n{"=" * 50}')
-    print(f'Summary: Modified {modified_count} out of {len(python_files)} file(s)')
+    print(
+        f'Summary: Modified {modified_count} out of {len(python_files)} file(s)'
+    )
 
 
 if __name__ == '__main__':

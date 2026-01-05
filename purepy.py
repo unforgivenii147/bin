@@ -9,9 +9,8 @@ def has_native_wheels(info) -> bool:
     urls = info.get('urls', [])
     for u in urls:
         filename = u.get('filename', '').lower()
-        if any(
-            ext in filename for ext in ['.so', '.pyd', '.dll', 'win_amd64', 'manylinux', 'macosx']
-        ):
+        if any(ext in filename for ext in
+               ['.so', '.pyd', '.dll', 'win_amd64', 'manylinux', 'macosx']):
             return True
     return False
 

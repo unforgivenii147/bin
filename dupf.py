@@ -39,7 +39,8 @@ def find_and_delete_duplicates(path: Path):
     # For each group of files with the same hash, keep the newest and delete the rest
     for file_hash, file_paths in files_by_hash.items():
         if len(file_paths) > 1:
-            duplicate_count += len(file_paths) - 1  # Count the duplicates (all but one)
+            duplicate_count += len(
+                file_paths) - 1  # Count the duplicates (all but one)
 
             # Sort files by modification time (newest first)
             file_paths.sort(key=lambda x: x.stat().st_mtime, reverse=True)
@@ -61,11 +62,14 @@ def find_and_delete_duplicates(path: Path):
 
 
 @click.command()
-@click.argument('path', default='.', type=click.Path(exists=True, file_okay=False, dir_okay=True))
+@click.argument('path',
+                default='.',
+                type=click.Path(exists=True, file_okay=False, dir_okay=True))
 def remove_duplicates(path) -> None:
     """Finds and deletes duplicate files in the specified directory, keeping only the newest one."""
     print(f'Searching for duplicates in directory: {path}')
-    duplicate_count, deleted_count, total_deleted_size = find_and_delete_duplicates(Path(path))
+    duplicate_count, deleted_count, total_deleted_size = find_and_delete_duplicates(
+        Path(path))
 
     # Report results
     print('\nSummary:')

@@ -12,7 +12,9 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 # Standard library imports remain at top
-IGNORED_DIRS = {'.git', 'dist', 'build', '__pycache__', '.venv', 'node_modules'}
+IGNORED_DIRS = {
+    '.git', 'dist', 'build', '__pycache__', '.venv', 'node_modules'
+}
 
 # ---------- UTILS ----------
 
@@ -42,9 +44,9 @@ def format_single_file(file: Path, args) -> bool:
         if args.remove_all_unused_imports:
             import autoflake
 
-            code = autoflake.fix_code(
-                code, remove_all_unused_imports=True, remove_unused_variables=True
-            )
+            code = autoflake.fix_code(code,
+                                      remove_all_unused_imports=True,
+                                      remove_unused_variables=True)
 
         # 2. Sort Imports
         if args.isort:
@@ -84,29 +86,42 @@ def format_single_file(file: Path, args) -> bool:
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description='Fast Python API-based formatter (Lazy Loading)')
-    p.add_argument('files', nargs='*', help='Specific files to format (optional)')
-    p.add_argument('-b', '--black', action='store_true', help='Use black style')
-    p.add_argument('-a', '--autopep', action='store_true', help='Use autopep8 style')
+    p = argparse.ArgumentParser(
+        description='Fast Python API-based formatter (Lazy Loading)')
+    p.add_argument('files',
+                   nargs='*',
+                   help='Specific files to format (optional)')
+    p.add_argument('-b',
+                   '--black',
+                   action='store_true',
+                   help='Use black style')
+    p.add_argument('-a',
+                   '--autopep',
+                   action='store_true',
+                   help='Use autopep8 style')
     p.add_argument('-i', '--isort', action='store_true', help='Sort imports')
-    p.add_argument(
-        '-r', '--remove-all-unused-imports', action='store_true', help='Autoflake cleanup'
-    )
-    p.add_argument('-t', '--time', action='store_true', help='Show overall runtime')
+    p.add_argument('-r',
+                   '--remove-all-unused-imports',
+                   action='store_true',
+                   help='Autoflake cleanup')
+    p.add_argument('-t',
+                   '--time',
+                   action='store_true',
+                   help='Show overall runtime')
     args = p.parse_args()
 
     start_time = time.perf_counter()
 
     # Step 1: Collect Files
     if args.files:
-        files = [Path(f) for f in args.files if Path(f).is_file() and is_python_file(Path(f))]
+        files = [
+            Path(f) for f in args.files
+            if Path(f).is_file() and is_python_file(Path(f))
+        ]
     else:
         files = [
-            f
-            for f in Path('.').rglob('*')
-            if f.is_file()
-            and not any(part in IGNORED_DIRS for part in f.parts)
-            and is_python_file(f)
+            f for f in Path('.').rglob('*') if f.is_file() and not any(
+                part in IGNORED_DIRS for part in f.parts) and is_python_file(f)
         ]
 
     if not files:
@@ -118,7 +133,8 @@ def main() -> None:
     # Step 2: Parallel Execution
     # map handles the distribution; lambda passes the context
     with ThreadPoolExecutor(max_workers=8) as executor:
-        results = list(executor.map(lambda f: format_single_file(f, args), files))
+        results = list(
+            executor.map(lambda f: format_single_file(f, args), files))
 
     # Step 3: Reporting
     changed_count = sum(1 for r in results if r)

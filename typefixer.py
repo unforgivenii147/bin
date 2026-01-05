@@ -17,8 +17,10 @@ MIME_TO_EXT_MAP = {
     'video/mp4': 'mp4',
     'audio/mpeg': 'mp3',
     'text/plain': 'txt',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    'docx',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+    'xlsx',
     'application/octet-stream': None,  # Binary/unknown, skip renaming
 }
 

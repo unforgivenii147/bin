@@ -47,10 +47,10 @@ def main() -> None:
         futures = [executor.submit(ctime_if_recent, p) for p in files]
 
         for fut in tqdm(
-            as_completed(futures),
-            total=len(futures),
-            desc='Scanning',
-            unit='file',
+                as_completed(futures),
+                total=len(futures),
+                desc='Scanning',
+                unit='file',
         ):
             result = fut.result()
             if result is not None:

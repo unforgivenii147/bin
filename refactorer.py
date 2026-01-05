@@ -18,7 +18,8 @@ for file in [func_file, classes_file, const_file, init_file]:
 
 # Helper function to check if a node is a constant (simple assignment)
 def is_constant(node):
-    return isinstance(node, ast.Assign) and all(isinstance(t, ast.Name) for t in node.targets)
+    return isinstance(node, ast.Assign) and all(
+        isinstance(t, ast.Name) for t in node.targets)
 
 
 # Helper function to write to files

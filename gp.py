@@ -18,9 +18,9 @@ def run(cmd) -> None:
 def ensure_git_repo() -> None:
     """Ensure that the current directory is a Git repository."""
     try:
-        subprocess.check_output(
-            'git rev-parse --is-inside-work-tree', shell=True, stderr=subprocess.STDOUT
-        )
+        subprocess.check_output('git rev-parse --is-inside-work-tree',
+                                shell=True,
+                                stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError:
         print('Not inside a Git repository.', file=sys.stderr)
         sys.exit(1)

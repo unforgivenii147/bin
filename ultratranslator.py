@@ -21,7 +21,7 @@ def is_english(text: str) -> bool:
 
 
 def chunk_text(text: str, size: int = 800) -> list[str]:
-    return [text[i : i + size] for i in range(0, len(text), size)]
+    return [text[i:i + size] for i in range(0, len(text), size)]
 
 
 def translate_chunk(chunk: str) -> str:
@@ -41,10 +41,10 @@ def translate_text(text: str) -> str:
 
 def safe_overwrite(filepath: Path, content: str) -> None:
     with tempfile.NamedTemporaryFile(
-        mode='w',
-        encoding='utf-8',
-        delete=False,
-        dir=filepath.parent,
+            mode='w',
+            encoding='utf-8',
+            delete=False,
+            dir=filepath.parent,
     ) as tmp:
         tmp.write(content)
         tmp_path = Path(tmp.name)
@@ -58,7 +58,9 @@ def extract_docstrings(tree: ast.AST) -> dict[int, str]:
     docstrings = {}
 
     for node in ast.walk(tree):
-        if isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        if isinstance(
+                node,
+            (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             doc = ast.get_docstring(node, clean=False)
             if doc and not is_english(doc):
                 docstrings[id(node)] = doc

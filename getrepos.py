@@ -28,7 +28,8 @@ def get_repos(username: str) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Get GitHub repositories for a user')
+    parser = argparse.ArgumentParser(
+        description='Get GitHub repositories for a user')
     parser.add_argument('username', type=str, help='GitHub username')
     args = parser.parse_args()
     get_repos(args.username)

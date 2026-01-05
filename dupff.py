@@ -50,12 +50,14 @@ def find_duplicates(path: Path):
     # Report duplicates: for each group of files with the same hash, print the relative paths
     for file_hash, file_paths in files_by_hash.items():
         if len(file_paths) > 1:
-            duplicate_count += len(file_paths) - 1  # Count the duplicates (all but one)
+            duplicate_count += len(
+                file_paths) - 1  # Count the duplicates (all but one)
 
             # Print the relative paths of the duplicates
             print(f'Duplicate files found for hash {file_hash}:')
             for file_path in file_paths:
-                relative_path = file_path.relative_to(path)  # Get relative path
+                relative_path = file_path.relative_to(
+                    path)  # Get relative path
                 print(f'  {relative_path}')
             print()  # Add a newline for better separation
 
@@ -63,7 +65,9 @@ def find_duplicates(path: Path):
 
 
 @click.command()
-@click.argument('path', default='.', type=click.Path(exists=True, file_okay=False, dir_okay=True))
+@click.argument('path',
+                default='.',
+                type=click.Path(exists=True, file_okay=False, dir_okay=True))
 def report_duplicates(path) -> None:
     """Finds and reports duplicate files in the specified directory by their relative paths."""
     print(f'Searching for duplicates in directory: {path}')

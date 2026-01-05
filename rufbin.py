@@ -62,7 +62,8 @@ def main() -> None:
     """Main function - scan and format Python files."""
     current_dir = Path()
     python_files = [
-        item for item in current_dir.iterdir() if item.is_file() and is_python_file(item)
+        item for item in current_dir.iterdir()
+        if item.is_file() and is_python_file(item)
     ]
     if not python_files:
         return

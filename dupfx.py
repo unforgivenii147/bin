@@ -83,7 +83,6 @@ def hash_groups_in_parallel(groups):
 
     hash_groups = defaultdict(list)
 
-    
     with cf.ProcessPoolExecutor() as executor:
         futures = {executor.submit(hash_file, str(p)): p for p in candidates}
         for future in cf.as_completed(futures):
@@ -123,7 +122,8 @@ def auto_delete_duplicates(dups) -> None:
 
 def report_duplicates(dups):
     dup_count = sum(len(files) - 1 for files in dups.values())
-    dup_size = sum(Path(f).stat().st_size for files in dups.values() for f in files[1:])
+    dup_size = sum(
+        Path(f).stat().st_size for files in dups.values() for f in files[1:])
     print(f'\n📊 Report:')
     print(f'   • Duplicate groups: {len(dups)}')
     print(f'   • Total duplicate files: {dup_count}')

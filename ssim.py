@@ -12,9 +12,12 @@ from collections import defaultdict
 
 
 class FileSimilarityDetector:
+
     def __init__(self, root_dir='.', exclude_dirs=None):
         self.root_dir = Path(root_dir)
-        self.exclude_dirs = exclude_dirs or ['.git', '__pycache__', 'node_modules']
+        self.exclude_dirs = exclude_dirs or [
+            '.git', '__pycache__', 'node_modules'
+        ]
         self.file_data = {}  # Stores {path: (xxhash, ssdeep_hash)}
         self.duplicates = defaultdict(list)  # Stores {xxhash: [path1, path2]}
 
@@ -42,15 +45,22 @@ class FileSimilarityDetector:
     def process_all_files(self, files):
         print(f'Processing {len(files)} files...')
         with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(self.calculate_hashes, f) for f in files]
-            for future in tqdm(as_completed(futures), total=len(files), desc='Hashing'):
+            futures = [
+                executor.submit(self.calculate_hashes, f) for f in files
+            ]
+            for future in tqdm(as_completed(futures),
+                               total=len(files),
+                               desc='Hashing'):
                 path, xh, sh = future.result()
                 if xh and sh:
                     self.file_data[path] = {'xxhash': xh, 'ssdeep': sh}
                     self.duplicates[xh].append(path)
 
         # Filter duplicates: only keep entries with > 1 file
-        self.duplicates = {k: v for k, v in self.duplicates.items() if len(v) > 1}
+        self.duplicates = {
+            k: v
+            for k, v in self.duplicates.items() if len(v) > 1
+        }
         return self.file_data
 
     def create_similarity_groups(self, threshold=50):
@@ -64,12 +74,15 @@ class FileSimilarityDetector:
             already_accounted_for.update(dup_list)
 
         # Get files that are NOT duplicates
-        files_to_compare = [p for p in self.file_data.keys() if p not in already_accounted_for]
+        files_to_compare = [
+            p for p in self.file_data.keys() if p not in already_accounted_for
+        ]
 
         visited = set()
         groups = []
 
-        for i, file1 in enumerate(tqdm(files_to_compare, desc='Finding Similarities')):
+        for i, file1 in enumerate(
+                tqdm(files_to_compare, desc='Finding Similarities')):
             if file1 in visited:
                 continue
 
@@ -77,7 +90,7 @@ class FileSimilarityDetector:
             visited.add(file1)
             hash1 = self.file_data[file1]['ssdeep']
 
-            for file2 in files_to_compare[i + 1 :]:
+            for file2 in files_to_compare[i + 1:]:
                 if file2 in visited:
                     continue
 
@@ -109,10 +122,19 @@ class FileSimilarityDetector:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Detect duplicates and similar files.')
-    parser.add_argument('threshold', type=int, help='Similarity threshold (0-100)')
-    parser.add_argument('-m', '--move', action='store_true', help='Move files instead of copying')
-    parser.add_argument('-o', '--output', default='output', help='Output directory')
+    parser = argparse.ArgumentParser(
+        description='Detect duplicates and similar files.')
+    parser.add_argument('threshold',
+                        type=int,
+                        help='Similarity threshold (0-100)')
+    parser.add_argument('-m',
+                        '--move',
+                        action='store_true',
+                        help='Move files instead of copying')
+    parser.add_argument('-o',
+                        '--output',
+                        default='output',
+                        help='Output directory')
     args = parser.parse_args()
 
     detector = FileSimilarityDetector()
@@ -128,7 +150,9 @@ def main():
     sim_groups = detector.create_similarity_groups(args.threshold)
     if sim_groups:
         mode_str = 'move' if args.move else 'copy'
-        detector.export_files(sim_groups, mode=mode_str, output_dir=args.output)
+        detector.export_files(sim_groups,
+                              mode=mode_str,
+                              output_dir=args.output)
         print(f'Processed {len(sim_groups)} similarity groups.')
     else:
         print('No similar (non-identical) files found.')
@@ -137,7 +161,9 @@ def main():
     if detector.duplicates:
         print('\n' + '=' * 30)
         print('!!! DUPLICATES FOUND !!!')
-        print('The following sets of files are 100% identical (excluded from similarity groups):')
+        print(
+            'The following sets of files are 100% identical (excluded from similarity groups):'
+        )
         for xh, paths in detector.duplicates.items():
             print(f'\nHash: {xh}')
             for p in paths:

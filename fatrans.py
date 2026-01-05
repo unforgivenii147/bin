@@ -73,7 +73,8 @@ def interactive_mode(fa_en, en_fa):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Offline Persian ↔ English translator')
+    parser = argparse.ArgumentParser(
+        description='Offline Persian ↔ English translator')
     parser.add_argument('word', nargs='*', help='Word to translate')
     parser.add_argument('--prefix', help='List words starting with prefix')
     parser.add_argument('--fuzzy', help='Fuzzy search (typo tolerant)')

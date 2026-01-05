@@ -13,6 +13,7 @@ from typing import Tuple
 
 
 class GitHubRepoManager:
+
     def __init__(self):
         """Initialize the GitHub Repository Manager."""
         self.repo_dir = Path.cwd()
@@ -42,7 +43,8 @@ class GitHubRepoManager:
 
     def _repo_exists_on_github(self) -> bool:
         """Check if repository exists on GitHub."""
-        returncode, _, _ = self._run_command(['gh', 'repo', 'view', self.repo_name])
+        returncode, _, _ = self._run_command(
+            ['gh', 'repo', 'view', self.repo_name])
         return returncode == 0
 
     def _init_git_repo(self):
@@ -61,20 +63,21 @@ class GitHubRepoManager:
 
         # Get current branch
         returncode, current_branch, _ = self._run_command(
-            ['git', 'symbolic-ref', '--short', 'HEAD']
-        )
+            ['git', 'symbolic-ref', '--short', 'HEAD'])
 
         if returncode != 0:
             # No branch exists, create main
             print("Creating 'main' branch...")
-            returncode, _, stderr = self._run_command(['git', 'checkout', '-b', 'main'])
+            returncode, _, stderr = self._run_command(
+                ['git', 'checkout', '-b', 'main'])
             if returncode != 0:
                 print(f'Error:  {stderr}')
                 sys.exit(1)
         elif current_branch != 'main':
             # Rename current branch to main
             print(f"Renaming '{current_branch}' to 'main'...")
-            returncode, _, stderr = self._run_command(['git', 'branch', '-M', 'main'])
+            returncode, _, stderr = self._run_command(
+                ['git', 'branch', '-M', 'main'])
             if returncode != 0:
                 print(f'Error: {stderr}')
                 sys.exit(1)
@@ -101,18 +104,16 @@ class GitHubRepoManager:
             print(f"✓ Repository '{self.repo_name}' already exists on GitHub")
             return
 
-        returncode, stdout, stderr = self._run_command(
-            [
-                'gh',
-                'repo',
-                'create',
-                self.repo_name,
-                '--source=.',
-                '--remote=origin',
-                '--public',
-                '--push=false',
-            ]
-        )
+        returncode, stdout, stderr = self._run_command([
+            'gh',
+            'repo',
+            'create',
+            self.repo_name,
+            '--source=.',
+            '--remote=origin',
+            '--public',
+            '--push=false',
+        ])
 
         if returncode != 0:
             print(f'Error creating repository: {stderr}')
@@ -134,7 +135,8 @@ class GitHubRepoManager:
         print('\n💾 Checking for changes to commit...')
 
         # Check if there are changes
-        returncode, _, _ = self._run_command(['git', 'diff', '--cached', '--quiet'])
+        returncode, _, _ = self._run_command(
+            ['git', 'diff', '--cached', '--quiet'])
 
         if returncode == 0:
             # No changes to commit
@@ -145,7 +147,8 @@ class GitHubRepoManager:
         commit_msg = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         print(f"Committing with message: '{commit_msg}'")
 
-        returncode, _, stderr = self._run_command(['git', 'commit', '-m', commit_msg])
+        returncode, _, stderr = self._run_command(
+            ['git', 'commit', '-m', commit_msg])
         if returncode != 0:
             print(f'Error: {stderr}')
             sys.exit(1)
@@ -156,7 +159,8 @@ class GitHubRepoManager:
     def _push_to_github(self):
         """Push to GitHub."""
         print('\n🚀 Pushing to GitHub...')
-        returncode, stdout, stderr = self._run_command(['git', 'push', '-u', 'origin', 'main'])
+        returncode, stdout, stderr = self._run_command(
+            ['git', 'push', '-u', 'origin', 'main'])
 
         if returncode != 0:
             print(f'Error:  {stderr}')

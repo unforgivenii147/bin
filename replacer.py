@@ -26,7 +26,9 @@ def replace_in_files(search_text, replace_text, dry_run=False):
                     if pattern.search(line):
                         new_line = pattern.sub(replace_text, line)
                         if dry_run:
-                            print(f'[DRY RUN] Match found in {file_path} on line {i + 1}:')
+                            print(
+                                f'[DRY RUN] Match found in {file_path} on line {i + 1}:'
+                            )
                             print(f'  - Old: {line.strip()}')
                             print(f'  + New: {new_line.strip()}')
                         new_lines.append(new_line)
@@ -44,10 +46,13 @@ def replace_in_files(search_text, replace_text, dry_run=False):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Recursively replace text in files.')
+    parser = argparse.ArgumentParser(
+        description='Recursively replace text in files.')
     parser.add_argument('search', help='The text to search for')
     parser.add_argument('replace', help='The replacement text')
-    parser.add_argument('--dry-run', action='store_true', help='Show changes without applying them')
+    parser.add_argument('--dry-run',
+                        action='store_true',
+                        help='Show changes without applying them')
 
     args = parser.parse_args()
 

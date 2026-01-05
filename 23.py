@@ -36,7 +36,10 @@ def run_command(cmd):
     try:
         # We set force-exclude so ruff doesn't format files unrelated to the project context
         # if they happen to be in the list (though we are scanning current dir).
-        result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
+        result = subprocess.run(cmd,
+                                capture_output=True,
+                                text=True,
+                                encoding='utf-8')
         return result.returncode, result.stdout, result.stderr
     except Exception as e:
         return -1, '', str(e)
@@ -114,10 +117,7 @@ def get_all_files(root_dir):
     for root, dirs, files in os.walk(root_dir):
         # Skip common ignore dirs to save time
         dirs[:] = [
-            d
-            for d in dirs
-            if d
-            not in {
+            d for d in dirs if d not in {
                 '.git',
                 '.venv',
                 'venv',

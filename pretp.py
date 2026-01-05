@@ -44,7 +44,8 @@ def main():
         dirs[:] = [d for d in dirs if d not in exclude_dirs]
 
         for file in files:
-            if file.endswith(target_extensions) and not file.endswith(exclude_extensions):
+            if file.endswith(target_extensions
+                             ) and not file.endswith(exclude_extensions):
                 files_to_format.append(os.path.join(root, file))
 
     if not files_to_format:
@@ -53,10 +54,14 @@ def main():
 
     errors = []
     # Using ThreadPoolExecutor as Prettier is an external CLI process
-    with tqdm(total=len(files_to_format), desc='Beautifying', unit='file') as pbar:
+    with tqdm(total=len(files_to_format), desc='Beautifying',
+              unit='file') as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             # Map the formatting function across all discovered files
-            future_to_file = {executor.submit(format_file, f): f for f in files_to_format}
+            future_to_file = {
+                executor.submit(format_file, f): f
+                for f in files_to_format
+            }
 
             for future in concurrent.futures.as_completed(future_to_file):
                 err = future.result()

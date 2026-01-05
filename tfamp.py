@@ -14,7 +14,8 @@ def translate_word(word):
     """Translate a single Persian word to English with retry."""
     for attempt in range(3):
         try:
-            translated = GoogleTranslator(source='auto', target='en').translate(word)
+            translated = GoogleTranslator(source='auto',
+                                          target='en').translate(word)
             return translated
         except Exception as e:
             print(f"[WARN] Failed '{word}' (attempt {attempt + 1}): {e}")

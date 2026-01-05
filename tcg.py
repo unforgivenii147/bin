@@ -24,10 +24,12 @@ def detect_shebang(content: str) -> str | None:
         return None
 
     # Simple heuristics
-    if 'import ' in content or 'def ' in content or stripped.startswith('python'):
+    if 'import ' in content or 'def ' in content or stripped.startswith(
+            'python'):
         return TERMUX_PYTHON
 
-    if stripped.startswith(('echo ', 'cd ', 'export ', 'set ', 'if ', 'for ', '#!/bin/sh')):
+    if stripped.startswith(
+        ('echo ', 'cd ', 'export ', 'set ', 'if ', 'for ', '#!/bin/sh')):
         return TERMUX_BASH
 
     return None
@@ -38,8 +40,10 @@ def create_symlink(out_file):
     name_without_ext, ext = os.path.splitext(base_name)
 
     # Create symlink only if there is an extension
-    if ext and os.path.abspath(os.getcwd()) == os.path.abspath(os.path.expanduser('~/bin')):
-        symlink_path = os.path.join(os.path.dirname(out_file), name_without_ext)
+    if ext and os.path.abspath(os.getcwd()) == os.path.abspath(
+            os.path.expanduser('~/bin')):
+        symlink_path = os.path.join(os.path.dirname(out_file),
+                                    name_without_ext)
         try:
             os.symlink(out_file, symlink_path)
             print(f'Symlink created: {symlink_path} -> {out_file}')

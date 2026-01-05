@@ -21,7 +21,8 @@ def collect_files(root):
 
         for fname in filenames:
             full = os.path.join(dirpath, fname)
-            if os.path.abspath(full) == os.path.abspath(OUTPUT_FILE) or fname == __file__:
+            if os.path.abspath(full) == os.path.abspath(
+                    OUTPUT_FILE) or fname == __file__:
                 continue
             yield full
 
@@ -53,7 +54,8 @@ def build_all_txt(root):
 if __name__ == '__main__':
     import argparse
 
-    ap = argparse.ArgumentParser(description='Merge files recursively into all.txt')
+    ap = argparse.ArgumentParser(
+        description='Merge files recursively into all.txt')
     ap.add_argument('--path', default='.', help='Directory to scan')
     args = ap.parse_args()
 

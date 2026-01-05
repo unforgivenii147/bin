@@ -19,9 +19,9 @@ STRTOFIND = ['import ', '__version__', 'from ', '#!/', '#  encodig']
 def clean_text(text: str) -> str:
     """Remove lines containing any string from STRTOFIND."""
     return '\n'.join(
-        line
-        for line in text.splitlines()
-        if not any(s in line for s in STRTOFIND)  # why: check substring membership
+        line for line in text.splitlines()
+        if not any(s in line
+                   for s in STRTOFIND)  # why: check substring membership
     )
 
 
@@ -87,7 +87,8 @@ def dispatch_archive(path: str) -> None:
     name = path.lower()
     if name.endswith('.zip') or name.endswith('.whl'):
         process_zip(path)
-    elif name.endswith('.tar.gz') or name.endswith('.tgz') or name.endswith('.tar'):
+    elif name.endswith('.tar.gz') or name.endswith('.tgz') or name.endswith(
+            '.tar'):
         process_tar(path)
 
 
@@ -102,7 +103,8 @@ def main() -> None:
                 continue
 
             # handle archives
-            if name.lower().endswith(('.zip', '.whl', '.tar.gz', '.tgz', '.tar')):
+            if name.lower().endswith(
+                ('.zip', '.whl', '.tar.gz', '.tgz', '.tar')):
                 dispatch_archive(full_path)
 
 

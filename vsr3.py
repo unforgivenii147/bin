@@ -44,7 +44,8 @@ def get_package_name_version(dist_dir: Path) -> tuple:
     return parts[0], '0.0.0'
 
 
-def read_record_file(dist_dir: Path, site_packages: Path) -> tuple[List[Path], Set[Path]]:
+def read_record_file(dist_dir: Path,
+                     site_packages: Path) -> tuple[List[Path], Set[Path]]:
     """
     Read RECORD file and return list of existing files and set of missing files.
     Returns: (existing_files, missing_files)
@@ -114,9 +115,8 @@ def copy_files_to_temp(files: List[Path], site_packages: Path, temp_dir: Path):
             shutil.copytree(file_path, dest_path, dirs_exist_ok=True)
 
 
-def create_wheel(
-    pkg_name: str, pkg_version: str, temp_dir: Path, output_dir: Path, wheel_tag: Optional[str]
-) -> bool:
+def create_wheel(pkg_name: str, pkg_version: str, temp_dir: Path,
+                 output_dir: Path, wheel_tag: Optional[str]) -> bool:
     """Create wheel file from temporary directory."""
     try:
         # Use wheel pack command if available
@@ -129,7 +129,11 @@ def create_wheel(
         wheel_file = output_dir / f'{wheel_name}.whl'
 
         # Create wheel using wheel pack or zip
-        cmd = [sys.executable, '-m', 'wheel', 'pack', str(temp_dir), '-d', str(output_dir)]
+        cmd = [
+            sys.executable, '-m', 'wheel', 'pack',
+            str(temp_dir), '-d',
+            str(output_dir)
+        ]
 
         result = subprocess.run(cmd, capture_output=True, text=True)
 
@@ -152,9 +156,8 @@ def create_wheel(
         return False
 
 
-def repack_package(
-    dist_dir: Path, site_packages: Path, output_dir: Path, not_repacked_dir: Path
-) -> bool:
+def repack_package(dist_dir: Path, site_packages: Path, output_dir: Path,
+                   not_repacked_dir: Path) -> bool:
     """Repack a single package."""
     pkg_name, pkg_version = get_package_name_version(dist_dir)
 
@@ -165,7 +168,8 @@ def repack_package(
         return False
 
     # Check for missing critical files (non-.pyc)
-    has_missing_critical = any(f.suffix in ['.py', ''] or f.is_dir() for f in missing_files)
+    has_missing_critical = any(f.suffix in ['.py', ''] or f.is_dir()
+                               for f in missing_files)
 
     if has_missing_critical:
         # Copy to not_repacked directory
@@ -195,15 +199,20 @@ def repack_package(
         copy_files_to_temp(existing_files, site_packages, temp_path)
 
         # Create wheel
-        success = create_wheel(pkg_name, pkg_version, temp_path, output_dir, wheel_tag)
+        success = create_wheel(pkg_name, pkg_version, temp_path, output_dir,
+                               wheel_tag)
 
         return success
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Repack installed Python packages as wheels')
+    parser = argparse.ArgumentParser(
+        description='Repack installed Python packages as wheels')
     parser.add_argument('packages', nargs='*', help='Package names to repack')
-    parser.add_argument('-a', '--all', action='store_true', help='Repack all installed packages')
+    parser.add_argument('-a',
+                        '--all',
+                        action='store_true',
+                        help='Repack all installed packages')
 
     args = parser.parse_args()
 
@@ -235,7 +244,10 @@ def main():
     # Filter packages if specific ones requested
     if not args.all:
         pkg_set = set(args.packages)
-        all_dist_dirs = [d for d in all_dist_dirs if get_package_name_version(d)[0] in pkg_set]
+        all_dist_dirs = [
+            d for d in all_dist_dirs
+            if get_package_name_version(d)[0] in pkg_set
+        ]
 
     # Process packages with progress bar
     success_count = 0
@@ -246,7 +258,8 @@ def main():
             pkg_name, _ = get_package_name_version(dist_dir)
             pbar.set_description(f'Repacking {pkg_name}')
 
-            if repack_package(dist_dir, site_packages, output_dir, not_repacked_dir):
+            if repack_package(dist_dir, site_packages, output_dir,
+                              not_repacked_dir):
                 success_count += 1
             else:
                 failed_count += 1

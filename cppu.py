@@ -35,7 +35,8 @@ def main() -> None:
         print('No files found.')
         return
 
-    print(f'Formatting {len(files_to_format)} files using ThreadPoolExecutor...')
+    print(
+        f'Formatting {len(files_to_format)} files using ThreadPoolExecutor...')
 
     count = 0
     # ThreadPoolExecutor is lightweight and doesn't require pickling arguments

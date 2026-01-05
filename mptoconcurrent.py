@@ -50,11 +50,13 @@ def replace_multiprocessing(file_path):
         )
 
         # Replace Pool() with ProcessPoolExecutor()
-        content = re.sub(r'\bmultiprocessing\.Pool\b', 'ProcessPoolExecutor', content)
+        content = re.sub(r'\bmultiprocessing\.Pool\b', 'ProcessPoolExecutor',
+                         content)
         content = re.sub(r'\bPool\b(?=\()', 'ProcessPoolExecutor', content)
 
         # Replace Process with ProcessPoolExecutor (simplistic, may need adjustment)
-        content = re.sub(r'\bmultiprocessing\.Process\b', 'ProcessPoolExecutor', content)
+        content = re.sub(r'\bmultiprocessing\.Process\b',
+                         'ProcessPoolExecutor', content)
 
         # Write changes
         with open(file_path, 'w', encoding='utf-8') as f:

@@ -76,7 +76,7 @@ def read_image_ocr(path: Path) -> str:
 # Translation
 # -------------------------------
 def chunk_text(text: str, size: int = CHUNK_SIZE) -> list:
-    return [text[i : i + size] for i in range(0, len(text), size)]
+    return [text[i:i + size] for i in range(0, len(text), size)]
 
 
 def translate_chunks(chunks, src_lang: str) -> str:
@@ -102,9 +102,12 @@ def build_raw_ocr_path(input_path: Path) -> Path:
 # Main
 # -------------------------------
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Translate text or image to English.')
+    parser = argparse.ArgumentParser(
+        description='Translate text or image to English.')
     parser.add_argument('input_path')
-    parser.add_argument('--lang', default='auto', help="Source language code or 'auto'")
+    parser.add_argument('--lang',
+                        default='auto',
+                        help="Source language code or 'auto'")
     args = parser.parse_args()
     in_path = Path(args.input_path)
     if not in_path.exists():

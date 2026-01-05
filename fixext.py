@@ -26,7 +26,8 @@ def detect_text_based_extension(text):
     # Python
     if text.startswith('#!') and 'python' in text:
         return 'py'
-    if any(k in text for k in ['def ', 'class ', 'import ', 'from ', '__main__']):
+    if any(k in text
+           for k in ['def ', 'class ', 'import ', 'from ', '__main__']):
         return 'py'
 
     # Shell
@@ -50,10 +51,8 @@ def detect_text_based_extension(text):
         return 'ini'
 
     # SQL
-    if any(
-        text.lower().startswith(cmd)
-        for cmd in ['select ', 'insert ', 'update ', 'delete ', 'create ']
-    ):
+    if any(text.lower().startswith(cmd)
+           for cmd in ['select ', 'insert ', 'update ', 'delete ', 'create ']):
         return 'sql'
 
     # CSS
@@ -142,7 +141,9 @@ def correct_file_extension(root='.'):
             final_path = safe_rename(path, new_path)
 
             if final_path != new_path:
-                print(f' ⚠  Collision detected. Saved as: {os.path.basename(final_path)}')
+                print(
+                    f' ⚠  Collision detected. Saved as: {os.path.basename(final_path)}'
+                )
 
 
 if __name__ == '__main__':

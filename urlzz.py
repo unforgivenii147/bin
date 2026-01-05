@@ -94,7 +94,9 @@ def extract_urls(filepath):
         return extract_urls_from_file(filepath)
     elif ext in ['.zip', '.whl']:
         return extract_urls_from_zip(filepath)
-    elif ext.startswith('.tar') or ext in ['.tar.gz', '.tar.xz', '.tar.zst', '.tar.7z']:
+    elif ext.startswith('.tar') or ext in [
+            '.tar.gz', '.tar.xz', '.tar.zst', '.tar.7z'
+    ]:
         return extract_urls_from_tar(filepath)
     #    elif ext == '.7z':
     #        return extract_urls_from_7z(filepath)

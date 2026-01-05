@@ -10,9 +10,9 @@ def folderize_by_extension(base_dir: str):
     for root, dirs, files in os.walk(base_dir, topdown=True):
         # Prevent descending into extension folders we create
         dirs[:] = [
-            d
-            for d in dirs
-            if not os.path.samefile(os.path.join(root, d), base_dir) or d.startswith('.')
+            d for d in dirs
+            if not os.path.samefile(os.path.join(root, d), base_dir)
+            or d.startswith('.')
         ]
 
         for filename in files:
@@ -37,7 +37,8 @@ def folderize_by_extension(base_dir: str):
                 base, extension = os.path.splitext(filename)
                 i = 1
                 while os.path.exists(dest_path):
-                    dest_path = os.path.join(target_path, f'{base}_{i}{extension}')
+                    dest_path = os.path.join(target_path,
+                                             f'{base}_{i}{extension}')
                     i += 1
 
             shutil.move(src_path, dest_path)

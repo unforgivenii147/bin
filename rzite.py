@@ -49,7 +49,8 @@ def find_distributions(site_dirs):
     dists = {}
     for sd in site_dirs:
         for p in sd.iterdir():
-            if p.is_dir() and (p.name.endswith('.dist-info') or p.name.endswith('.egg-info')):
+            if p.is_dir() and (p.name.endswith('.dist-info')
+                               or p.name.endswith('.egg-info')):
                 key = p.name.rsplit('.', 1)[0].lower()
                 dists[key] = p
     return dists
@@ -70,7 +71,8 @@ def parse_metadata_from_distinfo(distinfo_dir):
     if ep.exists():
         config = ConfigParser()
         try:
-            config.read_string('[DEFAULT]\n' + ep.read_text(encoding='utf-8', errors='ignore'))
+            config.read_string('[DEFAULT]\n' +
+                               ep.read_text(encoding='utf-8', errors='ignore'))
         except Exception:
             config.read(ep)
         lines = ep.read_text(encoding='utf-8', errors='ignore').splitlines()
@@ -92,26 +94,24 @@ def read_record_list(distinfo_dir):
     rec = distinfo_dir / 'RECORD'
     if rec.exists():
         return [
-            l.strip().split(',', 1)[0]
-            for l in rec.read_text(encoding='utf-8', errors='ignore').splitlines()
-            if l.strip()
+            l.strip().split(',', 1)[0] for l in rec.read_text(
+                encoding='utf-8', errors='ignore').splitlines() if l.strip()
         ]
     for p in (
-        distinfo_dir / 'installed-files.txt',
-        distinfo_dir / 'installed_files.txt',
+            distinfo_dir / 'installed-files.txt',
+            distinfo_dir / 'installed_files.txt',
     ):
         if p.exists():
             return [
-                l.strip()
-                for l in p.read_text(encoding='utf-8', errors='ignore').splitlines()
+                l.strip() for l in p.read_text(encoding='utf-8',
+                                               errors='ignore').splitlines()
                 if l.strip()
             ]
     tt = distinfo_dir / 'top_level.txt'
     if tt.exists():
         return [
-            l.strip()
-            for l in tt.read_text(encoding='utf-8', errors='ignore').splitlines()
-            if l.strip()
+            l.strip() for l in tt.read_text(
+                encoding='utf-8', errors='ignore').splitlines() if l.strip()
         ]
     return None
 
@@ -247,7 +247,8 @@ def _has_native_extensions(tree_items) -> bool:
     return any(src.suffix.lower() in native_exts for src, _ in tree_items)
 
 
-def build_wheel_from_tree(tree_items, dist_name, version, workdir, wheel_out_path):
+def build_wheel_from_tree(tree_items, dist_name, version, workdir,
+                          wheel_out_path):
     # copy items into workdir
     for src, rel in tree_items:
         dest = workdir / rel
@@ -299,7 +300,8 @@ def build_wheel_from_tree(tree_items, dist_name, version, workdir, wheel_out_pat
     rec.write_text('\n'.join(record_lines) + '\n', encoding='utf-8')
     # write zip
     wheel_out_path.parent.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(wheel_out_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(wheel_out_path, 'w',
+                         compression=zipfile.ZIP_DEFLATED) as zf:
         for root, _, files in os.walk(workdir):
             for fn in files:
                 full = Path(root) / fn
@@ -348,7 +350,8 @@ def main() -> None:
             key = name.lower()
             found = None
             for k, p in dists.items():
-                if k == key or k.startswith(key + '-') or k.split('-')[0] == key:
+                if k == key or k.startswith(key +
+                                            '-') or k.split('-')[0] == key:
                     found = p
                     break
             if not found:
@@ -370,7 +373,8 @@ def main() -> None:
                 base = base_name
             md = parse_metadata_from_distinfo(distinfo)
             dist_name = md.get('Name') or base.split('-', 1)[0]
-            version = md.get('Version') or (base.split('-', 1)[1] if '-' in base else '0')
+            version = md.get('Version') or (base.split('-', 1)[1]
+                                            if '-' in base else '0')
             items, md = collect_files_for_dist(distinfo, site_dirs, prefix)
             if not items:
                 continue
@@ -388,7 +392,8 @@ def main() -> None:
             else:
                 wheel_name = f'{dist_name.replace("-", "_")}-{version}-py3-none-any.whl'
             wheel_out = wheel_dir / wheel_name
-            build_wheel_from_tree(items, dist_name, version, workdir, wheel_out)
+            build_wheel_from_tree(items, dist_name, version, workdir,
+                                  wheel_out)
         except Exception:
             pass
 

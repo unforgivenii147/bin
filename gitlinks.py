@@ -12,7 +12,8 @@ OUTPUT_FILE = 'gitlinks.txt'
 ARCHIVE_EXTENSIONS = ('.zip', '.whl', '.tar.gz', '.tgz', '.tar.xz', '.txz')
 
 # Regex that works on **bytes**
-GIT_REGEX_BYTES = re.compile(rb'(?:https?://|git@|git://)[^\s\'"]+?\.git\b', re.IGNORECASE)
+GIT_REGEX_BYTES = re.compile(rb'(?:https?://|git@|git://)[^\s\'"]+?\.git\b',
+                             re.IGNORECASE)
 
 
 def extract_git_urls_from_bytes(data: bytes):

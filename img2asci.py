@@ -21,7 +21,9 @@ def render_ascii(image_path):
     Convert an image to ASCII and render it to the terminal.
     """
     art = AsciiArt.from_image(image_path)
-    art.to_terminal(columns=os.get_terminal_size().columns, width_ratio=2, monochrome=False)
+    art.to_terminal(columns=os.get_terminal_size().columns,
+                    width_ratio=2,
+                    monochrome=False)
 
 
 def main():

@@ -24,9 +24,9 @@ PREFIX = 'Tag: py2-none-any'
 
 def clean_text(text: str) -> str:
     """Remove PREFIX lines from raw text."""
-    return '\n'.join(line for line in text.splitlines() if not line.startswith(PREFIX)) + (
-        '\n' if text.endswith('\n') else ''
-    )
+    return '\n'.join(
+        line for line in text.splitlines()
+        if not line.startswith(PREFIX)) + ('\n' if text.endswith('\n') else '')
 
 
 def clean_file(path: str) -> None:
@@ -91,7 +91,8 @@ def dispatch_archive(path: str) -> None:
     name = path.lower()
     if name.endswith('.zip') or name.endswith('.whl'):
         process_zip(path)
-    elif name.endswith('.tar.gz') or name.endswith('.tgz') or name.endswith('.tar'):
+    elif name.endswith('.tar.gz') or name.endswith('.tgz') or name.endswith(
+            '.tar'):
         process_tar(path)
 
 
@@ -106,7 +107,8 @@ def main() -> None:
                 continue
 
             # handle archives
-            if name.lower().endswith(('.zip', '.whl', '.tar.gz', '.tgz', '.tar')):
+            if name.lower().endswith(
+                ('.zip', '.whl', '.tar.gz', '.tgz', '.tar')):
                 #                continue
                 dispatch_archive(full_path)
 

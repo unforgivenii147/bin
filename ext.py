@@ -52,15 +52,14 @@ def is_constant_name(name: str) -> bool:
 
 
 def extract_from_file(
-    path: str,
-) -> Tuple[
-    str,
-    Dict[str, str],  # top-level classes
-    Dict[str, str],  # top-level functions
-    Dict[str, str],  # nested classes
-    Dict[str, str],  # nested functions
-    Dict[str, str],  # top-level constants
-]:
+    path: str, ) -> Tuple[
+        str,
+        Dict[str, str],  # top-level classes
+        Dict[str, str],  # top-level functions
+        Dict[str, str],  # nested classes
+        Dict[str, str],  # nested functions
+        Dict[str, str],  # top-level constants
+    ]:
     try:
         with open(path, 'r', encoding='utf-8', errors='ignore') as f:
             source = f.read()
@@ -102,13 +101,11 @@ def extract_from_file(
             if not isinstance(parent, ast.Module):
                 continue
 
-            if (
-                isinstance(node, ast.Assign)
-                and len(node.targets) == 1
-                and isinstance(node.targets[0], ast.Name)
-            ):
+            if (isinstance(node, ast.Assign) and len(node.targets) == 1
+                    and isinstance(node.targets[0], ast.Name)):
                 name = node.targets[0].id
-            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            elif isinstance(node, ast.AnnAssign) and isinstance(
+                    node.target, ast.Name):
                 name = node.target.id
             else:
                 continue

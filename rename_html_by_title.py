@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 class TitleParser(HTMLParser):
+
     def __init__(self):
         super().__init__()
         self.in_title = False
@@ -86,10 +87,11 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='Recursively rename HTML files based on <title> tag'
-    )
+        description='Recursively rename HTML files based on <title> tag')
     parser.add_argument('path', help='Root directory')
-    parser.add_argument('--dry-run', action='store_true', help='Preview changes only')
+    parser.add_argument('--dry-run',
+                        action='store_true',
+                        help='Preview changes only')
 
     args = parser.parse_args()
     rename_html_files(Path(args.path), dry_run=args.dry_run)

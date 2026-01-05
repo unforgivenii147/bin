@@ -24,7 +24,8 @@ def get_size(filepath):
 
 def get_translator():
     if not hasattr(_thread_local, 'translator'):
-        _thread_local.translator = GoogleTranslator(source=SRC_LANG, target=TARGET_LANG)
+        _thread_local.translator = GoogleTranslator(source=SRC_LANG,
+                                                    target=TARGET_LANG)
     return _thread_local.translator
 
 
@@ -98,7 +99,9 @@ def process_file(filepath):
 
     # Process docstrings
     for node in ast.walk(parsed):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)):
+        if isinstance(
+                node,
+            (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)):
             docstring = ast.get_docstring(node, clean=False)
             if docstring:
                 doc_start = node.body[0].lineno - 1 if node.body else None
@@ -106,9 +109,8 @@ def process_file(filepath):
                 for lookback in range(3):
                     possible = doc_start - lookback
                     if possible >= 0 and (
-                        lines[possible].lstrip().startswith('"""')
-                        or lines[possible].lstrip().startswith("'''")
-                    ):
+                            lines[possible].lstrip().startswith('"""')
+                            or lines[possible].lstrip().startswith("'''")):
                         docstring_line = possible
                         break
                 else:
@@ -116,18 +118,21 @@ def process_file(filepath):
 
                 doc_lines = []
                 line_idx = docstring_line
-                quote_type = '"""' if lines[line_idx].lstrip().startswith('"""') else "'''"
+                quote_type = '"""' if lines[line_idx].lstrip().startswith(
+                    '"""') else "'''"
                 # Accumulate lines until the closing triple-quote
                 while True:
                     doc_lines.append(lines[line_idx])
-                    if lines[line_idx].rstrip().endswith(quote_type) and line_idx != docstring_line:
+                    if lines[line_idx].rstrip().endswith(
+                            quote_type) and line_idx != docstring_line:
                         break
                     line_idx += 1
                 doc_block = '\n'.join(doc_lines)
                 # Extract the content inside the quotes (for docstring only)
-                doc_body = re.sub(
-                    rf'^{quote_type}|{quote_type}$', '', doc_block.strip(), flags=re.MULTILINE
-                ).strip()
+                doc_body = re.sub(rf'^{quote_type}|{quote_type}$',
+                                  '',
+                                  doc_block.strip(),
+                                  flags=re.MULTILINE).strip()
                 # Replace only the lines within the docstring that need translation
                 translated_doc_body = translate_docstring(doc_body)
                 translated_doc_block = f'{quote_type}\n{translated_doc_body}\n{quote_type}'

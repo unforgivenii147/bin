@@ -16,6 +16,7 @@ def get_py_files(start_path):
 
 
 class ImportVisitor(ast.NodeVisitor):
+
     def __init__(self):
         self.imports = set()
 
@@ -49,13 +50,10 @@ def find_imports(start_path):
     # Filter out standard libraries and local files
     local_files = {p.stem for p in pathlib.Path(start_path).glob('*.py')}
 
-    return sorted(
-        [
-            imp
-            for imp in all_imports
-            if imp not in std_libs and imp not in local_files and imp != '__future__'
-        ]
-    )
+    return sorted([
+        imp for imp in all_imports if imp not in std_libs
+        and imp not in local_files and imp != '__future__'
+    ])
 
 
 def get_version(module_name):
@@ -76,8 +74,7 @@ def get_version(module_name):
         # Search dictionary for 'version' related keys
         for k, v in mod.__dict__.items():
             if ('version' in k.lower() or 'ver' in k.lower()) and isinstance(
-                v, (str, numbers.Number)
-            ):
+                    v, (str, numbers.Number)):
                 return str(v)
     except Exception:
         return 'Unknown'

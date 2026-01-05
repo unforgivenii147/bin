@@ -37,9 +37,16 @@ def build_output_path(input_path: Path) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Translate jap → English using deep-translator.')
-    parser.add_argument('input_path', type=str, help='Path to input text file.')
-    parser.add_argument('-g', '--game', type=str, default=None, help='Optional game argument.')
+    parser = argparse.ArgumentParser(
+        description='Translate jap → English using deep-translator.')
+    parser.add_argument('input_path',
+                        type=str,
+                        help='Path to input text file.')
+    parser.add_argument('-g',
+                        '--game',
+                        type=str,
+                        default=None,
+                        help='Optional game argument.')
     args = parser.parse_args()
 
     in_path = Path(args.input_path)

@@ -58,10 +58,12 @@ def site_packages_paths(prefix):
 
 
 def find_distributions(site_dirs):
-    dists = {}  # key: dist_name (normalized) -> path to dist-info or egg-info Path
+    dists = {
+    }  # key: dist_name (normalized) -> path to dist-info or egg-info Path
     for sd in site_dirs:
         for p in sd.iterdir():
-            if p.is_dir() and (p.name.endswith('.dist-info') or p.name.endswith('.egg-info')):
+            if p.is_dir() and (p.name.endswith('.dist-info')
+                               or p.name.endswith('.egg-info')):
                 # distribution folder name: <name>-<version>.dist-info or <name>.egg-info or <name>-<version>.egg-info
                 key = p.name.rsplit('.')[0]  # remove suffix
                 # normalize key (lowercase) for matching
@@ -86,14 +88,17 @@ def parse_metadata_from_distinfo(distinfo_dir):
     if ep.exists():
         config = ConfigParser()
         try:
-            config.read_string('[DEFAULT]\n' + ep.read_text(encoding='utf-8', errors='ignore'))
+            config.read_string('[DEFAULT]\n' +
+                               ep.read_text(encoding='utf-8', errors='ignore'))
         except Exception:
             # Try using a proper ConfigParser read
             config.read(ep)
-        if config.has_section('console_scripts') or config.has_option('console_scripts', ''):
+        if config.has_section('console_scripts') or config.has_option(
+                'console_scripts', ''):
             # configparser handling is messy because entry_points format is not a real INI always
             # We'll parse manually
-            lines = ep.read_text(encoding='utf-8', errors='ignore').splitlines()
+            lines = ep.read_text(encoding='utf-8',
+                                 errors='ignore').splitlines()
             section = None
             console = []
             for ln in lines:
@@ -101,7 +106,8 @@ def parse_metadata_from_distinfo(distinfo_dir):
                 if ln.startswith('[') and ln.endswith(']'):
                     section = ln[1:-1].strip()
                     continue
-                if section == 'console_scripts' and ln and not ln.startswith('#'):
+                if section == 'console_scripts' and ln and not ln.startswith(
+                        '#'):
                     # format: name = module:callable
                     left = ln.split('=', 1)[0].strip()
                     console.append(left)
@@ -113,21 +119,20 @@ def read_record_list(distinfo_dir):
     rec = distinfo_dir / 'RECORD'
     if rec.exists():
         lines = [
-            l.strip().split(',', 1)[0]
-            for l in rec.read_text(encoding='utf-8', errors='ignore').splitlines()
-            if l.strip()
+            l.strip().split(',', 1)[0] for l in rec.read_text(
+                encoding='utf-8', errors='ignore').splitlines() if l.strip()
         ]
         return lines
     # egg-info fallback
     installed = None
     for p in [
-        distinfo_dir / 'installed-files.txt',
-        distinfo_dir / 'installed_files.txt',
+            distinfo_dir / 'installed-files.txt',
+            distinfo_dir / 'installed_files.txt',
     ]:
         if p.exists():
             installed = [
-                l.strip()
-                for l in p.read_text(encoding='utf-8', errors='ignore').splitlines()
+                l.strip() for l in p.read_text(encoding='utf-8',
+                                               errors='ignore').splitlines()
                 if l.strip()
             ]
             return installed
@@ -135,9 +140,8 @@ def read_record_list(distinfo_dir):
     tt = distinfo_dir / 'top_level.txt'
     if tt.exists():
         tops = [
-            l.strip()
-            for l in tt.read_text(encoding='utf-8', errors='ignore').splitlines()
-            if l.strip()
+            l.strip() for l in tt.read_text(
+                encoding='utf-8', errors='ignore').splitlines() if l.strip()
         ]
         return tops
     return None
@@ -242,8 +246,8 @@ def collect_files_for_dist(distinfo_path, site_dirs, prefix):
         added = set()
         if tl.exists():
             tops = [
-                l.strip()
-                for l in tl.read_text(encoding='utf-8', errors='ignore').splitlines()
+                l.strip() for l in tl.read_text(encoding='utf-8',
+                                                errors='ignore').splitlines()
                 if l.strip()
             ]
             for name in tops:
@@ -289,7 +293,8 @@ def collect_files_for_dist(distinfo_path, site_dirs, prefix):
     return final, md
 
 
-def build_wheel_from_tree(tree_items, dist_name, version, workdir, wheel_out_path):
+def build_wheel_from_tree(tree_items, dist_name, version, workdir,
+                          wheel_out_path):
     """tree_items: list of (src_path (Path), rel_path (Path)) to copy into workdir
     dist_name, version used for naming if needed
     workdir: Path where to create wheel contents
@@ -349,7 +354,8 @@ def build_wheel_from_tree(tree_items, dist_name, version, workdir, wheel_out_pat
 
     # Now create the wheel zip
     wheel_out_path.parent.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(wheel_out_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(wheel_out_path, 'w',
+                         compression=zipfile.ZIP_DEFLATED) as zf:
         for root, _dirs, files in os.walk(workdir):
             for fn in files:
                 full = Path(root) / fn
@@ -368,7 +374,10 @@ def main() -> None:
         nargs='*',
         help='Package names (distribution names). If none given, repack all.',
     )
-    parser.add_argument('-a', '--all', action='store_true', help='Repack all installed packages')
+    parser.add_argument('-a',
+                        '--all',
+                        action='store_true',
+                        help='Repack all installed packages')
     args = parser.parse_args()
 
     if not args.packages and not args.all:
@@ -397,7 +406,8 @@ def main() -> None:
             found = None
             for k, p in dists.items():
                 # k is like 'mypkg-1.2.3' or 'mypkg'
-                if k == key or k.startswith(key + '-') or k.split('-')[0] == key:
+                if k == key or k.startswith(key +
+                                            '-') or k.split('-')[0] == key:
                     found = p
                     break
             if not found:
@@ -426,12 +436,14 @@ def main() -> None:
             # try metadata
             md = parse_metadata_from_distinfo(distinfo)
             dist_name = md.get('Name') or base.split('-', 1)[0]
-            version = md.get('Version') or (base.split('-', 1)[1] if '-' in base else '0')
+            version = md.get('Version') or (base.split('-', 1)[1]
+                                            if '-' in base else '0')
             print(f'Repacking {dist_name} {version} ...')
 
             items, md = collect_files_for_dist(distinfo, site_dirs, prefix)
             if not items:
-                print(f'  no files found for {dist_name}, skipping', file=sys.stderr)
+                print(f'  no files found for {dist_name}, skipping',
+                      file=sys.stderr)
                 continue
             workdir = repack_root / f'{dist_name}-{version}'
             # clean workdir
@@ -442,7 +454,8 @@ def main() -> None:
             wheel_name = f'{dist_name.replace("-", "_")}-{version}-py3-none-any.whl'
             wheel_out = wheel_dir / wheel_name
 
-            built = build_wheel_from_tree(items, dist_name, version, workdir, wheel_out)
+            built = build_wheel_from_tree(items, dist_name, version, workdir,
+                                          wheel_out)
             print(f'  wrote wheel: {built}')
         except Exception as e:
             print(f'Error repacking {distinfo}: {e}', file=sys.stderr)

@@ -103,7 +103,8 @@ def load_mapping(path: str) -> dict[str, str]:
 # ------------------------- AST EXTRACTION HELPERS --------------------------
 
 
-def extract_from_ast(code: str, path_hint: str | None = None) -> dict[str, set[str]]:
+def extract_from_ast(code: str,
+                     path_hint: str | None = None) -> dict[str, set[str]]:
     """Parse Python source and extract:
       - imports: top-level names imported (first component)
       - star_imports: modules used in `from X import *`
@@ -122,7 +123,9 @@ def extract_from_ast(code: str, path_hint: str | None = None) -> dict[str, set[s
         tree = ast.parse(code)
     except Exception:
         # fallback: simple regexes for dynamic import strings
-        for m in re.finditer(r"(?:import_module|__import__)\(\s*['\"]([\w\.]+)['\"]\s*\)", code):
+        for m in re.finditer(
+                r"(?:import_module|__import__)\(\s*['\"]([\w\.]+)['\"]\s*\)",
+                code):
             result['dynamic'].add(m.group(1).split('.', 1)[0])
         return result
 
@@ -153,27 +156,21 @@ def extract_from_ast(code: str, path_hint: str | None = None) -> dict[str, set[s
         # dynamic import detection (__import__('pkg') or importlib.import_module('pkg'))
         elif isinstance(node, ast.Call):
             # __import__('pkg')
-            if isinstance(node.func, ast.Name) and node.func.id == '__import__':
-                if (
-                    node.args
-                    and isinstance(node.args[0], ast.Constant)
-                    and isinstance(node.args[0].value, str)
-                ):
+            if isinstance(node.func,
+                          ast.Name) and node.func.id == '__import__':
+                if (node.args and isinstance(node.args[0], ast.Constant)
+                        and isinstance(node.args[0].value, str)):
                     result['dynamic'].add(node.args[0].value.split('.', 1)[0])
             # importlib.import_module('pkg')
             elif isinstance(node.func, ast.Attribute):
                 val = node.func
-                if (
-                    isinstance(val.value, ast.Name)
-                    and val.value.id == 'importlib'
-                    and val.attr == 'import_module'
-                ):
-                    if (
-                        node.args
-                        and isinstance(node.args[0], ast.Constant)
-                        and isinstance(node.args[0].value, str)
-                    ):
-                        result['dynamic'].add(node.args[0].value.split('.', 1)[0])
+                if (isinstance(val.value, ast.Name)
+                        and val.value.id == 'importlib'
+                        and val.attr == 'import_module'):
+                    if (node.args and isinstance(node.args[0], ast.Constant)
+                            and isinstance(node.args[0].value, str)):
+                        result['dynamic'].add(node.args[0].value.split('.',
+                                                                       1)[0])
 
     # As a final pass, if star imports exist, try to also detect imports inside the module by scanning the file for 'from x import y' patterns (handled later when tracing star modules).
     return result
@@ -182,7 +179,9 @@ def extract_from_ast(code: str, path_hint: str | None = None) -> dict[str, set[s
 # --------------------------- FILE PROCESSORS --------------------------------
 
 
-def process_py_file_content(code: str, path_hint: str | None = None) -> dict[str, list[str]]:
+def process_py_file_content(code: str,
+                            path_hint: str | None = None
+                            ) -> dict[str, list[str]]:
     d = extract_from_ast(code, path_hint)
     return {k: sorted(v) for k, v in d.items()}
 
@@ -191,7 +190,12 @@ def process_py_file(path: Path) -> dict[str, list[str]]:
     try:
         text = path.read_text(encoding='utf-8', errors='ignore')
     except Exception:
-        return {'imports': [], 'star_modules': [], 'dynamic': [], 'relative': []}
+        return {
+            'imports': [],
+            'star_modules': [],
+            'dynamic': [],
+            'relative': []
+        }
     return process_py_file_content(text, str(path))
 
 
@@ -208,7 +212,12 @@ def process_noext_python_script(path: Path) -> dict[str, list[str]]:
                 }
             code = f.read()
     except Exception:
-        return {'imports': [], 'star_modules': [], 'dynamic': [], 'relative': []}
+        return {
+            'imports': [],
+            'star_modules': [],
+            'dynamic': [],
+            'relative': []
+        }
     return process_py_file_content(code, str(path))
 
 
@@ -314,7 +323,8 @@ def process_raw(path: str) -> dict[str, list[str]]:
         return process_noext_python_script(p)
     if name.endswith('.zip') or name.endswith('.whl'):
         return process_zip_file(p)
-    if name.endswith('.tar.gz') or name.endswith('.tgz') or name.endswith('.tar.xz'):
+    if name.endswith('.tar.gz') or name.endswith('.tgz') or name.endswith(
+            '.tar.xz'):
         return process_tar_file(p)
     # else nothing
     return {'imports': [], 'star_modules': [], 'dynamic': [], 'relative': []}
@@ -342,9 +352,11 @@ def build_project_module_map(sources: list[str]) -> dict[str, list[str]]:
         rel = os.path.normpath(fp).lstrip('./')
         parts = rel.split(os.sep)
         if parts[-1] == '__init__.py':
-            mod = '.'.join(parts[:-1]) if parts[:-1] else parts[-2] if len(parts) > 1 else ''
+            mod = '.'.join(parts[:-1]) if parts[:-1] else parts[-2] if len(
+                parts) > 1 else ''
         else:
-            mod = '.'.join(parts)[:-3] if rel.endswith('.py') else '.'.join(parts)
+            mod = '.'.join(parts)[:-3] if rel.endswith('.py') else '.'.join(
+                parts)
         if not mod:
             continue
         # also register top-level first component
@@ -357,7 +369,8 @@ def build_project_module_map(sources: list[str]) -> dict[str, list[str]]:
 # ---------------------- STAR IMPORT / MODULE TRACING ------------------------
 
 
-def trace_star_module(module: str, project_map: dict[str, list[str]]) -> set[str]:
+def trace_star_module(module: str, project_map: dict[str,
+                                                     list[str]]) -> set[str]:
     """Given a module dotted path (e.g., "mypkg.submod"), attempt to find its source inside
     the project map and extract imports and any names listed in __all__.
     Returns a set of imported top-level names discovered inside that module.
@@ -388,13 +401,16 @@ def trace_star_module(module: str, project_map: dict[str, list[str]]) -> set[str
             for node in ast.walk(tree):
                 if isinstance(node, ast.Assign):
                     for target in node.targets:
-                        if isinstance(target, ast.Name) and target.id == '__all__':
+                        if isinstance(target,
+                                      ast.Name) and target.id == '__all__':
                             # evaluate if it's a simple list/tuple of literals
                             val = node.value
                             names = []
                             if isinstance(val, (ast.List, ast.Tuple)):
                                 for elt in val.elts:
-                                    if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                                    if isinstance(elt,
+                                                  ast.Constant) and isinstance(
+                                                      elt.value, str):
                                         names.append(elt.value)
                             # If __all__ references modules (strings), we may treat them as submodules -> add top-level
                             for nm in names:
@@ -474,16 +490,10 @@ def scan_sources(ignore_dirs: set[str]) -> list[str]:
             fp = os.path.join(root, f)
             lower = f.lower()
             # include python sources, archives, notebooks, or no-extension scripts
-            if (
-                lower.endswith('.py')
-                or lower.endswith('.ipynb')
-                or lower.endswith('.whl')
-                or lower.endswith('.zip')
-                or lower.endswith('.tar.gz')
-                or lower.endswith('.tgz')
-                or lower.endswith('.tar.xz')
-                or Path(fp).suffix == ''
-            ):
+            if (lower.endswith('.py') or lower.endswith('.ipynb')
+                    or lower.endswith('.whl') or lower.endswith('.zip')
+                    or lower.endswith('.tar.gz') or lower.endswith('.tgz')
+                    or lower.endswith('.tar.xz') or Path(fp).suffix == ''):
                 out.append(fp)
     return out
 
@@ -501,25 +511,34 @@ def main() -> None:
         default=['venv', '.venv', '.git', '.ipynb_checkpoints'],
         help='Directories to ignore during scan',
     )
-    p.add_argument('--no-cache', action='store_true', help='Disable cache usage')
-    p.add_argument('--clear-cache', action='store_true', help='Clear cache and exit')
+    p.add_argument('--no-cache',
+                   action='store_true',
+                   help='Disable cache usage')
+    p.add_argument('--clear-cache',
+                   action='store_true',
+                   help='Clear cache and exit')
     p.add_argument(
         '--stdlib',
         default='/sdcard/stdlib',
         help='File containing stdlib module names (one per line)',
     )
-    p.add_argument('--mapping', default='/sdcard/mapping', help='Mapping file module->pip-package')
+    p.add_argument('--mapping',
+                   default='/sdcard/mapping',
+                   help='Mapping file module->pip-package')
     p.add_argument(
         '--pipfile',
         default='/sdcard/pip.txt',
         help='Offline pip package list (one per line)',
     )
     p.add_argument('--cache-file', default=CACHE_FILE, help='Cache file path')
-    p.add_argument('--out', default='requirements.txt', help='Output requirements file')
+    p.add_argument('--out',
+                   default='requirements.txt',
+                   help='Output requirements file')
     p.add_argument(
         '--include-unknown',
         action='store_true',
-        help='Include packages not present in offline pip list (default: only include those in piplist)',
+        help=
+        'Include packages not present in offline pip list (default: only include those in piplist)',
     )
     args = p.parse_args()
 
@@ -542,7 +561,8 @@ def main() -> None:
 
     # cache handling
     cache_path = Path(args.cache_file)
-    cache = {} if args.no_cache else load_json(cache_path) if cache_path.exists() else {}
+    cache = {} if args.no_cache else load_json(
+        cache_path) if cache_path.exists() else {}
     if args.clear_cache:
         try:
             if cache_path.exists():
@@ -576,8 +596,7 @@ def main() -> None:
                             'dynamic': [],
                             'relative': [],
                         },
-                    )
-                )
+                    ))
                 needs = False
         if needs:
             tasks.append(path)
@@ -587,9 +606,9 @@ def main() -> None:
     if tasks:
         with mp.Pool(mp.cpu_count()) as pool:
             for res in tqdm(
-                pool.imap_unordered(process_raw, tasks),
-                total=len(tasks),
-                desc='Processing',
+                    pool.imap_unordered(process_raw, tasks),
+                    total=len(tasks),
+                    desc='Processing',
             ):
                 computed_results.append(res)
 
@@ -652,7 +671,8 @@ def main() -> None:
         final_candidates.add(imp)
 
     # resolve packages using mapping + piplist
-    pkgs = resolve_packages(final_candidates, stdlib, mapping, piplist, project_top_only)
+    pkgs = resolve_packages(final_candidates, stdlib, mapping, piplist,
+                            project_top_only)
 
     # apply piplist filter: if not include_unknown, intersect with piplist (case-insensitive)
     if not args.include_unknown and piplist:

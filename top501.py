@@ -26,15 +26,14 @@ def collect_top_lines(directory, text_extensions, top_n=500):
         print(f'\nProcessing {ext} files...')
         lines_counter = Counter()
         file_paths = [
-            Path(root) / file
-            for root, _, files in os.walk(directory)
-            for file in files
-            if is_text_file(Path(root) / file, {ext})
+            Path(root) / file for root, _, files in os.walk(directory)
+            for file in files if is_text_file(Path(root) / file, {ext})
         ]
         if not file_paths:
             print(f'No {ext} files found. Skipping...')
             continue
-        print(f'Found {len(file_paths)} {ext} files. Processing in parallel...')
+        print(
+            f'Found {len(file_paths)} {ext} files. Processing in parallel...')
         start_time = time.time()
         with Pool(cpu_count()) as pool:
             results = pool.starmap(

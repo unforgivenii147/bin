@@ -16,6 +16,7 @@ ALLOWED_PYTHON_EXTENSIONS = ('.py', '')  # .py or no extension
 
 # --- Core AST Visitor for Entity Extraction ---
 class EntityExtractor(ast.NodeVisitor):
+
     def __init__(self, source_content: str, original_path: Path):
         self.entities = []
         self.source_lines = source_content.splitlines(keepends=True)
@@ -27,28 +28,34 @@ class EntityExtractor(ast.NodeVisitor):
         end_line = node.end_lineno or node.lineno
         code_slice = self.source_lines[start_line:end_line]
         if node.col_offset is not None:
-            code_slice[0] = code_slice[0][node.col_offset :]
+            code_slice[0] = code_slice[0][node.col_offset:]
         if node.end_col_offset is not None and node.end_col_offset > 0:
             last_line = code_slice[-1]
-            code_slice[-1] = last_line[: node.end_col_offset]
+            code_slice[-1] = last_line[:node.end_col_offset]
         return ''.join(code_slice)
 
     def _extract_and_save(self, node: ast.AST, entity_type: str, name: str):
         entity_code = self._get_source_slice(node)
         scope_prefix = '_'.join(self.scope_stack)
         full_name = f'{scope_prefix}_{name}' if scope_prefix else name
-        self.entities.append(
-            {
-                'name': name,
-                'full_name': full_name,
-                'type': entity_type,
-                'code': entity_code,
-                'path': str(self.original_path),
-                'is_constant': entity_type == 'constant',
-                'is_class': entity_type == 'class',
-                'is_function': entity_type in ('function', 'method'),
-            }
-        )
+        self.entities.append({
+            'name':
+            name,
+            'full_name':
+            full_name,
+            'type':
+            entity_type,
+            'code':
+            entity_code,
+            'path':
+            str(self.original_path),
+            'is_constant':
+            entity_type == 'constant',
+            'is_class':
+            entity_type == 'class',
+            'is_function':
+            entity_type in ('function', 'method'),
+        })
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         # Only extract top-level functions, ignore nested functions
@@ -63,7 +70,8 @@ class EntityExtractor(ast.NodeVisitor):
 
     def visit_Assign(self, node: ast.Assign):
         if not self.scope_stack:
-            if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            if len(node.targets) == 1 and isinstance(node.targets[0],
+                                                     ast.Name):
                 target_name = node.targets[0].id
                 if re.match(r'^[A-Z_][A-Z0-9_]*$', target_name):
                     self._extract_and_save(node, 'constant', target_name)
@@ -187,7 +195,8 @@ def save_entity_to_db(entity: Dict[str, Any]):
 
 
 # --- Processing Functions ---
-def extract_entities_from_content(content: str, path: Path) -> List[Dict[str, Any]]:
+def extract_entities_from_content(content: str,
+                                  path: Path) -> List[Dict[str, Any]]:
     try:
         tree = ast.parse(content)
         extractor = EntityExtractor(content, path)
@@ -208,8 +217,8 @@ def is_python_file_no_extension(path: Path) -> bool:
             first_lines = ''.join(f.readlines(1024))
             return bool(
                 re.match(r'#!\s*/.*python', first_lines)
-                or ('def ' in first_lines or 'class ' in first_lines or 'import ' in first_lines)
-            )
+                or ('def ' in first_lines or 'class ' in first_lines
+                    or 'import ' in first_lines))
     except:
         return False
 
@@ -227,10 +236,12 @@ def process_single_file(path: Path) -> List[Dict[str, Any]]:
 
 # --- Main Execution ---
 def main():
-    parser = argparse.ArgumentParser(description='Extract Python entities and save to database.')
-    parser.add_argument(
-        '-db', '--database', action='store_true', help='Save extracted entities to the database'
-    )
+    parser = argparse.ArgumentParser(
+        description='Extract Python entities and save to database.')
+    parser.add_argument('-db',
+                        '--database',
+                        action='store_true',
+                        help='Save extracted entities to the database')
     args = parser.parse_args()
 
     print(f'Starting analysis in {Path.cwd()}...')
@@ -243,7 +254,8 @@ def main():
             path = Path(root) / name
             if path.is_relative_to(OUTPUT_DIR):
                 continue
-            if path.suffix in ALLOWED_PYTHON_EXTENSIONS or is_python_file_no_extension(path):
+            if path.suffix in ALLOWED_PYTHON_EXTENSIONS or is_python_file_no_extension(
+                    path):
                 files_to_process.append(path)
 
     if not files_to_process:

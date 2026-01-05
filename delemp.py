@@ -83,9 +83,8 @@ def clean_lines(lines: list[str], collapse: bool) -> tuple[list[str], int]:
     return cleaned, removed
 
 
-def clean_file(
-    path: Path, whitelist: set[str], blacklist: set[str], collapse: bool
-) -> tuple[bool, int, str]:
+def clean_file(path: Path, whitelist: set[str], blacklist: set[str],
+               collapse: bool) -> tuple[bool, int, str]:
     if path.suffix.lower() in blacklist:
         return False, 0, ''
 
@@ -133,7 +132,10 @@ def main() -> None:
     files = list(iter_files(root))
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = {executor.submit(clean_file, f, whitelist, blacklist, collapse): f for f in files}
+        futures = {
+            executor.submit(clean_file, f, whitelist, blacklist, collapse): f
+            for f in files
+        }
 
         for future in as_completed(futures):
             changed, removed, ext = future.result()

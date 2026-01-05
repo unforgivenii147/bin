@@ -33,7 +33,8 @@ ANSI_HIGHLIGHT = '\033[31m'  # red; allow environment/no-color override
 def colorize(text: str, start: int, end: int, enable: bool = True) -> str:
     if not enable:
         return text
-    return text[:start] + ANSI_HIGHLIGHT + ANSI_BOLD + text[start:end] + ANSI_RESET + text[end:]
+    return text[:start] + ANSI_HIGHLIGHT + ANSI_BOLD + text[
+        start:end] + ANSI_RESET + text[end:]
 
 
 # ---------- Binary detection ----------
@@ -79,14 +80,14 @@ def collect_files(
         if os.path.isfile(root):
             yield root
             continue
-        for dirpath, dirnames, filenames in os.walk(root, followlinks=follow_symlinks):
+        for dirpath, dirnames, filenames in os.walk(
+                root, followlinks=follow_symlinks):
             # prune ignored dirs and hidden dirs if needed
             dirnames[:] = [
-                d
-                for d in dirnames
+                d for d in dirnames
                 if (include_hidden or not d.startswith('.'))
-                and d not in IGNORED_DIRS
-                and not matches_any_glob(os.path.join(dirpath, d), exclude_globs)
+                and d not in IGNORED_DIRS and
+                not matches_any_glob(os.path.join(dirpath, d), exclude_globs)
             ]
             for fn in filenames:
                 if not include_hidden and fn.startswith('.'):
@@ -150,24 +151,39 @@ def search_file_text_mode(
 
 # ---------- Main CLI ----------
 def build_argparser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description='ripgrep-like recursive search in Python')
-    p.add_argument('pattern', nargs='?', help='Regex pattern (positional) or use -e')
-    p.add_argument('-e', '--regexp', dest='pattern_e', help='Pattern (alternative to positional)')
-    p.add_argument('-i', '--ignore-case', action='store_true', help='Case-insensitive search')
+    p = argparse.ArgumentParser(
+        description='ripgrep-like recursive search in Python')
+    p.add_argument('pattern',
+                   nargs='?',
+                   help='Regex pattern (positional) or use -e')
+    p.add_argument('-e',
+                   '--regexp',
+                   dest='pattern_e',
+                   help='Pattern (alternative to positional)')
+    p.add_argument('-i',
+                   '--ignore-case',
+                   action='store_true',
+                   help='Case-insensitive search')
     p.add_argument(
         '-F',
         '--fixed-strings',
         action='store_true',
         help='Fixed string search (no regex)',
     )
-    p.add_argument('-n', '--line-number', action='store_true', help='Show line numbers')
+    p.add_argument('-n',
+                   '--line-number',
+                   action='store_true',
+                   help='Show line numbers')
     p.add_argument(
         '-l',
         '--files-with-matches',
         action='store_true',
         help='Only print filenames that match',
     )
-    p.add_argument('-c', '--count', action='store_true', help='Print count of matches per file')
+    p.add_argument('-c',
+                   '--count',
+                   action='store_true',
+                   help='Print count of matches per file')
     p.add_argument(
         '-t',
         '--threads',
@@ -175,10 +191,18 @@ def build_argparser() -> argparse.ArgumentParser:
         default=DEFAULT_THREADS,
         help='Number of worker threads',
     )
-    p.add_argument('--hidden', action='store_true', help='Search hidden files and directories')
-    p.add_argument('--glob', action='append', help='Include glob (fnmatch); can be repeated')
-    p.add_argument('--exclude', action='append', help='Exclude glob (fnmatch); can be repeated')
-    p.add_argument('--no-color', action='store_true', help='Disable colorized output')
+    p.add_argument('--hidden',
+                   action='store_true',
+                   help='Search hidden files and directories')
+    p.add_argument('--glob',
+                   action='append',
+                   help='Include glob (fnmatch); can be repeated')
+    p.add_argument('--exclude',
+                   action='append',
+                   help='Exclude glob (fnmatch); can be repeated')
+    p.add_argument('--no-color',
+                   action='store_true',
+                   help='Disable colorized output')
     p.add_argument(
         '--max-filesize',
         type=int,
@@ -230,8 +254,7 @@ def main(argv: list[str] | None = None) -> int:
             exclude_globs=exclude_globs,
             follow_symlinks=args.follow,
             max_filesize=args.max_filesize,
-        )
-    )
+        ))
 
     if not candidates:
         return 0
@@ -275,8 +298,13 @@ def main(argv: list[str] | None = None) -> int:
                         out_line = line
                         if color and spans:
                             # apply highlights from end -> start to not shift indices
-                            for s, e in sorted(spans, key=lambda x: x[0], reverse=True):
-                                out_line = colorize(out_line, s, e, enable=True)
+                            for s, e in sorted(spans,
+                                               key=lambda x: x[0],
+                                               reverse=True):
+                                out_line = colorize(out_line,
+                                                    s,
+                                                    e,
+                                                    enable=True)
                         if args.line_number:
                             print(f'{path}:{lineno}:{out_line}')
                         else:

@@ -33,7 +33,8 @@ def translate_name(name):
         return name, translation_cache[base] + ext
 
     try:
-        translated = GoogleTranslator(source='auto', target='en').translate(base)
+        translated = GoogleTranslator(source='auto',
+                                      target='en').translate(base)
         translation_cache[base] = translated
         return name, translated + ext
     except Exception:
@@ -45,19 +46,24 @@ def rename_files(directory):
     paths = [Path(p) for p in rignore.walk(directory)]
 
     # Filter unique names needing translation to avoid redundant API calls
-    unique_names_to_translate = list({p.name for p in paths if not is_english(p.name)})
+    unique_names_to_translate = list(
+        {p.name
+         for p in paths if not is_english(p.name)})
 
     translation_map = {}
 
     # Parallel translation using ThreadPoolExecutor
     # max_workers can be higher than CPU count for network I/O tasks
     with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(translate_name, name) for name in unique_names_to_translate]
+        futures = [
+            executor.submit(translate_name, name)
+            for name in unique_names_to_translate
+        ]
 
         for future in tqdm(
-            as_completed(futures),
-            total=len(unique_names_to_translate),
-            desc='Translating filenames',
+                as_completed(futures),
+                total=len(unique_names_to_translate),
+                desc='Translating filenames',
         ):
             original, translated = future.result()
             translation_map[original] = translated

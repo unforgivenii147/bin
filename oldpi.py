@@ -60,10 +60,10 @@ def tokenizer_confirm(filepath: str) -> Optional[str]:
 
             j = i + 1
             while j < len(tokens) and tokens[j].type in {
-                tokenize.NL,
-                tokenize.NEWLINE,
-                tokenize.INDENT,
-                tokenize.DEDENT,
+                    tokenize.NL,
+                    tokenize.NEWLINE,
+                    tokenize.INDENT,
+                    tokenize.DEDENT,
             }:
                 j += 1
 
@@ -88,9 +88,10 @@ def autofix_file(filepath: str) -> bool:
             if stripped.rstrip() == 'print':
                 continue
 
-            if stripped.startswith('print ') and not stripped.startswith('print('):
-                indent = line[: len(line) - len(stripped)]
-                content = stripped[len('print ') :].rstrip()
+            if stripped.startswith(
+                    'print ') and not stripped.startswith('print('):
+                indent = line[:len(line) - len(stripped)]
+                content = stripped[len('print '):].rstrip()
                 lines[i] = f'{indent}print({content})\n'
                 changed = True
 
@@ -127,7 +128,8 @@ def collect_py_files(root: str) -> List[str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Regex + tokenizer detection of Python 2 print')
+    parser = argparse.ArgumentParser(
+        description='Regex + tokenizer detection of Python 2 print')
     parser.add_argument('path', nargs='?', default='.')
     parser.add_argument('-a', '--autofix', action='store_true')
     parser.add_argument('-w', '--workers', type=int, default=os.cpu_count())
@@ -136,13 +138,15 @@ def main() -> None:
     py_files = collect_py_files(args.path)
 
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
-        futures = [executor.submit(process_file, f, args.autofix) for f in py_files]
+        futures = [
+            executor.submit(process_file, f, args.autofix) for f in py_files
+        ]
 
         for future in tqdm(
-            as_completed(futures),
-            total=len(futures),
-            desc='Scanning files',
-            unit='file',
+                as_completed(futures),
+                total=len(futures),
+                desc='Scanning files',
+                unit='file',
         ):
             result = future.result()
             if result:

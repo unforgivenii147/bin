@@ -4,8 +4,19 @@
 def scan_directory(directory='.'):
     """Scan the directory for source code files and count lines."""
     stats = {
-        'total': {'code': 0, 'comments': 0, 'blank': 0},
-        'languages': {lang: {'code': 0, 'comments': 0, 'blank': 0} for lang in LANG_EXTENSIONS},
+        'total': {
+            'code': 0,
+            'comments': 0,
+            'blank': 0
+        },
+        'languages': {
+            lang: {
+                'code': 0,
+                'comments': 0,
+                'blank': 0
+            }
+            for lang in LANG_EXTENSIONS
+        },
     }
 
     for root, _, files in os.walk(directory):

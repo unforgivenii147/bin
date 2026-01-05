@@ -10,7 +10,8 @@ from pathlib import Path
 QUALITY_RANGE_STR = '60-70'
 START_DIR = Path('.')
 NUM_PROCESSES = cpu_count()
-print(f'Using {NUM_PROCESSES} CPU cores for parallel processing via subprocess.')
+print(
+    f'Using {NUM_PROCESSES} CPU cores for parallel processing via subprocess.')
 
 
 # --- Optimization Function (Subprocess) ---
@@ -32,9 +33,14 @@ def compress_single_file_subprocess(input_path: str, quality_range: str):
             input_path,  # Overwrite the original file
         ]
         # Execute the command
-        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        result = subprocess.run(command,
+                                capture_output=True,
+                                text=True,
+                                check=True)
         if 'skipping' in result.stdout.lower():
-            print(f'🟢 Skipped: {input_path} (No size reduction possible or quality too low)')
+            print(
+                f'🟢 Skipped: {input_path} (No size reduction possible or quality too low)'
+            )
         else:
             print(f'✅ Optimized: {input_path} (Quality: {quality_range})')
     except subprocess.CalledProcessError as e:
@@ -57,11 +63,14 @@ if __name__ == '__main__':
     else:
         print(f'Found {len(all_png_files)} PNG files to process...')
         # Use functools.partial to pre-set the quality argument
-        compress_task = partial(compress_single_file_subprocess, quality_range=QUALITY_RANGE_STR)
+        compress_task = partial(compress_single_file_subprocess,
+                                quality_range=QUALITY_RANGE_STR)
         # Create a multiprocessing Pool
         try:
             with Pool(NUM_PROCESSES) as pool:
                 pool.map(compress_task, all_png_files)
-            print('\n✨ All PNG files processed successfully using Subprocess. ✨')
+            print(
+                '\n✨ All PNG files processed successfully using Subprocess. ✨')
         except Exception as e:
-            print(f'\nAn unexpected error occurred during multiprocessing: {e}')
+            print(
+                f'\nAn unexpected error occurred during multiprocessing: {e}')

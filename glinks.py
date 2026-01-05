@@ -25,7 +25,8 @@ def extract_git_urls_from_text(text: str):
 def use_strings(path):
     """Extract text from binary using `strings`."""
     try:
-        out = subprocess.check_output(['strings', '-a', path], stderr=subprocess.DEVNULL)
+        out = subprocess.check_output(['strings', '-a', path],
+                                      stderr=subprocess.DEVNULL)
         return out.decode('utf-8', errors='ignore')
     except Exception:
         return ''
@@ -63,8 +64,10 @@ def process_zip(path):
                             # binary content → run strings on raw data
                             # strings can't read stdin directly, so write temp
                             text = subprocess.check_output(
-                                ['strings', '-a'], input=data, stderr=subprocess.DEVNULL
-                            ).decode('utf-8', errors='ignore')
+                                ['strings', '-a'],
+                                input=data,
+                                stderr=subprocess.DEVNULL).decode(
+                                    'utf-8', errors='ignore')
                         else:
                             text = data.decode('utf-8', errors='ignore')
 

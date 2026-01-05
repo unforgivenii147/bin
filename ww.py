@@ -7,7 +7,10 @@ import sys
 
 target_dir = Path(os.getcwd())
 os.chdir(target_dir.parent)
-subprocess.run(['wheel', 'pack', str(target_dir), '-d', '/data/data/com.termux/files/home/tmp/whl'])
+subprocess.run([
+    'wheel', 'pack',
+    str(target_dir), '-d', '/data/data/com.termux/files/home/tmp/whl'
+])
 
 # subprocess.run(['www'])
 

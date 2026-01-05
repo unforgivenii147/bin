@@ -47,10 +47,8 @@ def find_regex_in_dir(start_dir, output_dir, max_workers=4):
     output_dir.mkdir(parents=True, exist_ok=True)
 
     files_to_process = [
-        os.path.join(root, fname)
-        for root, _, files in os.walk(start_dir)
-        for fname in files
-        if fname.endswith('.py')
+        os.path.join(root, fname) for root, _, files in os.walk(start_dir)
+        for fname in files if fname.endswith('.py')
     ]
 
     total_files = len(files_to_process)
@@ -66,7 +64,9 @@ def find_regex_in_dir(start_dir, output_dir, max_workers=4):
         for future in as_completed(futures):
             _, regex_count = future.result()
             if regex_count:
-                print(f"Processed file '{futures[future]}' with {regex_count} regex patterns.")
+                print(
+                    f"Processed file '{futures[future]}' with {regex_count} regex patterns."
+                )
             processed_files += 1
             progress_bar.update(1)
 

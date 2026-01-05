@@ -86,18 +86,23 @@ def distribute_files(files, folders, base_dir):
         for (min_size, max_size), folder_name in size_to_folder.items():
             if min_size <= size <= max_size:
                 dest_folder = os.path.join(base_dir, folder_name)
-                dest_path = os.path.join(dest_folder, os.path.basename(filepath))
+                dest_path = os.path.join(dest_folder,
+                                         os.path.basename(filepath))
 
                 try:
                     shutil.move(filepath, dest_path)
-                    print(f'Moved {os.path.basename(filepath)} ({size:,} bytes) → {folder_name}')
+                    print(
+                        f'Moved {os.path.basename(filepath)} ({size:,} bytes) → {folder_name}'
+                    )
                     moved_count += 1
                     break
                 except Exception as e:
                     print(f'Failed to move {filepath}: {e}')
                 break
         else:
-            print(f'No folder match for {os.path.basename(filepath)} ({size:,} bytes)')
+            print(
+                f'No folder match for {os.path.basename(filepath)} ({size:,} bytes)'
+            )
 
     print(f'\nMoved {moved_count}/{len(files)} files successfully.')
 
@@ -115,7 +120,9 @@ def main():
 
     # Calculate optimal number of folders based on size range
     num_folders = calculate_optimal_folders(files)
-    print(f'Size range: {min(s[1] for s in files):,} - {max(s[1] for s in files):,} bytes')
+    print(
+        f'Size range: {min(s[1] for s in files):,} - {max(s[1] for s in files):,} bytes'
+    )
     print(f'Creating {num_folders} folders (range-based)')
 
     folders = create_range_folders(base_dir, files, num_folders)

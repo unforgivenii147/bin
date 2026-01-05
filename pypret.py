@@ -21,7 +21,8 @@ def beautify_json_file(file_path) -> bool | None:
         return False
 
 
-def beautify_code_file(file_path, beautify_function, asset_type) -> bool | None:
+def beautify_code_file(file_path, beautify_function,
+                       asset_type) -> bool | None:
     """Beautifies HTML, JS, or CSS files using jsbeautifier."""
     try:
         # 1. Read the original content

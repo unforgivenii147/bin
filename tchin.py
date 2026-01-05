@@ -20,7 +20,7 @@ def translator():
 
 
 def translate_text_chunked(text: str) -> str:
-    chunks = [text[i : i + CHUNK_SIZE] for i in range(0, len(text), CHUNK_SIZE)]
+    chunks = [text[i:i + CHUNK_SIZE] for i in range(0, len(text), CHUNK_SIZE)]
     out = []
     t = translator()
     for c in chunks:
@@ -42,7 +42,8 @@ def translate_python_file(content: str) -> str:
         stripped = line.strip()
 
         # Detect docstring start
-        if not in_docstring and (stripped.startswith('"""') or stripped.startswith("'''")):
+        if not in_docstring and (stripped.startswith('"""')
+                                 or stripped.startswith("'''")):
             in_docstring = True
             doc_delim = stripped[:3]
             # translate inside docstring
@@ -92,9 +93,12 @@ def translate_text_file(content: str) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Translate zh-CNpanese → English safely.')
+    parser = argparse.ArgumentParser(
+        description='Translate zh-CNpanese → English safely.')
     parser.add_argument('input_path')
-    parser.add_argument('--lang', default='zh-CN', help="Source language or 'auto'")
+    parser.add_argument('--lang',
+                        default='zh-CN',
+                        help="Source language or 'auto'")
     args = parser.parse_args()
 
     in_path = Path(args.input_path)

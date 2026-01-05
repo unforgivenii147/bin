@@ -21,7 +21,8 @@ def translate_filename(filename):
     """Translate non-English filename to English."""
     name, ext = os.path.splitext(filename)
     try:
-        translated = GoogleTranslator(source='auto', target='en').translate(name)
+        translated = GoogleTranslator(source='auto',
+                                      target='en').translate(name)
         return translated + ext
     except Exception as e:
         print(f'Translation error for {filename}: {e}')

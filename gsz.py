@@ -51,11 +51,13 @@ def get_branch_size(repo: str, branch: str) -> int:
     if response.status_code == 200:
         data = response.json()
         size_bytes = sum(
-            item.get('size', 0) for item in data.get('tree', []) if item['type'] == 'blob'
-        )
+            item.get('size', 0) for item in data.get('tree', [])
+            if item['type'] == 'blob')
         return size_bytes // 1024  # convert to KB
     else:
-        raise RuntimeError(f'Failed to fetch branch tree: {branch}, status {response.status_code}')
+        raise RuntimeError(
+            f'Failed to fetch branch tree: {branch}, status {response.status_code}'
+        )
 
 
 def format_size(kb: int) -> str:
@@ -67,7 +69,9 @@ def format_size(kb: int) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description='Check GitHub repo size')
     parser.add_argument('repo', help='Repo URL or user/repo')
-    parser.add_argument('--all-branches', action='store_true', help='Show size of all branches')
+    parser.add_argument('--all-branches',
+                        action='store_true',
+                        help='Show size of all branches')
     args = parser.parse_args()
 
     try:

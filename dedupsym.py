@@ -78,7 +78,8 @@ def build_groups(root: Path, cache: dict):
             size = st.st_size
             mtime = st.st_mtime
             cached = cache.get(key)
-            if cached and cached.get('size') == size and cached.get('mtime') == mtime:
+            if cached and cached.get('size') == size and cached.get(
+                    'mtime') == mtime:
                 h = cached['hash']
             else:
                 try:
@@ -123,7 +124,9 @@ def dedupe(root: Path, dry_run=False, force=False):
             # If stored exists but original still exists (rare), remove original before symlink
             if original.exists():
                 if dry_run:
-                    print(f'[DRY] remove original file before symlink: {original}')
+                    print(
+                        f'[DRY] remove original file before symlink: {original}'
+                    )
                 else:
                     original.unlink()
                     print(f'removed original file: {original}')
@@ -176,7 +179,8 @@ def restore(dry_run=False):
         for orig in originals:
             # if original exists and is not a symlink, skip
             if orig.exists() and not orig.is_symlink():
-                print(f'skipping restore for {orig} (exists and not a symlink)')
+                print(
+                    f'skipping restore for {orig} (exists and not a symlink)')
                 continue
             # if it's a symlink, ensure it points to our stored file
             if orig.is_symlink():
@@ -221,10 +225,16 @@ def restore(dry_run=False):
 
 def main():
     ap = argparse.ArgumentParser(
-        description='Deduplicate files by moving one copy to ~/dups and symlinking duplicates using xxhash.'
+        description=
+        'Deduplicate files by moving one copy to ~/dups and symlinking duplicates using xxhash.'
     )
-    ap.add_argument('path', nargs='?', default='.', help='Path to scan (default current directory)')
-    ap.add_argument('--dry-run', action='store_true', help='Show actions without making changes')
+    ap.add_argument('path',
+                    nargs='?',
+                    default='.',
+                    help='Path to scan (default current directory)')
+    ap.add_argument('--dry-run',
+                    action='store_true',
+                    help='Show actions without making changes')
     ap.add_argument(
         '--restore',
         action='store_true',

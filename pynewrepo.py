@@ -14,6 +14,7 @@ from typing import Optional, Tuple
 
 
 class GitHubRepoManager:
+
     def __init__(self, repo_name: Optional[str] = None):
         """Initialize the GitHub Repository Manager."""
         self.current_dir = Path.cwd()
@@ -47,12 +48,14 @@ class GitHubRepoManager:
 
     def _check_gh_cli_installed(self) -> bool:
         """Check if GitHub CLI (gh) is installed."""
-        returncode, _, _ = self._run_command(['gh', '--version'], capture_output=True)
+        returncode, _, _ = self._run_command(['gh', '--version'],
+                                             capture_output=True)
         return returncode == 0
 
     def _check_gh_authenticated(self) -> bool:
         """Check if GitHub CLI is authenticated."""
-        returncode, _, _ = self._run_command(['gh', 'auth', 'status'], capture_output=True)
+        returncode, _, _ = self._run_command(['gh', 'auth', 'status'],
+                                             capture_output=True)
         return returncode == 0
 
     def _repo_exists_locally(self) -> bool:
@@ -71,21 +74,25 @@ class GitHubRepoManager:
     def _get_remote_url(self) -> Optional[str]:
         """Get the current remote URL."""
         returncode, stdout, _ = self._run_command(
-            ['git', 'config', '--get', 'remote.origin.url'], capture_output=True
-        )
+            ['git', 'config', '--get', 'remote.origin.url'],
+            capture_output=True)
         return stdout if returncode == 0 and stdout else None
 
     def _init_local_repo(self):
         """Initialize local git repository."""
-        print(f'\n📦 Initializing local git repository in {self.current_dir}...')
-        returncode, stdout, stderr = self._run_command(['git', 'init'], capture_output=True)
+        print(
+            f'\n📦 Initializing local git repository in {self.current_dir}...')
+        returncode, stdout, stderr = self._run_command(['git', 'init'],
+                                                       capture_output=True)
         if returncode != 0 and 'Reinitialized' not in stderr and 'Initialized' not in stderr:
             print(f'Error initializing git repo:    {stderr}')
             sys.exit(1)
 
         # Configure git user for this repo
-        self._run_command(['git', 'config', 'user. name', self.git_user], capture_output=True)
-        self._run_command(['git', 'config', 'user.email', self.git_email], capture_output=True)
+        self._run_command(['git', 'config', 'user. name', self.git_user],
+                          capture_output=True)
+        self._run_command(['git', 'config', 'user.email', self.git_email],
+                          capture_output=True)
         print('✓ Local repository initialized')
 
     def _create_github_repo(self):
@@ -122,7 +129,8 @@ class GitHubRepoManager:
     def _stage_all_changes(self):
         """Stage all changes."""
         print('\n📝 Staging all changes...')
-        returncode, _, stderr = self._run_command(['git', 'add', '.'], capture_output=True)
+        returncode, _, stderr = self._run_command(['git', 'add', '.'],
+                                                  capture_output=True)
         if returncode != 0:
             print(f'Error staging changes:  {stderr}')
             sys.exit(1)
@@ -136,7 +144,9 @@ class GitHubRepoManager:
 
         # Filter out . git directory
         files = [f for f in files if f.name != '.git']
-        hidden_files = [f for f in hidden_files if f.name not in ['.git', '.', '..']]
+        hidden_files = [
+            f for f in hidden_files if f.name not in ['.git', '.', '..']
+        ]
 
         has_content = len(files) > 0 or len(hidden_files) > 0
 
@@ -159,8 +169,7 @@ class GitHubRepoManager:
 
         print(f"\n💾 Committing changes with message: '{message}'")
         returncode, stdout, stderr = self._run_command(
-            ['git', 'commit', '-m', message], capture_output=True
-        )
+            ['git', 'commit', '-m', message], capture_output=True)
         if returncode != 0:
             if 'nothing to commit' in stderr or 'nothing to commit' in stdout:
                 print('⚠️  Nothing to commit')
@@ -181,23 +190,24 @@ class GitHubRepoManager:
 
         # Check if remote already exists
         returncode, current_url, _ = self._run_command(
-            ['git', 'remote', 'get-url', 'origin'], capture_output=True
-        )
+            ['git', 'remote', 'get-url', 'origin'], capture_output=True)
 
         if returncode == 0 and current_url:
             if current_url == self.repo_url:
                 print("✓ Remote 'origin' already configured correctly")
                 return
             else:
-                print(f'Updating remote URL from {current_url} to {self.repo_url}')
-                self._run_command(
-                    ['git', 'remote', 'set-url', 'origin', self.repo_url], capture_output=True
+                print(
+                    f'Updating remote URL from {current_url} to {self.repo_url}'
                 )
+                self._run_command(
+                    ['git', 'remote', 'set-url', 'origin', self.repo_url],
+                    capture_output=True)
                 return
 
         returncode, _, stderr = self._run_command(
-            ['git', 'remote', 'add', 'origin', self.repo_url], capture_output=True
-        )
+            ['git', 'remote', 'add', 'origin', self.repo_url],
+            capture_output=True)
         if returncode != 0:
             print(f'Error adding remote: {stderr}')
             sys.exit(1)
@@ -208,17 +218,21 @@ class GitHubRepoManager:
         print(f'\n🚀 Pushing to GitHub ({branch} branch)...')
 
         returncode, stdout, stderr = self._run_command(
-            ['git', 'push', '-u', 'origin', branch], capture_output=True
-        )
+            ['git', 'push', '-u', 'origin', branch], capture_output=True)
 
         if returncode != 0:
             print(f'stdout: {stdout}')
             print(f'stderr: {stderr}')
             if 'permission denied' in stderr.lower():
-                print(f'Error:  Permission denied.  Check your GitHub credentials.')
+                print(
+                    f'Error:  Permission denied.  Check your GitHub credentials.'
+                )
                 sys.exit(1)
-            elif 'not found' in stderr.lower() or 'does not appear' in stderr.lower():
-                print(f"Note: Remote branch '{branch}' doesn't exist yet (creating on push)")
+            elif 'not found' in stderr.lower(
+            ) or 'does not appear' in stderr.lower():
+                print(
+                    f"Note: Remote branch '{branch}' doesn't exist yet (creating on push)"
+                )
             else:
                 print(f'Warning: Push encountered an issue: {stderr}')
 
@@ -227,14 +241,12 @@ class GitHubRepoManager:
     def _rename_branch_to_main(self):
         """Rename current branch to 'main' if it's not already."""
         returncode, current_branch, _ = self._run_command(
-            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'], capture_output=True
-        )
+            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'], capture_output=True)
 
         if returncode == 0 and current_branch and current_branch != 'main':
             print(f"\n🔄 Renaming branch from '{current_branch}' to 'main'...")
             returncode, _, stderr = self._run_command(
-                ['git', 'branch', '-M', 'main'], capture_output=True
-            )
+                ['git', 'branch', '-M', 'main'], capture_output=True)
             if returncode != 0:
                 print(f'Warning: Could not rename branch: {stderr}')
 
@@ -299,7 +311,8 @@ class GitHubRepoManager:
             use_existing = self.handle_existing_repo()
             if not use_existing:
                 # Remove old remote if exists
-                self._run_command(['git', 'remote', 'remove', 'origin'], capture_output=True)
+                self._run_command(['git', 'remote', 'remove', 'origin'],
+                                  capture_output=True)
         else:
             # Initialize new repo
             self._init_local_repo()
@@ -325,7 +338,9 @@ class GitHubRepoManager:
 
                 print('\n' + '=' * 60)
                 print('✅ Success! Repository created and pushed to GitHub')
-                print(f'Repository URL: https://github.com/{self.github_username}/{self.repo_name}')
+                print(
+                    f'Repository URL: https://github.com/{self.github_username}/{self.repo_name}'
+                )
                 print('=' * 60)
             else:
                 print(f'\n❌ Failed to create repository on GitHub')
@@ -338,7 +353,8 @@ class GitHubRepoManager:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description='Create a GitHub repository using gh CLI and auto-commit with current date/time'
+        description=
+        'Create a GitHub repository using gh CLI and auto-commit with current date/time'
     )
     parser.add_argument(
         '-n',

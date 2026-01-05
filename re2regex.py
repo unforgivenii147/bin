@@ -41,11 +41,11 @@ def update_file(file_path, reverse=False):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Recursively swap 'import re' with 'import regex as re'"
-    )
-    parser.add_argument(
-        '-r', '--reverse', action='store_true', help='Reverse the replacement (regex as re -> re)'
-    )
+        description="Recursively swap 'import re' with 'import regex as re'")
+    parser.add_argument('-r',
+                        '--reverse',
+                        action='store_true',
+                        help='Reverse the replacement (regex as re -> re)')
     args = parser.parse_args()
 
     # Gather all .py files recursively
@@ -56,7 +56,9 @@ def main():
     # Use ProcessPoolExecutor for parallel processing
     with ProcessPoolExecutor() as executor:
         # Map the update function to all found files
-        results = list(executor.map(update_file, py_files, [args.reverse] * len(py_files)))
+        results = list(
+            executor.map(update_file, py_files,
+                         [args.reverse] * len(py_files)))
 
     # Filter and print results
     updates = [r for r in results if r]
