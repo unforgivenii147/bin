@@ -23,5 +23,4 @@ soniq = list(set(cmdline_section))
 
 with open(output_file, 'a') as file:
     for cmd in soniq:
-        print(str(cmd))
         file.write(cmd + '\n')
