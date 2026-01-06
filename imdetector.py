@@ -8,21 +8,21 @@ import ast
 import os
 from typing import List
 
-OUTPUT_FILE = "found.txt"
+OUTPUT_FILE = 'found.txt'
 
 
 def is_probably_python(path: str) -> bool:
     try:
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
             head = f.read(2048)
-        return "import " in head or "def " in head or "class " in head
+        return 'import ' in head or 'def ' in head or 'class ' in head
     except Exception:
         return False
 
 
 def has_late_import(path: str) -> bool:
     try:
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
             code = f.read()
         tree = ast.parse(code)
     except Exception:
@@ -49,7 +49,7 @@ def find_files(root: str) -> List[str]:
         for name in filenames:
             path = os.path.join(dirpath, name)
 
-            if not name.endswith(".py") and not is_probably_python(path):
+            if not name.endswith('.py') and not is_probably_python(path):
                 continue
 
             if has_late_import(path):
@@ -61,13 +61,13 @@ def find_files(root: str) -> List[str]:
 def main() -> None:
     matches = find_files(os.getcwd())
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+    with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         for path in matches:
-            f.write(path + "\n")
+            f.write(path + '\n')
 
-    print(f"Found {len(matches)} files with late imports.")
-    print(f"Results saved to {OUTPUT_FILE}")
+    print(f'Found {len(matches)} files with late imports.')
+    print(f'Results saved to {OUTPUT_FILE}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

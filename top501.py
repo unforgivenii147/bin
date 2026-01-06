@@ -15,7 +15,7 @@ def process_file(file_path, text_extensions):
     if not is_text_file(file_path, text_extensions):
         return Counter()
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             return Counter(line.strip() for line in f if line.strip())
     except (UnicodeDecodeError, PermissionError):
         return Counter()
@@ -23,7 +23,7 @@ def process_file(file_path, text_extensions):
 
 def collect_top_lines(directory, text_extensions, top_n=500):
     for ext in text_extensions:
-        print(f"\nProcessing {ext} files...")
+        print(f'\nProcessing {ext} files...')
         lines_counter = Counter()
         file_paths = [
             Path(root) / file
@@ -32,9 +32,9 @@ def collect_top_lines(directory, text_extensions, top_n=500):
             if is_text_file(Path(root) / file, {ext})
         ]
         if not file_paths:
-            print(f"No {ext} files found. Skipping...")
+            print(f'No {ext} files found. Skipping...')
             continue
-        print(f"Found {len(file_paths)} {ext} files. Processing in parallel...")
+        print(f'Found {len(file_paths)} {ext} files. Processing in parallel...')
         start_time = time.time()
         with Pool(cpu_count()) as pool:
             results = pool.starmap(
@@ -44,23 +44,23 @@ def collect_top_lines(directory, text_extensions, top_n=500):
         for result in results:
             lines_counter.update(result)
         # Save top lines for the current extension
-        output_file = f"/sdcard/top500{ext}.txt"
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(f"Top {top_n} most frequent lines for {ext} files:\n\n")
+        output_file = f'/sdcard/top500{ext}.txt'
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(f'Top {top_n} most frequent lines for {ext} files:\n\n')
             for line, count in lines_counter.most_common(top_n):
-                f.write(f"{count}: {line}\n")
+                f.write(f'{count}: {line}\n')
         elapsed = time.time() - start_time
         print(
-            f"Saved top {top_n} lines for {ext} files to {output_file} (took {elapsed:.2f} seconds)"
+            f'Saved top {top_n} lines for {ext} files to {output_file} (took {elapsed:.2f} seconds)'
         )
 
 
 def main():
     # Common text file extensions
-    text_extensions = {".h", ".hpp"}
+    text_extensions = {'.h', '.hpp'}
     # Collect and save top lines
-    collect_top_lines(".", text_extensions, top_n=500)
+    collect_top_lines('.', text_extensions, top_n=500)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

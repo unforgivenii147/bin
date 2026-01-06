@@ -21,18 +21,18 @@ from pathlib import Path
 
 MAX_WORKERS = 8
 TEXT_CHUNK = 8192
-EXCLUDED_DIRS = {".git"}
-WHITELIST_FILE = Path("/sdcard/txt")
-BIN_EXT = Path("/sdcard/bin")
+EXCLUDED_DIRS = {'.git'}
+WHITELIST_FILE = Path('/sdcard/txt')
+BIN_EXT = Path('/sdcard/bin')
 
 
 def load_bin():
     if not BIN_EXT.exists():
-        sys.exit("error : file not found")
+        sys.exit('error : file not found')
     exts = set()
     for line in BIN_EXT.read_text().splitlines():
         line = line.strip().lower()
-        if not line or line.startswith("#"):
+        if not line or line.startswith('#'):
             continue
         exts.add(f'.{line.lstrip(".")}')
     return exts
@@ -40,20 +40,20 @@ def load_bin():
 
 def load_extension_whitelist() -> set[str]:
     if not WHITELIST_FILE.exists():
-        sys.exit("Error: text_based.txt not found")
+        sys.exit('Error: text_based.txt not found')
 
     exts = set()
     for line in WHITELIST_FILE.read_text().splitlines():
         line = line.strip().lower()
-        if line and not line.startswith("#"):
+        if line and not line.startswith('#'):
             exts.add(f'.{line.lstrip(".")}')
     return exts
 
 
 def is_text_file(path: Path) -> bool:
     try:
-        with open(path, "rb") as f:
-            return b"\x00" not in f.read(TEXT_CHUNK)
+        with open(path, 'rb') as f:
+            return b'\x00' not in f.read(TEXT_CHUNK)
     except OSError:
         return False
 
@@ -87,29 +87,29 @@ def clean_file(
     path: Path, whitelist: set[str], blacklist: set[str], collapse: bool
 ) -> tuple[bool, int, str]:
     if path.suffix.lower() in blacklist:
-        return False, 0, ""
+        return False, 0, ''
 
     if path.suffix.lower() not in whitelist:
-        return False, 0, ""
+        return False, 0, ''
 
     if not is_text_file(path):
-        return False, 0, ""
+        return False, 0, ''
 
     try:
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
             lines = f.readlines()
 
         cleaned, removed = clean_lines(lines, collapse)
 
         if removed == 0:
-            return False, 0, ""
+            return False, 0, ''
 
-        with open(path, "w", encoding="utf-8", errors="ignore") as f:
+        with open(path, 'w', encoding='utf-8', errors='ignore') as f:
             f.writelines(cleaned)
 
         return True, removed, path.suffix.lower()
     except Exception:
-        return False, 0, ""
+        return False, 0, ''
 
 
 def iter_files(root: Path):
@@ -121,7 +121,7 @@ def iter_files(root: Path):
 
 def main() -> None:
     blacklist = load_bin()
-    collapse = "--collapse" in sys.argv
+    collapse = '--collapse' in sys.argv
     #    collapse = True
     whitelist = load_extension_whitelist()
     root = Path.cwd()
@@ -133,10 +133,7 @@ def main() -> None:
     files = list(iter_files(root))
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = {
-            executor.submit(clean_file, f, whitelist, blacklist, collapse): f
-            for f in files
-        }
+        futures = {executor.submit(clean_file, f, whitelist, blacklist, collapse): f for f in files}
 
         for future in as_completed(futures):
             changed, removed, ext = future.result()
@@ -145,15 +142,15 @@ def main() -> None:
                 total_removed += removed
                 per_ext[ext] += removed
 
-    print("\n✓ done")
-    print(f"  files modified: {modified_files}")
-    print(f"  blank lines removed: {total_removed}")
+    print('\n✓ done')
+    print(f'  files modified: {modified_files}')
+    print(f'  blank lines removed: {total_removed}')
 
     if per_ext:
-        print("\n  per-extension:")
+        print('\n  per-extension:')
         for ext, count in sorted(per_ext.items()):
-            print(f"    {ext}: {count}")
+            print(f'    {ext}: {count}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

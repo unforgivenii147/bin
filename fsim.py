@@ -6,7 +6,7 @@ import sys
 import ssdeep
 
 
-def get_all_files(root="."):
+def get_all_files(root='.'):
     """Recursively collect all file paths under root."""
     file_paths = []
     for dirpath, _, filenames in os.walk(root):
@@ -21,11 +21,11 @@ def compute_hashes(files):
     hashes = {}
     for f in files:
         try:
-            with open(f, "rb") as fh:
+            with open(f, 'rb') as fh:
                 data = fh.read()
                 hashes[f] = ssdeep.hash(data)
         except Exception as e:
-            print(f"Skipping {f}: {e}")
+            print(f'Skipping {f}: {e}')
     return hashes
 
 
@@ -52,44 +52,44 @@ def group_similar_files(hashes, threshold):
     return groups
 
 
-def copy_groups(groups, output_dir="output"):
+def copy_groups(groups, output_dir='output'):
     """Copy grouped files into output directory."""
     os.makedirs(output_dir, exist_ok=True)
     for idx, group in enumerate(groups, start=1):
-        group_dir = os.path.join(output_dir, f"group_{idx}")
+        group_dir = os.path.join(output_dir, f'group_{idx}')
         os.makedirs(group_dir, exist_ok=True)
         for f in group:
             try:
                 shutil.copy2(f, group_dir)
             except Exception as e:
-                print(f"Failed to copy {f}: {e}")
+                print(f'Failed to copy {f}: {e}')
 
 
 def main():
     if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <threshold>")
+        print(f'Usage: {sys.argv[0]} <threshold>')
         sys.exit(1)
 
     try:
         threshold = int(sys.argv[1])
     except ValueError:
-        print("Threshold must be an integer (0–100).")
+        print('Threshold must be an integer (0–100).')
         sys.exit(1)
 
-    files = get_all_files(".")
-    print(f"Found {len(files)} files. Computing hashes...")
+    files = get_all_files('.')
+    print(f'Found {len(files)} files. Computing hashes...')
     hashes = compute_hashes(files)
 
-    print("Comparing files...")
+    print('Comparing files...')
     groups = group_similar_files(hashes, threshold)
 
     if not groups:
-        print("No similar files found.")
+        print('No similar files found.')
     else:
-        print(f"Found {len(groups)} groups of similar files.")
+        print(f'Found {len(groups)} groups of similar files.')
         copy_groups(groups)
         print("Copied groups to 'output' directory.")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

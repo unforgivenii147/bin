@@ -22,10 +22,8 @@ def create_size_folders(base_dir, target_count=100):
     folders = []
     size = 1000  # Start from 1k
     while len(folders) < target_count:
-        next_size = (
-            size * 2 if size < 100000 else size + 200000
-        )  # Exponential then linear growth
-        folder_name = f"{size // 1000}k-{next_size // 1000}k"
+        next_size = size * 2 if size < 100000 else size + 200000  # Exponential then linear growth
+        folder_name = f'{size // 1000}k-{next_size // 1000}k'
         folders.append((size, next_size, folder_name))
         size = next_size
     for _, _, folder_name in folders:
@@ -62,35 +60,33 @@ def distribute_files(files, folders, base_dir):
 
         try:
             shutil.move(filepath, dest_path)
-            print(
-                f"Moved {os.path.basename(filepath)} ({size} bytes) to {folders[folder_idx][2]}"
-            )
+            print(f'Moved {os.path.basename(filepath)} ({size} bytes) to {folders[folder_idx][2]}')
         except Exception as e:
-            print(f"Failed to move {filepath}: {e}")
+            print(f'Failed to move {filepath}: {e}')
 
         # Distribute evenly
         folder_idx = (folder_idx + 1) % num_folders
 
 
 def main():
-    base_dir = Path(".").resolve()
-    print(f"Processing files in: {base_dir}")
+    base_dir = Path('.').resolve()
+    print(f'Processing files in: {base_dir}')
 
     files = get_all_files(base_dir)
     if not files:
-        print("No files found.")
+        print('No files found.')
         return
 
-    print(f"Found {len(files)} files.")
+    print(f'Found {len(files)} files.')
 
     # Create enough folders for even distribution
     num_folders = min(20, (len(files) + 99) // 100)  # ~100 files per folder
     folders = create_size_folders(base_dir, num_folders)
 
-    print(f"Created {len(folders)} size-based folders.")
+    print(f'Created {len(folders)} size-based folders.')
     distribute_files(files, folders, base_dir)
-    print("Folderization complete!")
+    print('Folderization complete!')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

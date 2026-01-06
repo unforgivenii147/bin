@@ -5,15 +5,15 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor
 
 # List of file extensions to search for
-FILE_EXTENSIONS = {".c", ".cpp", ".cxx", ".cc", ".h", ".hh", ".hpp", ".hxx"}
+FILE_EXTENSIONS = {'.c', '.cpp', '.cxx', '.cc', '.h', '.hh', '.hpp', '.hxx'}
 
 
 def format_file(file_path):
-    print(f"formating {os.path.relpath(file_path)}")
+    print(f'formating {os.path.relpath(file_path)}')
     try:
         # Running an external command like clang-format releases the GIL,
         # allowing threads to run concurrently while waiting for the command.
-        subprocess.run(["clang-format", "-i", file_path], check=True)
+        subprocess.run(['clang-format', '-i', file_path], check=True)
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
@@ -21,7 +21,7 @@ def format_file(file_path):
 
 def find_files():
     all_files = []
-    for root, _, files in os.walk("."):
+    for root, _, files in os.walk('.'):
         for file in files:
             if any(file.endswith(ext) for ext in FILE_EXTENSIONS):
                 all_files.append(os.path.join(root, file))
@@ -32,10 +32,10 @@ def main() -> None:
     start = perf_counter()
     files_to_format = find_files()
     if not files_to_format:
-        print("No files found.")
+        print('No files found.')
         return
 
-    print(f"Formatting {len(files_to_format)} files using ThreadPoolExecutor...")
+    print(f'Formatting {len(files_to_format)} files using ThreadPoolExecutor...')
 
     count = 0
     # ThreadPoolExecutor is lightweight and doesn't require pickling arguments
@@ -43,8 +43,8 @@ def main() -> None:
         results = executor.map(format_file, files_to_format)
         count = sum(1 for success in results if success)
 
-    print(f"{perf_counter() - start} secs")
+    print(f'{perf_counter() - start} secs')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

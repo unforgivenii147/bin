@@ -12,8 +12,8 @@ import rignore
 from deep_translator import GoogleTranslator
 from tqdm import tqdm
 
-DIRECTORY = "."
-non_english_pattern = re.compile(r"[^\x00-\x7F]")
+DIRECTORY = '.'
+non_english_pattern = re.compile(r'[^\x00-\x7F]')
 
 
 def is_english(text: str) -> bool:
@@ -26,7 +26,7 @@ def chunk_text(text: str, size: int = 800) -> list[str]:
 
 def translate_chunk(chunk: str) -> str:
     try:
-        result = GoogleTranslator(source="auto", target="en").translate(chunk)
+        result = GoogleTranslator(source='auto', target='en').translate(chunk)
         return result if result else chunk
     except Exception:
         return chunk
@@ -36,13 +36,13 @@ def translate_text(text: str) -> str:
     chunks = chunk_text(text)
     with Pool(cpu_count()) as pool:
         translated = list(pool.imap(translate_chunk, chunks))
-    return "".join(translated)
+    return ''.join(translated)
 
 
 def safe_overwrite(filepath: Path, content: str) -> None:
     with tempfile.NamedTemporaryFile(
-        mode="w",
-        encoding="utf-8",
+        mode='w',
+        encoding='utf-8',
         delete=False,
         dir=filepath.parent,
     ) as tmp:
@@ -58,9 +58,7 @@ def extract_docstrings(tree: ast.AST) -> dict[int, str]:
     docstrings = {}
 
     for node in ast.walk(tree):
-        if isinstance(
-            node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
-        ):
+        if isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             doc = ast.get_docstring(node, clean=False)
             if doc and not is_english(doc):
                 docstrings[id(node)] = doc
@@ -82,18 +80,18 @@ def translate_python_file(source: str) -> str:
             tok_str = translate_text(tok_str)
 
         elif tok_type == tokenize.STRING:
-            stripped = tok_str.strip("'\"")
+            stripped = tok_str.strip('\'"')
             if not is_english(stripped):
                 try:
                     translated = translate_text(stripped)
                     quote = tok_str[0]
-                    tok_str = f"{quote}{translated}{quote}"
+                    tok_str = f'{quote}{translated}{quote}'
                 except Exception:
                     pass
 
         output.append(tok_str)
 
-    return "".join(output)
+    return ''.join(output)
 
 
 # ---------- FILE PROCESSING ----------
@@ -103,21 +101,21 @@ def process_files(directory: str) -> None:
     paths = [Path(p) for p in rignore.walk(directory)]
     files = [p for p in paths if p.is_file()]
 
-    for fp in tqdm(files, desc="Scanning files"):
+    for fp in tqdm(files, desc='Scanning files'):
         suffix = fp.suffix.lower()
 
-        if suffix not in {".txt", ".md", ".srt", ".json", ".html", ".py"}:
+        if suffix not in {'.txt', '.md', '.srt', '.json', '.html', '.py'}:
             continue
 
         try:
-            original = fp.read_text(encoding="utf-8", errors="ignore")
+            original = fp.read_text(encoding='utf-8', errors='ignore')
         except Exception:
             continue
 
         if is_english(original.strip()):
             continue
 
-        if suffix == ".py":
+        if suffix == '.py':
             translated = translate_python_file(original)
         else:
             translated = translate_text(original)
@@ -126,8 +124,8 @@ def process_files(directory: str) -> None:
             continue
 
         safe_overwrite(fp, translated)
-        print(f"Translated safely: {fp}")
+        print(f'Translated safely: {fp}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     process_files(DIRECTORY)

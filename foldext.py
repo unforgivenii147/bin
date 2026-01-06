@@ -3,7 +3,7 @@ import os
 import shutil
 
 BASE_DIR = os.getcwd()
-NO_EXT_DIR = "_no_ext"
+NO_EXT_DIR = '_no_ext'
 
 
 def folderize_by_extension(base_dir: str):
@@ -12,8 +12,7 @@ def folderize_by_extension(base_dir: str):
         dirs[:] = [
             d
             for d in dirs
-            if not os.path.samefile(os.path.join(root, d), base_dir)
-            or d.startswith(".")
+            if not os.path.samefile(os.path.join(root, d), base_dir) or d.startswith('.')
         ]
 
         for filename in files:
@@ -24,7 +23,7 @@ def folderize_by_extension(base_dir: str):
                 continue
 
             name, ext = os.path.splitext(filename)
-            ext = ext.lower().lstrip(".")
+            ext = ext.lower().lstrip('.')
 
             target_dir = ext if ext else NO_EXT_DIR
             target_path = os.path.join(base_dir, target_dir)
@@ -38,11 +37,11 @@ def folderize_by_extension(base_dir: str):
                 base, extension = os.path.splitext(filename)
                 i = 1
                 while os.path.exists(dest_path):
-                    dest_path = os.path.join(target_path, f"{base}_{i}{extension}")
+                    dest_path = os.path.join(target_path, f'{base}_{i}{extension}')
                     i += 1
 
             shutil.move(src_path, dest_path)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     folderize_by_extension(BASE_DIR)

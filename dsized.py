@@ -10,7 +10,6 @@ import os
 
 MAX_DOWNLOAD_SIZE = 1 * 1024 * 1024  # 1 MB
 
-
 def fetch_content_length(url: str) -> int | None:
     """Try to fetch Content-Length via HEAD or partial GET."""
     request = urllib.request.Request(url, method="HEAD")
@@ -30,7 +29,6 @@ def fetch_content_length(url: str) -> int | None:
         length = response.headers.get("Content-Length")
         return int(length) if length else None
 
-
 def format_size(size_bytes: int) -> str:
     units = ["B", "KB", "MB", "GB", "TB"]
     size = float(size_bytes)
@@ -39,7 +37,6 @@ def format_size(size_bytes: int) -> str:
             return f"{size:.2f} {unit}"
         size /= 1024
     return f"{size:.2f} PB"
-
 
 def download_file(url: str, dest_dir: Path) -> None:
     """Download file to dest_dir using last path component as filename."""
@@ -50,7 +47,6 @@ def download_file(url: str, dest_dir: Path) -> None:
         print(f"Downloaded: {dest_file}")
     except Exception as e:
         print(f"Failed to download {url}: {e}")
-
 
 def process_url(url: str, download_dir: Path | None = None) -> str:
     """Fetch size and optionally download if under limit."""
@@ -64,12 +60,8 @@ def process_url(url: str, download_dir: Path | None = None) -> str:
 
         # Ask user if they want to download the file
         if download_dir and size <= MAX_DOWNLOAD_SIZE:
-            user_input = (
-                input(f"Do you want to download this file (size: {size_str})? (y/n): ")
-                .strip()
-                .lower()
-            )
-            if user_input == "y":
+            user_input = input(f"Do you want to download this file (size: {size_str})? (y/n): ").strip().lower()
+            if user_input == 'y':
                 download_file(url, download_dir)
             else:
                 print("Download skipped.")
@@ -80,14 +72,14 @@ def process_url(url: str, download_dir: Path | None = None) -> str:
     except Exception as exc:
         return f"{url}\tError: {exc}"
 
-
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Show download size of a URL or URLs from a file"
     )
     parser.add_argument("input", help="Download URL or file containing URLs")
     parser.add_argument(
-        "-d", "--download", help="Directory to download files smaller than 1MB"
+        "-d", "--download",
+        help="Directory to download files smaller than 1MB"
     )
     args = parser.parse_args()
 
@@ -109,7 +101,6 @@ def main() -> None:
         print(f"Updated file: {input_path} ({len(updated_lines)} URLs processed)")
     else:
         print(process_url(args.input, download_dir))
-
 
 if __name__ == "__main__":
     main()

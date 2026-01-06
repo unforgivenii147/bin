@@ -20,16 +20,16 @@ def is_python_file(file_path):
         bool: True if file is a Python file, False otherwise
     """
     # Check if it has .py extension
-    if file_path.suffix == ".py":
+    if file_path.suffix == '.py':
         return True
 
     # For files without extension, check the shebang
-    if file_path.suffix == "":
+    if file_path.suffix == '':
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 first_line = f.readline()
                 # Check for Python shebang
-                if first_line.startswith("#!") and "python" in first_line.lower():
+                if first_line.startswith('#!') and 'python' in first_line.lower():
                     return True
         except (UnicodeDecodeError, PermissionError, IsADirectoryError):
             # Skip binary files, permission denied, or directories
@@ -49,7 +49,7 @@ def process_file(file_path):
         bool: True if file was modified, False otherwise
     """
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
 
         original_content = content
@@ -65,24 +65,24 @@ def process_file(file_path):
         # - 'from re import ...'
 
         # Replace standalone 'import re'
-        replacement = r"^(\s*)import\s+re\s*($|#)"
-        pattern = r"\1import regex as re\2"
+        replacement = r'^(\s*)import\s+re\s*($|#)'
+        pattern = r'\1import regex as re\2'
         content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
 
         # Check if content was modified
         if content != original_content:
-            with open(file_path, "w", encoding="utf-8") as f:
+            with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             return True
 
         return False
 
     except Exception as e:
-        print(f"Error processing {file_path}: {e}")
+        print(f'Error processing {file_path}: {e}')
         return False
 
 
-def find_and_process_python_files(root_dir="."):
+def find_and_process_python_files(root_dir='.'):
     """
     Find all Python files recursively and process them.
 
@@ -94,40 +94,40 @@ def find_and_process_python_files(root_dir="."):
     total_files = 0
 
     # Directories to skip
-    skip_dirs = {".git"}
+    skip_dirs = {'.git'}
 
     # Walk through all files recursively
-    for item in root_path.rglob("*"):
+    for item in root_path.rglob('*'):
         # Skip if it's a directory
         if item.is_dir():
             continue
 
         # Skip files in excluded directories
-        if any(part in skip_dirs or part.startswith(".") for part in item.parts):
+        if any(part in skip_dirs or part.startswith('.') for part in item.parts):
             continue
 
         # Check if it's a Python file
         if is_python_file(item):
             total_files += 1
-            file_type = f"(.py)" if item.suffix == ".py" else "(no ext)"
-            print(f"Processing {file_type}: {item}")
+            file_type = f'(.py)' if item.suffix == '.py' else '(no ext)'
+            print(f'Processing {file_type}: {item}')
 
             if process_file(item):
                 modified_files.append(item)
-                print(f"  ✓ Modified")
+                print(f'  ✓ Modified')
             else:
-                print(f"  - No changes needed")
+                print(f'  - No changes needed')
 
     # Print summary
-    print("\n" + "=" * 60)
-    print(f"Summary:")
-    print(f"  Total Python files processed: {total_files}")
-    print(f"  Files modified: {len(modified_files)}")
+    print('\n' + '=' * 60)
+    print(f'Summary:')
+    print(f'  Total Python files processed: {total_files}')
+    print(f'  Files modified: {len(modified_files)}')
 
     if modified_files:
-        print(f"\nModified files:")
+        print(f'\nModified files:')
         for file in modified_files:
-            print(f"  - {file}")
+            print(f'  - {file}')
 
 
 def main():
@@ -138,28 +138,7 @@ def main():
         description="Replace 'import re' with 'import regex as re' in Python files recursively."
     )
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show what would be changed without modifying files",
+        '--dry-run', action='store_true', help='Show what would be changed without modifying files'
     )
     parser.add_argument(
-        "directory",
-        nargs="?",
-        default=".",
-        help="Directory to process (default: current directory)",
-    )
-
-    args = parser.parse_args()
-
-    print("processing '...")
-    print(f"{os.path.abspath(args.directory)}\n")
-
-    if args.dry_run:
-        print("\n*** DRY RUN MODE - No files will be modified ***\n")
-
-    find_and_process_python_files(args.directory)
-    print("\nDone!")
-
-
-if __name__ == "__main__":
-    main()
+     

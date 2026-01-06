@@ -2,7 +2,7 @@
 import pdfminer.six
 from pypdf import PdfReader, PdfWriter
 
-reader = PdfReader("py.pdf", strict=False)
+reader = PdfReader('py.pdf', strict=False)
 writer = PdfWriter()
 
 for page in reader.pages:
@@ -10,5 +10,5 @@ for page in reader.pages:
     print(text)
     writer.add_page(page)
 
-with open("fixed.pdf", "wb") as f:
+with open('fixed.pdf', 'wb') as f:
     writer.write(f)

@@ -28,12 +28,12 @@ from tqdm import tqdm
 
 def is_binary(path: Path) -> bool:
     try:
-        with path.open("rb") as f:
+        with path.open('rb') as f:
             chunk = f.read(4096)
-        if b"\x00" in chunk:
+        if b'\x00' in chunk:
             return True
 
-        text_chars = bytearray(range(32, 127)) + b"\n\r\t\b"
+        text_chars = bytearray(range(32, 127)) + b'\n\r\t\b'
         nontext = sum(1 for b in chunk if b not in text_chars)
         return nontext / max(len(chunk), 1) > 0.30
     except Exception:
@@ -48,10 +48,10 @@ def is_binary(path: Path) -> bool:
 def needs_conversion(path: Path) -> bool:
     try:
         with (
-            path.open("rb") as f,
+            path.open('rb') as f,
             mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm,
         ):
-            return mm.find(b"\r\n") != -1
+            return mm.find(b'\r\n') != -1
     except Exception:
         return False
 
@@ -62,10 +62,10 @@ def needs_conversion(path: Path) -> bool:
 
 
 def convert_in_place(path: Path) -> None:
-    with path.open("r+b") as f:
+    with path.open('r+b') as f:
         with mmap.mmap(f.fileno(), 0) as mm:
             data = mm[:]
-            new = data.replace(b"\r\n", b"\n")
+            new = data.replace(b'\r\n', b'\n')
             if new == data:
                 return
             mm.seek(0)
@@ -75,13 +75,13 @@ def convert_in_place(path: Path) -> None:
 
 
 def convert_with_temp(path: Path) -> None:
-    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp = path.with_suffix(path.suffix + '.tmp')
     with (
-        path.open("r", encoding="utf-8", errors="ignore", newline="") as src,
-        tmp.open("w", encoding="utf-8", newline="") as dst,
+        path.open('r', encoding='utf-8', errors='ignore', newline='') as src,
+        tmp.open('w', encoding='utf-8', newline='') as dst,
     ):
         for line in src:
-            dst.write(line.replace("\r\n", "\n"))
+            dst.write(line.replace('\r\n', '\n'))
     os.replace(tmp, path)
 
 
@@ -92,26 +92,26 @@ def convert_with_temp(path: Path) -> None:
 
 def safe_convert(path: Path, dry_run: bool = False) -> str:
     if not path.is_file():
-        return "SKIP_NOT_FILE"
+        return 'SKIP_NOT_FILE'
 
     if is_binary(path):
-        return "SKIP_BINARY"
+        return 'SKIP_BINARY'
 
     if not needs_conversion(path):
-        return "SKIP_ALREADY_UNIX"
+        return 'SKIP_ALREADY_UNIX'
 
     if dry_run:
-        return "DRY_RUN"
+        return 'DRY_RUN'
 
     try:
         convert_in_place(path)
-        return "CONVERTED_MMAP"
+        return 'CONVERTED_MMAP'
     except Exception:
         try:
             convert_with_temp(path)
-            return "CONVERTED_TEMP"
+            return 'CONVERTED_TEMP'
         except Exception:
-            return "ERROR"
+            return 'ERROR'
 
 
 # ----------------------------------------------------
@@ -126,9 +126,9 @@ def scan_paths(inputs, recursive: bool, excludes) -> list[Path]:
         p = Path(inp)
         if p.is_dir():
             if recursive:
-                result.extend(p.rglob("*"))
+                result.extend(p.rglob('*'))
             else:
-                result.extend(p.glob("*"))
+                result.extend(p.glob('*'))
         else:
             result.append(p)
 
@@ -149,8 +149,8 @@ def scan_paths(inputs, recursive: bool, excludes) -> list[Path]:
 def worker(args):
     path, dry = args
     res = safe_convert(path, dry_run=dry)
-    if res == "ERROR":
-        logging.error(f"Failed to convert: {path}")
+    if res == 'ERROR':
+        logging.error(f'Failed to convert: {path}')
     return res
 
 
@@ -161,56 +161,4 @@ def worker(args):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Fast dos2unix converter with mmap, tqdm, error logging."
-    )
-
-    parser.add_argument("paths", nargs="*", help="Files or directories.")
-    parser.add_argument("--recursive", action="store_true")
-    parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--parallel", type=int, default=1)
-    parser.add_argument("--chunksize", type=int, default=50)
-    parser.add_argument("--exclude", nargs="*", default=[])
-    parser.add_argument("--verbose", action="store_true")
-
-    return parser.parse_args()
-
-
-# ----------------------------------------------------
-# Main
-# ----------------------------------------------------
-
-
-def main() -> None:
-    args = parse_args()
-
-    # Default: process "." recursively when no arguments
-    if not args.paths:
-        args.paths = ["."]
-        args.recursive = True
-
-    # Setup error-only log file
-    log_dir = Path.home() / "tmp"
-    log_dir.mkdir(exist_ok=True)
-    log_file = log_dir / "pydos2unix.log"
-
-    logging.basicConfig(
-        filename=str(log_file),
-        level=logging.ERROR,
-        format="%(asctime)s %(levelname)s: %(message)s",
-    )
-
-    files = scan_paths(args.paths, args.recursive, args.exclude)
-    tasks = [(p, args.dry_run) for p in files]
-
-    if args.parallel > 1:
-        with Pool(args.parallel) as pool:
-            with tqdm(total=len(tasks), unit="file") as bar:
-                for _ in pool.imap_unordered(worker, tasks, chunksize=args.chunksize):
-                    bar.update(1)
-    else:
-        for task in tqdm(tasks, unit="file"):
-            worker(task)
-
-
-if __name__ == "__main__":
-    main()
+        description='Fast dos2unix converter with mmap, tqdm, error logging.'

@@ -35,7 +35,7 @@ import regex as re
 from tqdm import tqdm
 
 # Default cache file (in project dir)
-CACHE_FILE = ".reqcache.json"
+CACHE_FILE = '.reqcache.json'
 
 # ----------------------------- Utilities -----------------------------------
 
@@ -47,23 +47,23 @@ def fast_hash(path: Path) -> str:
         stat = path.stat()
         h.update(str(stat.st_size).encode())
         h.update(str(int(stat.st_mtime)).encode())
-        with open(path, "rb") as f:
+        with open(path, 'rb') as f:
             h.update(f.read(4096))
         return h.hexdigest()
     except Exception:
-        return "0"
+        return '0'
 
 
 def load_json(path: Path) -> dict:
     try:
-        with open(path, encoding="utf-8", errors="ignore") as f:
+        with open(path, encoding='utf-8', errors='ignore') as f:
             return json.load(f)
     except Exception:
         return {}
 
 
 def save_json(path: Path, obj: dict) -> None:
-    with open(path, "w", encoding="utf-8") as f:
+    with open(path, 'w', encoding='utf-8') as f:
         json.dump(obj, f, indent=2, sort_keys=True)
 
 
@@ -73,7 +73,7 @@ def save_json(path: Path, obj: dict) -> None:
 def load_set_file(path: str) -> set[str]:
     out = set()
     try:
-        with open(path, encoding="utf-8", errors="ignore") as f:
+        with open(path, encoding='utf-8', errors='ignore') as f:
             for line in f:
                 v = line.strip()
                 if v:
@@ -87,13 +87,13 @@ def load_mapping(path: str) -> dict[str, str]:
     """Mapping file: lines like `module=subpackage-package` or `pkg.submod=package-name`."""
     out: dict[str, str] = {}
     try:
-        with open(path, encoding="utf-8", errors="ignore") as f:
+        with open(path, encoding='utf-8', errors='ignore') as f:
             for line in f:
                 line = line.strip()
-                if not line or line.startswith("#"):
+                if not line or line.startswith('#'):
                     continue
-                if "=" in line:
-                    k, v = line.split("=", 1)
+                if '=' in line:
+                    k, v = line.split('=', 1)
                     out[k.strip()] = v.strip()
     except Exception:
         pass
@@ -112,70 +112,68 @@ def extract_from_ast(code: str, path_hint: str | None = None) -> dict[str, set[s
     Returns a dict of sets.
     """
     result = {
-        "imports": set(),  # e.g., "requests", "os"
-        "star_modules": set(),  # modules used in from X import *
-        "dynamic": set(),  # string-literal dynamic imports detected
-        "relative": set(),  # local relative imports (module names or ".")
+        'imports': set(),  # e.g., "requests", "os"
+        'star_modules': set(),  # modules used in from X import *
+        'dynamic': set(),  # string-literal dynamic imports detected
+        'relative': set(),  # local relative imports (module names or ".")
     }
 
     try:
         tree = ast.parse(code)
     except Exception:
         # fallback: simple regexes for dynamic import strings
-        for m in re.finditer(
-            r"(?:import_module|__import__)\(\s*['\"]([\w\.]+)['\"]\s*\)", code
-        ):
-            result["dynamic"].add(m.group(1).split(".", 1)[0])
+        for m in re.finditer(r"(?:import_module|__import__)\(\s*['\"]([\w\.]+)['\"]\s*\)", code):
+            result['dynamic'].add(m.group(1).split('.', 1)[0])
         return result
 
     for node in ast.walk(tree):
         # static imports
         if isinstance(node, ast.Import):
             for a in node.names:
-                first = a.name.split(".", 1)[0]
-                result["imports"].add(first)
+                first = a.name.split('.', 1)[0]
+                result['imports'].add(first)
 
         elif isinstance(node, ast.ImportFrom):
             # relative import detection
             if node.level and node.level > 0:
                 # mark as local/relative
                 if node.module:
-                    result["relative"].add(node.module.split(".", 1)[0])
+                    result['relative'].add(node.module.split('.', 1)[0])
                 else:
-                    result["relative"].add(".")
+                    result['relative'].add('.')
                 continue
 
             if node.module:
-                base = node.module.split(".", 1)[0]
-                if any(name.name == "*" for name in node.names):
-                    result["star_modules"].add(node.module)
+                base = node.module.split('.', 1)[0]
+                if any(name.name == '*' for name in node.names):
+                    result['star_modules'].add(node.module)
                 else:
-                    result["imports"].add(base)
+                    result['imports'].add(base)
 
         # dynamic import detection (__import__('pkg') or importlib.import_module('pkg'))
         elif isinstance(node, ast.Call):
             # __import__('pkg')
-            if isinstance(node.func, ast.Name) and node.func.id == "__import__":
+            if isinstance(node.func, ast.Name) and node.func.id == '__import__':
                 if (
                     node.args
                     and isinstance(node.args[0], ast.Constant)
                     and isinstance(node.args[0].value, str)
                 ):
-                    result["dynamic"].add(node.args[0].value.split(".", 1)[0])
+                    result['dynamic'].add(node.args[0].value.split('.', 1)[0])
             # importlib.import_module('pkg')
             elif isinstance(node.func, ast.Attribute):
                 val = node.func
                 if (
                     isinstance(val.value, ast.Name)
-                    and val.value.id == "importlib"
-                    and val.attr == "import_module"
+                    and val.value.id == 'importlib'
+                    and val.attr == 'import_module'
                 ):
                     if (
                         node.args
                         and isinstance(node.args[0], ast.Constant)
                         and isinstance(node.args[0].value, str)
                     ):
-                        result["dynamic"].add(node.args[0].value.split(".", 1)[0])
+                        result['dynamic'].add(node.args[0].value.split('.', 1)[0])
 
     # As a final pass, if star imports exist, try to also detect imports inside the module by scanning the file for 'from x import y' patterns (handled later when tracing star modules).
     return result
@@ -184,42 +182,40 @@ def extract_from_ast(code: str, path_hint: str | None = None) -> dict[str, set[s
 # --------------------------- FILE PROCESSORS --------------------------------
 
 
-def process_py_file_content(
-    code: str, path_hint: str | None = None
-) -> dict[str, list[str]]:
+def process_py_file_content(code: str, path_hint: str | None = None) -> dict[str, list[str]]:
     d = extract_from_ast(code, path_hint)
     return {k: sorted(v) for k, v in d.items()}
 
 
 def process_py_file(path: Path) -> dict[str, list[str]]:
     try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
+        text = path.read_text(encoding='utf-8', errors='ignore')
     except Exception:
-        return {"imports": [], "star_modules": [], "dynamic": [], "relative": []}
+        return {'imports': [], 'star_modules': [], 'dynamic': [], 'relative': []}
     return process_py_file_content(text, str(path))
 
 
 def process_noext_python_script(path: Path) -> dict[str, list[str]]:
     try:
-        with open(path, encoding="utf-8", errors="ignore") as f:
+        with open(path, encoding='utf-8', errors='ignore') as f:
             first = f.readline()
-            if "#!" not in first or "python" not in first.lower():
+            if '#!' not in first or 'python' not in first.lower():
                 return {
-                    "imports": [],
-                    "star_modules": [],
-                    "dynamic": [],
-                    "relative": [],
+                    'imports': [],
+                    'star_modules': [],
+                    'dynamic': [],
+                    'relative': [],
                 }
             code = f.read()
     except Exception:
-        return {"imports": [], "star_modules": [], "dynamic": [], "relative": []}
+        return {'imports': [], 'star_modules': [], 'dynamic': [], 'relative': []}
     return process_py_file_content(code, str(path))
 
 
 def process_ipynb(path: Path) -> dict[str, list[str]]:
-    out = {"imports": [], "star_modules": [], "dynamic": [], "relative": []}
+    out = {'imports': [], 'star_modules': [], 'dynamic': [], 'relative': []}
     try:
-        with open(path, encoding="utf-8", errors="ignore") as f:
+        with open(path, encoding='utf-8', errors='ignore') as f:
             nb = json.load(f)
     except Exception:
         return out
@@ -227,18 +223,18 @@ def process_ipynb(path: Path) -> dict[str, list[str]]:
     stars = set()
     dyn = set()
     rel = set()
-    for cell in nb.get("cells", []):
-        if cell.get("cell_type") == "code":
-            src = "".join(cell.get("source", []))
+    for cell in nb.get('cells', []):
+        if cell.get('cell_type') == 'code':
+            src = ''.join(cell.get('source', []))
             d = extract_from_ast(src, str(path))
-            imports |= d["imports"]
-            stars |= d["star_modules"]
-            dyn |= d["dynamic"]
-            rel |= d["relative"]
-    out["imports"] = sorted(imports)
-    out["star_modules"] = sorted(stars)
-    out["dynamic"] = sorted(dyn)
-    out["relative"] = sorted(rel)
+            imports |= d['imports']
+            stars |= d['star_modules']
+            dyn |= d['dynamic']
+            rel |= d['relative']
+    out['imports'] = sorted(imports)
+    out['star_modules'] = sorted(stars)
+    out['dynamic'] = sorted(dyn)
+    out['relative'] = sorted(rel)
     return out
 
 
@@ -248,25 +244,25 @@ def process_zip_file(path: Path) -> dict[str, list[str]]:
     dyn = set()
     rel = set()
     try:
-        with zipfile.ZipFile(path, "r") as z:
+        with zipfile.ZipFile(path, 'r') as z:
             for name in z.namelist():
-                if name.endswith(".py"):
+                if name.endswith('.py'):
                     try:
-                        code = z.read(name).decode("utf-8", errors="ignore")
-                        d = extract_from_ast(code, f"{path}:{name}")
-                        imports |= d["imports"]
-                        stars |= d["star_modules"]
-                        dyn |= d["dynamic"]
-                        rel |= d["relative"]
+                        code = z.read(name).decode('utf-8', errors='ignore')
+                        d = extract_from_ast(code, f'{path}:{name}')
+                        imports |= d['imports']
+                        stars |= d['star_modules']
+                        dyn |= d['dynamic']
+                        rel |= d['relative']
                     except Exception:
                         pass
     except Exception:
         pass
     return {
-        "imports": sorted(imports),
-        "star_modules": sorted(stars),
-        "dynamic": sorted(dyn),
-        "relative": sorted(rel),
+        'imports': sorted(imports),
+        'star_modules': sorted(stars),
+        'dynamic': sorted(dyn),
+        'relative': sorted(rel),
     }
 
 
@@ -275,30 +271,30 @@ def process_tar_file(path: Path) -> dict[str, list[str]]:
     stars = set()
     dyn = set()
     rel = set()
-    mode = "r:xz" if str(path).endswith(".xz") else "r:gz"
+    mode = 'r:xz' if str(path).endswith('.xz') else 'r:gz'
     try:
         with tarfile.open(path, mode) as t:
             for m in t.getmembers():
-                if m.isfile() and m.name.endswith(".py"):
+                if m.isfile() and m.name.endswith('.py'):
                     try:
                         f = t.extractfile(m)
                         if not f:
                             continue
-                        code = f.read().decode("utf-8", errors="ignore")
-                        d = extract_from_ast(code, f"{path}:{m.name}")
-                        imports |= d["imports"]
-                        stars |= d["star_modules"]
-                        dyn |= d["dynamic"]
-                        rel |= d["relative"]
+                        code = f.read().decode('utf-8', errors='ignore')
+                        d = extract_from_ast(code, f'{path}:{m.name}')
+                        imports |= d['imports']
+                        stars |= d['star_modules']
+                        dyn |= d['dynamic']
+                        rel |= d['relative']
                     except Exception:
                         pass
     except Exception:
         pass
     return {
-        "imports": sorted(imports),
-        "star_modules": sorted(stars),
-        "dynamic": sorted(dyn),
-        "relative": sorted(rel),
+        'imports': sorted(imports),
+        'star_modules': sorted(stars),
+        'dynamic': sorted(dyn),
+        'relative': sorted(rel),
     }
 
 
@@ -310,18 +306,18 @@ def process_raw(path: str) -> dict[str, list[str]]:
     p = Path(path)
     name = str(p).lower()
 
-    if p.suffix == ".py":
+    if p.suffix == '.py':
         return process_py_file(p)
-    if p.suffix == ".ipynb":
+    if p.suffix == '.ipynb':
         return process_ipynb(p)
-    if p.suffix == "" and p.is_file():
+    if p.suffix == '' and p.is_file():
         return process_noext_python_script(p)
-    if name.endswith(".zip") or name.endswith(".whl"):
+    if name.endswith('.zip') or name.endswith('.whl'):
         return process_zip_file(p)
-    if name.endswith(".tar.gz") or name.endswith(".tgz") or name.endswith(".tar.xz"):
+    if name.endswith('.tar.gz') or name.endswith('.tgz') or name.endswith('.tar.xz'):
         return process_tar_file(p)
     # else nothing
-    return {"imports": [], "star_modules": [], "dynamic": [], "relative": []}
+    return {'imports': [], 'star_modules': [], 'dynamic': [], 'relative': []}
 
 
 # --------------------------- PROJECT MODULE MAP -----------------------------
@@ -339,24 +335,20 @@ def build_project_module_map(sources: list[str]) -> dict[str, list[str]]:
         p = Path(fp)
         if not p.exists():
             continue
-        if p.suffix != ".py":
+        if p.suffix != '.py':
             # archives and others are handled dynamically when tracing star imports (not added here)
             continue
         # derive dotted path from relative path
-        rel = os.path.normpath(fp).lstrip("./")
+        rel = os.path.normpath(fp).lstrip('./')
         parts = rel.split(os.sep)
-        if parts[-1] == "__init__.py":
-            mod = (
-                ".".join(parts[:-1])
-                if parts[:-1]
-                else parts[-2] if len(parts) > 1 else ""
-            )
+        if parts[-1] == '__init__.py':
+            mod = '.'.join(parts[:-1]) if parts[:-1] else parts[-2] if len(parts) > 1 else ''
         else:
-            mod = ".".join(parts)[:-3] if rel.endswith(".py") else ".".join(parts)
+            mod = '.'.join(parts)[:-3] if rel.endswith('.py') else '.'.join(parts)
         if not mod:
             continue
         # also register top-level first component
-        top = mod.split(".", 1)[0]
+        top = mod.split('.', 1)[0]
         mapping.setdefault(mod, []).append(fp)
         mapping.setdefault(top, mapping.get(top, []) + [fp])
     return mapping
@@ -376,7 +368,7 @@ def trace_star_module(module: str, project_map: dict[str, list[str]]) -> set[str
     if module in project_map:
         candidates += project_map[module]
     # try top-level module
-    top = module.split(".", 1)[0]
+    top = module.split('.', 1)[0]
     if top in project_map:
         candidates += project_map[top]
     # dedupe
@@ -384,32 +376,30 @@ def trace_star_module(module: str, project_map: dict[str, list[str]]) -> set[str
 
     for fp in candidates:
         try:
-            text = Path(fp).read_text(encoding="utf-8", errors="ignore")
+            text = Path(fp).read_text(encoding='utf-8', errors='ignore')
         except Exception:
             continue
         d = extract_from_ast(text, fp)
-        found_imports |= d["imports"]
-        found_imports |= {m.split(".", 1)[0] for m in d["dynamic"]}
+        found_imports |= d['imports']
+        found_imports |= {m.split('.', 1)[0] for m in d['dynamic']}
         # try to parse __all__
         try:
             tree = ast.parse(text)
             for node in ast.walk(tree):
                 if isinstance(node, ast.Assign):
                     for target in node.targets:
-                        if isinstance(target, ast.Name) and target.id == "__all__":
+                        if isinstance(target, ast.Name) and target.id == '__all__':
                             # evaluate if it's a simple list/tuple of literals
                             val = node.value
                             names = []
                             if isinstance(val, (ast.List, ast.Tuple)):
                                 for elt in val.elts:
-                                    if isinstance(elt, ast.Constant) and isinstance(
-                                        elt.value, str
-                                    ):
+                                    if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
                                         names.append(elt.value)
                             # If __all__ references modules (strings), we may treat them as submodules -> add top-level
                             for nm in names:
-                                if "." in nm:
-                                    found_imports.add(nm.split(".", 1)[0])
+                                if '.' in nm:
+                                    found_imports.add(nm.split('.', 1)[0])
                 # also catch simple "from .sub import X as Y" inside module -> local import; already handled in extract_from_ast.
         except Exception:
             pass
@@ -449,10 +439,10 @@ def resolve_packages(
             out_name = mapping[imp]
         else:
             # try longest prefix mapping: e.g. "google.cloud.storage" -> mapping has "google.cloud" etc.
-            parts = imp.split(".")
+            parts = imp.split('.')
             mapped = None
             for i in range(len(parts), 0, -1):
-                key = ".".join(parts[:i])
+                key = '.'.join(parts[:i])
                 if key in mapping:
                     mapped = mapping[key]
                     break
@@ -477,7 +467,7 @@ def resolve_packages(
 
 def scan_sources(ignore_dirs: set[str]) -> list[str]:
     out = []
-    for root, dirs, files in os.walk("."):
+    for root, dirs, files in os.walk('.'):
         # prune ignored directories early
         dirs[:] = [d for d in dirs if d not in ignore_dirs]
         for f in files:
@@ -485,14 +475,14 @@ def scan_sources(ignore_dirs: set[str]) -> list[str]:
             lower = f.lower()
             # include python sources, archives, notebooks, or no-extension scripts
             if (
-                lower.endswith(".py")
-                or lower.endswith(".ipynb")
-                or lower.endswith(".whl")
-                or lower.endswith(".zip")
-                or lower.endswith(".tar.gz")
-                or lower.endswith(".tgz")
-                or lower.endswith(".tar.xz")
-                or Path(fp).suffix == ""
+                lower.endswith('.py')
+                or lower.endswith('.ipynb')
+                or lower.endswith('.whl')
+                or lower.endswith('.zip')
+                or lower.endswith('.tar.gz')
+                or lower.endswith('.tgz')
+                or lower.endswith('.tar.xz')
+                or Path(fp).suffix == ''
             ):
                 out.append(fp)
     return out
@@ -503,35 +493,33 @@ def scan_sources(ignore_dirs: set[str]) -> list[str]:
 
 def main() -> None:
     p = argparse.ArgumentParser(
-        description="Offline requirements.txt generator (static + heuristics)."
+        description='Offline requirements.txt generator (static + heuristics).'
     )
     p.add_argument(
-        "--ignore",
-        nargs="*",
-        default=["venv", ".venv", ".git", ".ipynb_checkpoints"],
-        help="Directories to ignore during scan",
+        '--ignore',
+        nargs='*',
+        default=['venv', '.venv', '.git', '.ipynb_checkpoints'],
+        help='Directories to ignore during scan',
     )
-    p.add_argument("--no-cache", action="store_true", help="Disable cache usage")
-    p.add_argument("--clear-cache", action="store_true", help="Clear cache and exit")
+    p.add_argument('--no-cache', action='store_true', help='Disable cache usage')
+    p.add_argument('--clear-cache', action='store_true', help='Clear cache and exit')
     p.add_argument(
-        "--stdlib",
-        default="/sdcard/stdlib",
-        help="File containing stdlib module names (one per line)",
+        '--stdlib',
+        default='/sdcard/stdlib',
+        help='File containing stdlib module names (one per line)',
     )
+    p.add_argument('--mapping', default='/sdcard/mapping', help='Mapping file module->pip-package')
     p.add_argument(
-        "--mapping", default="/sdcard/mapping", help="Mapping file module->pip-package"
+        '--pipfile',
+        default='/sdcard/pip.txt',
+        help='Offline pip package list (one per line)',
     )
+    p.add_argument('--cache-file', default=CACHE_FILE, help='Cache file path')
+    p.add_argument('--out', default='requirements.txt', help='Output requirements file')
     p.add_argument(
-        "--pipfile",
-        default="/sdcard/pip.txt",
-        help="Offline pip package list (one per line)",
-    )
-    p.add_argument("--cache-file", default=CACHE_FILE, help="Cache file path")
-    p.add_argument("--out", default="requirements.txt", help="Output requirements file")
-    p.add_argument(
-        "--include-unknown",
-        action="store_true",
-        help="Include packages not present in offline pip list (default: only include those in piplist)",
+        '--include-unknown',
+        action='store_true',
+        help='Include packages not present in offline pip list (default: only include those in piplist)',
     )
     args = p.parse_args()
 
@@ -550,20 +538,18 @@ def main() -> None:
     project_map = build_project_module_map(sources)
     set(project_map.keys())  # module names and top-level names
     # but project_map has many dotted mappings; let's reduce to top-level names actually present
-    project_top_only = {k.split(".", 1)[0] for k in project_map.keys()}
+    project_top_only = {k.split('.', 1)[0] for k in project_map.keys()}
 
     # cache handling
     cache_path = Path(args.cache_file)
-    cache = (
-        {} if args.no_cache else load_json(cache_path) if cache_path.exists() else {}
-    )
+    cache = {} if args.no_cache else load_json(cache_path) if cache_path.exists() else {}
     if args.clear_cache:
         try:
             if cache_path.exists():
                 cache_path.unlink()
-            print("Cache cleared.")
+            print('Cache cleared.')
         except Exception as e:
-            print("Failed clearing cache:", e)
+            print('Failed clearing cache:', e)
         return
 
     tasks = []
@@ -579,16 +565,16 @@ def main() -> None:
                 mtime = pth.stat().st_mtime
             except Exception:
                 mtime = None
-            h = fast_hash(pth) if mtime is not None else "0"
-            if entry.get("mtime") == mtime and entry.get("hash") == h:
+            h = fast_hash(pth) if mtime is not None else '0'
+            if entry.get('mtime') == mtime and entry.get('hash') == h:
                 cached_results.append(
                     entry.get(
-                        "result",
+                        'result',
                         {
-                            "imports": [],
-                            "star_modules": [],
-                            "dynamic": [],
-                            "relative": [],
+                            'imports': [],
+                            'star_modules': [],
+                            'dynamic': [],
+                            'relative': [],
                         },
                     )
                 )
@@ -603,7 +589,7 @@ def main() -> None:
             for res in tqdm(
                 pool.imap_unordered(process_raw, tasks),
                 total=len(tasks),
-                desc="Processing",
+                desc='Processing',
             ):
                 computed_results.append(res)
 
@@ -615,8 +601,8 @@ def main() -> None:
                 mtime = Path(path).stat().st_mtime
             except Exception:
                 mtime = None
-            h = fast_hash(Path(path)) if mtime is not None else "0"
-            cache[key] = {"mtime": mtime, "hash": h, "result": res}
+            h = fast_hash(Path(path)) if mtime is not None else '0'
+            cache[key] = {'mtime': mtime, 'hash': h, 'result': res}
         try:
             save_json(cache_path, cache)
         except Exception:
@@ -629,21 +615,21 @@ def main() -> None:
     all_relative: set[str] = set()
 
     for r in cached_results + computed_results:
-        all_imports |= set(r.get("imports", []))
-        all_star_modules |= set(r.get("star_modules", []))
-        all_dynamic |= set(r.get("dynamic", []))
-        all_relative |= set(r.get("relative", []))
+        all_imports |= set(r.get('imports', []))
+        all_star_modules |= set(r.get('star_modules', []))
+        all_dynamic |= set(r.get('dynamic', []))
+        all_relative |= set(r.get('relative', []))
 
     # trace star imports by inspecting project sources for module definitions
     # this will add imports discovered inside the star-imported modules
     traced_from_star = set()
     if all_star_modules:
-        for mod in tqdm(sorted(all_star_modules), desc="Tracing star imports"):
+        for mod in tqdm(sorted(all_star_modules), desc='Tracing star imports'):
             traced_from_star |= trace_star_module(mod, project_map)
 
     # include dynamic imports (best-effort)
     # also try to map dynamic imports if they use dotted paths
-    dynamic_tops = {d.split(".", 1)[0] for d in all_dynamic}
+    dynamic_tops = {d.split('.', 1)[0] for d in all_dynamic}
 
     # combine discovered imports
     discovered = set(all_imports) | traced_from_star | dynamic_tops
@@ -666,9 +652,7 @@ def main() -> None:
         final_candidates.add(imp)
 
     # resolve packages using mapping + piplist
-    pkgs = resolve_packages(
-        final_candidates, stdlib, mapping, piplist, project_top_only
-    )
+    pkgs = resolve_packages(final_candidates, stdlib, mapping, piplist, project_top_only)
 
     # apply piplist filter: if not include_unknown, intersect with piplist (case-insensitive)
     if not args.include_unknown and piplist:
@@ -678,22 +662,22 @@ def main() -> None:
     # write requirements
     out_file = Path(args.out)
     try:
-        with out_file.open("w", encoding="utf-8") as f:
+        with out_file.open('w', encoding='utf-8') as f:
             for pkg in sorted(pkgs, key=lambda s: s.lower()):
-                f.write(pkg + "\n")
+                f.write(pkg + '\n')
     except Exception as e:
-        print("Failed writing requirements file:", e)
+        print('Failed writing requirements file:', e)
         sys.exit(2)
 
     # Print summary
-    print("\nGenerated", out_file.name)
-    print("────────────────────────────")
+    print('\nGenerated', out_file.name)
+    print('────────────────────────────')
     if pkgs:
         for pkg in sorted(pkgs, key=lambda s: s.lower()):
             print(pkg)
     else:
-        print("(empty)")
+        print('(empty)')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -10,7 +10,7 @@ def format_file(file_path):
     try:
         # --write formats the file in-place
         result = subprocess.run(
-            ["npx", "prettier", "--write", file_path],
+            ['npx', 'prettier', '--write', file_path],
             capture_output=True,
             text=True,
             check=True,
@@ -23,44 +23,40 @@ def format_file(file_path):
 def main():
     # Configuration
     target_extensions = (
-        ".js",
-        ".css",
-        ".htm",
-        ".html",
-        ".ts",
-        ".jsx",
-        ".tsx",
-        ".xml",
-        ".json",
+        '.js',
+        '.css',
+        '.htm',
+        '.html',
+        '.ts',
+        '.jsx',
+        '.tsx',
+        '.xml',
+        '.json',
     )
-    exclude_dirs = {".git"}
-    exclude_extensions = (".min.js", ".min.css")
+    exclude_dirs = {'.git'}
+    exclude_extensions = ('.min.js', '.min.css')
 
     files_to_format = []
 
-    print("Scanning directory for files...")
-    for root, dirs, files in os.walk("."):
+    print('Scanning directory for files...')
+    for root, dirs, files in os.walk('.'):
         # Prune excluded directories in-place to prevent recursion
         dirs[:] = [d for d in dirs if d not in exclude_dirs]
 
         for file in files:
-            if file.endswith(target_extensions) and not file.endswith(
-                exclude_extensions
-            ):
+            if file.endswith(target_extensions) and not file.endswith(exclude_extensions):
                 files_to_format.append(os.path.join(root, file))
 
     if not files_to_format:
-        print("No matching files found.")
+        print('No matching files found.')
         return
 
     errors = []
     # Using ThreadPoolExecutor as Prettier is an external CLI process
-    with tqdm(total=len(files_to_format), desc="Beautifying", unit="file") as pbar:
+    with tqdm(total=len(files_to_format), desc='Beautifying', unit='file') as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             # Map the formatting function across all discovered files
-            future_to_file = {
-                executor.submit(format_file, f): f for f in files_to_format
-            }
+            future_to_file = {executor.submit(format_file, f): f for f in files_to_format}
 
             for future in concurrent.futures.as_completed(future_to_file):
                 err = future.result()
@@ -69,15 +65,15 @@ def main():
                 pbar.update(1)
 
     # Final Report
-    print("\n" + "=" * 30)
-    print(f"Finished processing {len(files_to_format)} files.")
+    print('\n' + '=' * 30)
+    print(f'Finished processing {len(files_to_format)} files.')
     if errors:
-        print(f"Encountered {len(errors)} errors:")
+        print(f'Encountered {len(errors)} errors:')
         for error in errors:
-            print(f"  - {error}")
+            print(f'  - {error}')
     else:
-        print("All files formatted successfully!")
+        print('All files formatted successfully!')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

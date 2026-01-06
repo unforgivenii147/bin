@@ -3,9 +3,9 @@ from moviepy.editor import AudioFileClip
 import sys
 
 file = sys.argv[1]
-output = "last_5_minutes.mp3"
+output = 'last_5_minutes.mp3'
 
-print("Loading file and extracting last 5 minutes...")
+print('Loading file and extracting last 5 minutes...')
 audio = AudioFileClip(file)
 duration = audio.duration
 
@@ -13,6 +13,6 @@ duration = audio.duration
 start_time = max(0, duration - 300)
 
 clip = audio.subclip(start_time, duration)
-print(f"Writing {output} ({duration / 60:.1f} min total → last 5 min)...")
-clip.write_audioclip(output, bitrate="320k", fps=44100)
-print("Done! 🎉")
+print(f'Writing {output} ({duration / 60:.1f} min total → last 5 min)...')
+clip.write_audioclip(output, bitrate='320k', fps=44100)
+print('Done! 🎉')

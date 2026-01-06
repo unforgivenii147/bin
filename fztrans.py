@@ -8,15 +8,15 @@ import sys
 from difflib import get_close_matches
 from pathlib import Path
 
-DICT_FILE = "/sdcard/isaac/dic.json"
+DICT_FILE = '/sdcard/isaac/dic.json'
 
 
 def load_dictionary(path: Path):
     if not path.exists():
-        print(f"Error: {path} not found", file=sys.stderr)
+        print(f'Error: {path} not found', file=sys.stderr)
         sys.exit(1)
 
-    with path.open(encoding="utf-8") as f:
+    with path.open(encoding='utf-8') as f:
         data = json.load(f)
 
     fa_en = {str(k).strip(): str(v).strip() for k, v in data.items()}
@@ -32,8 +32,8 @@ def setup_readline(words):
         return matches[state] if state < len(matches) else None
 
     readline.set_completer(completer)
-    readline.parse_and_bind("tab: complete")
-    readline.set_completer_delims(" \t\n")
+    readline.parse_and_bind('tab: complete')
+    readline.set_completer_delims(' \t\n')
 
 
 def translate(word, fa_en, en_fa):
@@ -55,13 +55,13 @@ def fuzzy_search(word, all_words, limit=5, cutoff=0.6):
 def fzf_select(all_words):
     try:
         proc = subprocess.run(
-            ["fzf", "--prompt=Select word: "],
-            input="\n".join(sorted(all_words)),
+            ['fzf', '--prompt=Select word: '],
+            input='\n'.join(sorted(all_words)),
             text=True,
             stdout=subprocess.PIPE,
         )
     except FileNotFoundError:
-        print("fzf not found in PATH", file=sys.stderr)
+        print('fzf not found in PATH', file=sys.stderr)
         sys.exit(1)
 
     selection = proc.stdout.strip()
@@ -72,31 +72,29 @@ def interactive_mode(fa_en, en_fa):
     all_words = set(fa_en) | set(en_fa)
     setup_readline(all_words)
 
-    print("Offline Persian ↔ English Translator")
-    print("TAB for suggestions, Ctrl+C to exit\n")
+    print('Offline Persian ↔ English Translator')
+    print('TAB for suggestions, Ctrl+C to exit\n')
 
     while True:
         try:
-            word = input("> ").strip()
+            word = input('> ').strip()
         except (KeyboardInterrupt, EOFError):
-            print("\nBye.")
+            print('\nBye.')
             break
 
         if not word:
             continue
 
         result = translate(word, fa_en, en_fa)
-        print(result if result else "Not found")
+        print(result if result else 'Not found')
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Offline Persian ↔ English translator")
-    parser.add_argument("word", nargs="*", help="Word to translate")
-    parser.add_argument("--prefix", help="List words starting with prefix")
-    parser.add_argument("--fuzzy", help="Fuzzy search (typo tolerant)")
-    parser.add_argument(
-        "--fzf", default=True, action="store_true", help="Interactive fzf selector"
-    )
+    parser = argparse.ArgumentParser(description='Offline Persian ↔ English translator')
+    parser.add_argument('word', nargs='*', help='Word to translate')
+    parser.add_argument('--prefix', help='List words starting with prefix')
+    parser.add_argument('--fuzzy', help='Fuzzy search (typo tolerant)')
+    parser.add_argument('--fzf', default=True, action='store_true', help='Interactive fzf selector')
 
     args = parser.parse_args()
 
@@ -114,40 +112,40 @@ def main():
             print(result)
             sys.exit(0)
 
-        print("Not found", file=sys.stderr)
+        print('Not found', file=sys.stderr)
         sys.exit(1)
 
     # --prefix mode
     if args.prefix:
         matches = prefix_search(args.prefix, all_words)
         if matches:
-            print("\n".join(matches))
+            print('\n'.join(matches))
             sys.exit(0)
-        print("No matches", file=sys.stderr)
+        print('No matches', file=sys.stderr)
         sys.exit(1)
 
     # --fuzzy mode
     if args.fuzzy:
         matches = fuzzy_search(args.fuzzy, all_words)
         if matches:
-            print("\n".join(matches))
+            print('\n'.join(matches))
             sys.exit(0)
-        print("No close matches", file=sys.stderr)
+        print('No close matches', file=sys.stderr)
         sys.exit(1)
 
     # Direct translation
     if args.word:
-        word = " ".join(args.word).strip()
+        word = ' '.join(args.word).strip()
         result = translate(word, fa_en, en_fa)
         if result:
             print(result)
             sys.exit(0)
-        print("Not found", file=sys.stderr)
+        print('Not found', file=sys.stderr)
         sys.exit(1)
 
     # Interactive fallback
     interactive_mode(fa_en, en_fa)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

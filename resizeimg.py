@@ -19,17 +19,15 @@ def reduce_image_size(image_path, scale_factor=0.75) -> None:
             # Save over original file, preserving format and optimizing
             resized_img.save(image_path, optimize=True, quality=85)
 
-            print(
-                f"Reduced: {image_path} ({img.width}x{img.height} -> {new_width}x{new_height})"
-            )
+            print(f'Reduced: {image_path} ({img.width}x{img.height} -> {new_width}x{new_height})')
 
     except Exception as e:
-        print(f"Error processing {image_path}: {str(e)}")
+        print(f'Error processing {image_path}: {str(e)}')
 
 
 def main() -> None:
     # Supported image formats
-    image_extensions = ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.tiff", "*.webp"]
+    image_extensions = ['*.jpg', '*.jpeg', '*.png', '*.bmp', '*.tiff', '*.webp']
 
     # Get all image files in current directory
     image_files = []
@@ -38,17 +36,17 @@ def main() -> None:
         image_files.extend(glob.glob(extension.upper()))
 
     if not image_files:
-        print("No image files found in current directory.")
+        print('No image files found in current directory.')
         return
 
-    print(f"Found {len(image_files)} image file(s) to process...")
+    print(f'Found {len(image_files)} image file(s) to process...')
 
     # Process each image
     for image_file in image_files:
         reduce_image_size(image_file)
 
-    print("All images processed!")
+    print('All images processed!')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

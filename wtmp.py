@@ -7,8 +7,8 @@ import time
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-DEST_DIR = os.path.expanduser("~/tmp/tgz")
-ALLOWED_EXTENSIONS = (".tar.gz", ".whl", ".tar.xz", ".zip", ".tar.bz2")
+DEST_DIR = os.path.expanduser('~/tmp/tgz')
+ALLOWED_EXTENSIONS = ('.tar.gz', '.whl', '.tar.xz', '.zip', '.tar.bz2')
 
 
 def copy_if_match(src_path) -> None:
@@ -25,7 +25,7 @@ def copy_if_match(src_path) -> None:
         #            print(f'{Path(dest).stat().st_size}')
 
         except Exception as e:
-            print(f"Failed to copy {src_path}: {e}")
+            print(f'Failed to copy {src_path}: {e}')
 
 
 def startup_scan(path) -> None:
@@ -49,8 +49,8 @@ class CopyEventHandler(FileSystemEventHandler):
             copy_if_match(event.src_path)
 
 
-if __name__ == "__main__":
-    path = sys.argv[1] if len(sys.argv) > 1 else "/data/data/com.termux/files/usr/tmp"
+if __name__ == '__main__':
+    path = sys.argv[1] if len(sys.argv) > 1 else '/data/data/com.termux/files/usr/tmp'
 
     # 1️⃣ Perform startup scan before watching
     startup_scan(path)

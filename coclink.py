@@ -7,13 +7,13 @@ from googleapiclient.discovery import build
 
 # Load API Key
 load_dotenv()
-API_KEY = os.getenv("YOUTUBE_API_KEY")
+API_KEY = os.getenv('YOUTUBE_API_KEY')
 
 # Configuration
 CHANNELS = {
-    "Blueprint_CoC": "UCQJJGSWnPUCb8uKV_MoJeOA",
-    "iTzu": "UCLKKvlo0yK8OgWvjCiZQ3sA",
-    "Clash_Champs": "UC_mD8S6pWpSstY3mXJ9nEqw",
+    'Blueprint_CoC': 'UCQJJGSWnPUCb8uKV_MoJeOA',
+    'iTzu': 'UCLKKvlo0yK8OgWvjCiZQ3sA',
+    'Clash_Champs': 'UC_mD8S6pWpSstY3mXJ9nEqw',
 }
 
 
@@ -23,27 +23,27 @@ def get_videos(youtube, channel_id):
 
     videos = []
     request = youtube.search().list(
-        part="snippet",
+        part='snippet',
         channelId=channel_id,
         publishedAfter=past_date,
         maxResults=50,
-        order="date",
-        type="video",
+        order='date',
+        type='video',
     )
 
     while request:
         response = request.execute()
-        for item in response.get("items", []):
-            video_id = item["id"]["videoId"]
+        for item in response.get('items', []):
+            video_id = item['id']['videoId']
             # Fetch full description (search only gives a snippet)
-            video_details = youtube.videos().list(part="snippet", id=video_id).execute()
+            video_details = youtube.videos().list(part='snippet', id=video_id).execute()
 
-            snippet = video_details["items"][0]["snippet"]
+            snippet = video_details['items'][0]['snippet']
             videos.append(
                 {
-                    "title": snippet["title"],
-                    "description": snippet["description"],
-                    "url": f"https://www.youtube.com/watch?v={video_id}",
+                    'title': snippet['title'],
+                    'description': snippet['description'],
+                    'url': f'https://www.youtube.com/watch?v={video_id}',
                 }
             )
 
@@ -55,18 +55,18 @@ def get_videos(youtube, channel_id):
 
 def extract_th18_links(description):
     # Regex to find CoC layout links
-    pattern = r"(https?://link\.clashofclans\.com/[^\s]+)"
+    pattern = r'(https?://link\.clashofclans\.com/[^\s]+)'
     links = re.findall(pattern, description)
     # Filter for TH18 context or actual layout IDs containing TH18
-    return [l for l in links if "TH18" in l.upper() or "TH18" in description.upper()]
+    return [l for l in links if 'TH18' in l.upper() or 'TH18' in description.upper()]
 
 
 def create_html(channel_name, base_data):
-    date_str = datetime.now().strftime("%d-%m-%Y")
-    dir_name = f"output/{date_str}_{channel_name}"
+    date_str = datetime.now().strftime('%d-%m-%Y')
+    dir_name = f'output/{date_str}_{channel_name}'
     os.makedirs(dir_name, exist_ok=True)
 
-    file_path = os.path.join(dir_name, "bases.html")
+    file_path = os.path.join(dir_name, 'bases.html')
 
     html_content = f"""
     <html>
@@ -90,45 +90,45 @@ def create_html(channel_name, base_data):
             <p class="vid-ref">Source: <a href="{item['video_url']}" target="_blank">Watch Video</a></p>
             <ul>
         """
-        for link in item["links"]:
+        for link in item['links']:
             html_content += f'<li><a href="{link}">Get Base Layout</a></li>'
-        html_content += "</ul></div>"
+        html_content += '</ul></div>'
 
-    html_content += "</body></html>"
+    html_content += '</body></html>'
 
-    with open(file_path, "w", encoding="utf-8") as f:
+    with open(file_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
-    print(f"Generated: {file_path}")
+    print(f'Generated: {file_path}')
 
 
 def main():
     if not API_KEY:
-        print("Error: API_KEY not found in .env file.")
+        print('Error: API_KEY not found in .env file.')
         return
 
-    youtube = build("youtube", "v3", developerKey=API_KEY)
+    youtube = build('youtube', 'v3', developerKey=API_KEY)
 
     for name, cid in CHANNELS.items():
-        print(f"Processing {name}...")
+        print(f'Processing {name}...')
         vids = get_videos(youtube, cid)
         results = []
 
         for v in vids:
-            links = extract_th18_links(v["description"])
+            links = extract_th18_links(v['description'])
             if links:
                 results.append(
                     {
-                        "title": v["title"],
-                        "video_url": v["url"],
-                        "links": list(set(links)),  # Unique links
+                        'title': v['title'],
+                        'video_url': v['url'],
+                        'links': list(set(links)),  # Unique links
                     }
                 )
 
         if results:
             create_html(name, results)
         else:
-            print(f"No TH18 links found for {name}.")
+            print(f'No TH18 links found for {name}.')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

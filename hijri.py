@@ -12,5 +12,5 @@ def get_current_ymd():
 # Example usage:
 current_year, current_month, current_day = get_current_ymd()
 print(
-    f"{current_year}-{current_month}-{current_day}=={dh.georgian_to_hijri(current_year, current_month, current_day)}"
+    f'{current_year}-{current_month}-{current_day}=={dh.georgian_to_hijri(current_year, current_month, current_day)}'
 )

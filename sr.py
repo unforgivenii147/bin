@@ -18,15 +18,15 @@ from pathlib import Path
 
 # ---------- Utilities ----------
 def prefix_path():
-    p = os.environ.get("PREFIX")
+    p = os.environ.get('PREFIX')
     if p:
         return Path(p)
-    return Path(sysconfig.get_paths()["purelib"])
+    return Path(sysconfig.get_paths()['purelib'])
 
 
 def site_packages_paths(prefix):
-    pyver = f"python{sys.version_info.major}.{sys.version_info.minor}"
-    candidates = [prefix / "lib" / pyver / "site-packages"]
+    pyver = f'python{sys.version_info.major}.{sys.version_info.minor}'
+    candidates = [prefix / 'lib' / pyver / 'site-packages']
     for p in sys.path:
         try:
             ppath = Path(p)
@@ -50,61 +50,59 @@ def find_distributions(site_dirs):
         if not sd.exists():
             continue
         for p in sd.iterdir():
-            if p.is_dir() and (
-                p.name.endswith(".dist-info") or p.name.endswith(".egg-info")
-            ):
-                key = p.name.rsplit(".", 1)[0].lower()
+            if p.is_dir() and (p.name.endswith('.dist-info') or p.name.endswith('.egg-info')):
+                key = p.name.rsplit('.', 1)[0].lower()
                 dists[key] = p
     return dists
 
 
 def parse_metadata_from_distinfo(distinfo_dir):
     md = {}
-    for candidate in ("METADATA", "PKG-INFO"):
+    for candidate in ('METADATA', 'PKG-INFO'):
         p = distinfo_dir / candidate
         if p.exists():
-            txt = p.read_text(encoding="utf-8", errors="ignore")
+            txt = p.read_text(encoding='utf-8', errors='ignore')
             parsed = Parser().parsestr(txt)
-            md["Name"] = parsed.get("Name")
-            md["Version"] = parsed.get("Version")
-            md["Summary"] = parsed.get("Summary")
+            md['Name'] = parsed.get('Name')
+            md['Version'] = parsed.get('Version')
+            md['Summary'] = parsed.get('Summary')
             break
 
-    ep = distinfo_dir / "entry_points.txt"
+    ep = distinfo_dir / 'entry_points.txt'
     if ep.exists():
         console = []
-        lines = ep.read_text(encoding="utf-8", errors="ignore").splitlines()
+        lines = ep.read_text(encoding='utf-8', errors='ignore').splitlines()
         section = None
         for ln in lines:
             ln = ln.strip()
-            if ln.startswith("[") and ln.endswith("]"):
+            if ln.startswith('[') and ln.endswith(']'):
                 section = ln[1:-1].strip()
                 continue
-            if section == "console_scripts" and ln and not ln.startswith("#"):
-                left = ln.split("=", 1)[0].strip()
+            if section == 'console_scripts' and ln and not ln.startswith('#'):
+                left = ln.split('=', 1)[0].strip()
                 console.append(left)
-        md["console_scripts"] = console
+        md['console_scripts'] = console
     return md
 
 
 def read_record_list(distinfo_dir):
-    rec = distinfo_dir / "RECORD"
+    rec = distinfo_dir / 'RECORD'
     if rec.exists():
         return [
-            l.strip().split(",", 1)[0]
-            for l in rec.read_text(encoding="utf-8", errors="ignore").splitlines()
+            l.strip().split(',', 1)[0]
+            for l in rec.read_text(encoding='utf-8', errors='ignore').splitlines()
             if l.strip()
         ]
     return None
 
 
 def find_script_paths(prefix, script_names):
-    bin_dir = prefix / "bin"
+    bin_dir = prefix / 'bin'
     out = []
     if not bin_dir.exists():
         return out
     for s in script_names:
-        for alt in (s, s + ".py", s + "-script.py", s + ".sh"):
+        for alt in (s, s + '.py', s + '-script.py', s + '.sh'):
             ap = bin_dir / alt
             if ap.exists():
                 out.append(ap)
@@ -114,24 +112,22 @@ def find_script_paths(prefix, script_names):
 
 def compute_hash_and_size(path):
     h = hashlib.sha256()
-    with Path(path).open("rb") as f:
-        for chunk in iter(lambda: f.read(8192), b""):
+    with Path(path).open('rb') as f:
+        for chunk in iter(lambda: f.read(8192), b''):
             h.update(chunk)
-    digest = base64.urlsafe_b64encode(h.digest()).rstrip(b"=").decode("ascii")
-    return f"sha256={digest}", str(path.stat().st_size)
+    digest = base64.urlsafe_b64encode(h.digest()).rstrip(b'=').decode('ascii')
+    return f'sha256={digest}', str(path.stat().st_size)
 
 
 def detect_wheel_tags():
     impl = sys.implementation.name
     mj, mn = sys.version_info.major, sys.version_info.minor
-    if impl == "cpython":
-        py_tag, abi_tag = f"cp{mj}{mn}", f"cp{mj}{mn}"
+    if impl == 'cpython':
+        py_tag, abi_tag = f'cp{mj}{mn}', f'cp{mj}{mn}'
     else:
-        cache = getattr(sys.implementation, "cache_tag", None)
-        py_tag, abi_tag = (
-            cache.split("-", 1) if cache and "-" in cache else (f"py{mj}", "none")
-        )
-    plat = sysconfig.get_platform().replace("-", "_").replace(".", "_")
+        cache = getattr(sys.implementation, 'cache_tag', None)
+        py_tag, abi_tag = cache.split('-', 1) if cache and '-' in cache else (f'py{mj}', 'none')
+    plat = sysconfig.get_platform().replace('-', '_').replace('.', '_')
     return py_tag, abi_tag, plat
 
 
@@ -140,21 +136,19 @@ def collect_and_build(distinfo_path, prefix, wheel_out_path):
     base = distinfo_path.parent
     rec_list = read_record_list(distinfo_path)
     if not rec_list:
-        print(f"[-] Error: Could not find RECORD for {distinfo_path.name}. Skipping.")
+        print(f'[-] Error: Could not find RECORD for {distinfo_path.name}. Skipping.')
         return
 
     md = parse_metadata_from_distinfo(distinfo_path)
-    dist_name = (md.get("Name") or distinfo_path.name.split("-", 1)[0]).replace(
-        "-", "_"
-    )
-    version = md.get("Version") or "0.0.0"
+    dist_name = (md.get('Name') or distinfo_path.name.split('-', 1)[0]).replace('-', '_')
+    version = md.get('Version') or '0.0.0'
 
     collected_files = []  # List of (source_path, internal_zip_path)
     missing_files = []
 
     # Process files from RECORD
     for rel in rec_list:
-        if not rel or rel.endswith("RECORD") or rel.startswith(("..", "/")):
+        if not rel or rel.endswith('RECORD') or rel.startswith(('..', '/')):
             continue
 
         src = base / rel
@@ -167,60 +161,56 @@ def collect_and_build(distinfo_path, prefix, wheel_out_path):
                 for root, _, files in os.walk(src):
                     for fn in files:
                         s_path = Path(root) / fn
-                        collected_files.append(
-                            (s_path, s_path.relative_to(base).as_posix())
-                        )
+                        collected_files.append((s_path, s_path.relative_to(base).as_posix()))
             else:
                 collected_files.append((src, rel))
         else:
             missing_files.append(rel)
 
     # Add console scripts
-    if "console_scripts" in md:
-        for sp in find_script_paths(prefix, md["console_scripts"]):
-            collected_files.append((sp, f"bin/{sp.name}"))
+    if 'console_scripts' in md:
+        for sp in find_script_paths(prefix, md['console_scripts']):
+            collected_files.append((sp, f'bin/{sp.name}'))
 
     if missing_files:
-        print(f"[!] Error: Missing files for {dist_name}:")
+        print(f'[!] Error: Missing files for {dist_name}:')
         for m in missing_files:
-            print(f"    - {m}")
-        print(f"[*] Aborting wheel build for {dist_name}.")
+            print(f'    - {m}')
+        print(f'[*] Aborting wheel build for {dist_name}.')
         return
 
     # Determine Tags
     py_tag, abi_tag, plat_tag = detect_wheel_tags()
-    native_exts = {".so", ".pyd", ".dll", ".dylib", ".sl"}
+    native_exts = {'.so', '.pyd', '.dll', '.dylib', '.sl'}
     is_platform = any(s.suffix.lower() in native_exts for s, _ in collected_files)
-    wheel_tag = f"{py_tag}-{abi_tag}-{plat_tag}" if is_platform else "py3-none-any"
+    wheel_tag = f'{py_tag}-{abi_tag}-{plat_tag}' if is_platform else 'py3-none-any'
 
     # Write Zip
     wheel_out_path.parent.mkdir(parents=True, exist_ok=True)
     record_lines = []
 
-    with zipfile.ZipFile(wheel_out_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(wheel_out_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
         for src, rel in collected_files:
             zf.write(src, arcname=rel)
             h, size = compute_hash_and_size(src)
-            record_lines.append(f"{rel},{h},{size}")
+            record_lines.append(f'{rel},{h},{size}')
 
         # Create WHEEL file
         wheel_content = f'Wheel-Version: 1.0\nGenerator: repack_tool\nRoot-Is-Purelib: {"false" if is_platform else "true"}\nTag: {wheel_tag}\n'
-        zf.writestr(f"{distinfo_path.name}/WHEEL", wheel_content)
-        record_lines.append(f"{distinfo_path.name}/WHEEL,,")
+        zf.writestr(f'{distinfo_path.name}/WHEEL', wheel_content)
+        record_lines.append(f'{distinfo_path.name}/WHEEL,,')
 
         # Create RECORD file
-        record_lines.append(f"{distinfo_path.name}/RECORD,,")
-        zf.writestr(f"{distinfo_path.name}/RECORD", "\n".join(record_lines) + "\n")
+        record_lines.append(f'{distinfo_path.name}/RECORD,,')
+        zf.writestr(f'{distinfo_path.name}/RECORD', '\n'.join(record_lines) + '\n')
 
-    print(f"[+] Successfully built: {wheel_out_path.name}")
+    print(f'[+] Successfully built: {wheel_out_path.name}')
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Repack packages into .whl files directly."
-    )
-    parser.add_argument("packages", nargs="*", help="Distribution names to repack.")
-    parser.add_argument("-a", "--all", action="store_true", help="Repack all.")
+    parser = argparse.ArgumentParser(description='Repack packages into .whl files directly.')
+    parser.add_argument('packages', nargs='*', help='Distribution names to repack.')
+    parser.add_argument('-a', '--all', action='store_true', help='Repack all.')
     args = parser.parse_args()
 
     prefix = prefix_path()
@@ -236,25 +226,21 @@ def main():
             if key in dists:
                 to_do.append(dists[key])
 
-    wheel_dir = Path.home() / "tmp" / "wheels"
-    print(f"[*] Saving wheels to: {wheel_dir}")
+    wheel_dir = Path.home() / 'tmp' / 'wheels'
+    print(f'[*] Saving wheels to: {wheel_dir}')
 
     for distinfo in to_do:
         try:
             md = parse_metadata_from_distinfo(distinfo)
-            name = (md.get("Name") or distinfo.name.split("-", 1)[0]).replace("-", "_")
-            ver = md.get("Version") or "0"
+            name = (md.get('Name') or distinfo.name.split('-', 1)[0]).replace('-', '_')
+            ver = md.get('Version') or '0'
 
             # Simple check for platform tags for filename
             py_tag, abi_tag, plat_tag = detect_wheel_tags()
             # We assume non-platform unless we find native libs later,
             # but for naming we use a default or detect ahead
-            out_name = f"{name}-{ver}-py3-none-any.whl"
+            out_name = f'{name}-{ver}-py3-none-any.whl'
 
             collect_and_build(distinfo, prefix, wheel_dir / out_name)
         except Exception as e:
-            print(f"[!] Critical error repacking {distinfo.name}: {e}")
-
-
-if __name__ == "__main__":
-    main()
+            print(f'[!] Critical error repacking {disti

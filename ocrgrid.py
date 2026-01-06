@@ -36,9 +36,7 @@ def to_grayscale(img: np.ndarray) -> np.ndarray:
 
 def rescale(img: np.ndarray, scale: float = 2.0) -> np.ndarray:
     h, w = img.shape[:2]
-    return cv2.resize(
-        img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_CUBIC
-    )
+    return cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_CUBIC)
 
 
 def deskew(img: np.ndarray) -> np.ndarray:
@@ -54,9 +52,7 @@ def deskew(img: np.ndarray) -> np.ndarray:
     (h, w) = img.shape[:2]
     center = (w // 2, h // 2)
     m = cv2.getRotationMatrix2D(center, angle, 1.0)
-    return cv2.warpAffine(
-        img, m, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE
-    )
+    return cv2.warpAffine(img, m, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
 
 
 def rotate(img: np.ndarray, angle: int) -> np.ndarray:
@@ -77,15 +73,15 @@ def run_tesseract(
     oem: int,
     dpi: int,
 ) -> Dict[str, str]:
-    config = f"--psm {psm} --oem {oem} -c user_defined_dpi={dpi}"
+    config = f'--psm {psm} --oem {oem} -c user_defined_dpi={dpi}'
     text = pytesseract.image_to_string(img, config=config)
 
     return {
-        "psm": psm,
-        "oem": oem,
-        "dpi": dpi,
-        "config": config,
-        "text": text,
+        'psm': psm,
+        'oem': oem,
+        'dpi': dpi,
+        'config': config,
+        'text': text,
     }
 
 
@@ -96,21 +92,21 @@ def run_tesseract(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("fname", type=Path)
-    parser.add_argument("-o", "--out", type=Path, default=Path("ocr_output"))
+    parser.add_argument('fname', type=Path)
+    parser.add_argument('-o', '--out', type=Path, default=Path('ocr_output'))
     args = parser.parse_args()
 
     args.out.mkdir(parents=True, exist_ok=True)
 
-    base_img = Image.open(args.fname).convert("RGB")
+    base_img = Image.open(args.fname).convert('RGB')
     cv_img = pil_to_cv(base_img)
 
     image_variants: Dict[str, Image.Image] = {
-        "original": base_img,
-        "grayscale": cv_to_pil(to_grayscale(cv_img)),
-        "rescaled": cv_to_pil(rescale(cv_img)),
-        "deskewed": cv_to_pil(deskew(cv_img)),
-        "rotated_90": cv_to_pil(rotate(cv_img, 90)),
+        'original': base_img,
+        'grayscale': cv_to_pil(to_grayscale(cv_img)),
+        'rescaled': cv_to_pil(rescale(cv_img)),
+        'deskewed': cv_to_pil(deskew(cv_img)),
+        'rotated_90': cv_to_pil(rotate(cv_img, 90)),
     }
 
     psm_values = [3, 4, 6, 11]
@@ -128,38 +124,38 @@ def main() -> None:
                 for dpi in dpi_values:
                     result = run_tesseract(img, psm, oem, dpi)
 
-                    tag = f"psm{psm}_oem{oem}_dpi{dpi}"
-                    txt_path = variant_dir / f"{tag}.txt"
-                    meta_path = variant_dir / f"{tag}.json"
+                    tag = f'psm{psm}_oem{oem}_dpi{dpi}'
+                    txt_path = variant_dir / f'{tag}.txt'
+                    meta_path = variant_dir / f'{tag}.json'
 
-                    txt_path.write_text(result["text"], encoding="utf-8")
+                    txt_path.write_text(result['text'], encoding='utf-8')
                     meta_path.write_text(
                         json.dumps(
                             {
-                                "image_variant": variant_name,
-                                "source_file": str(args.fname),
-                                "tesseract": result,
+                                'image_variant': variant_name,
+                                'source_file': str(args.fname),
+                                'tesseract': result,
                             },
                             indent=2,
                         ),
-                        encoding="utf-8",
+                        encoding='utf-8',
                     )
 
                     report_index.append(
                         {
-                            "variant": variant_name,
-                            "psm": psm,
-                            "oem": oem,
-                            "dpi": dpi,
-                            "text_file": str(txt_path),
+                            'variant': variant_name,
+                            'psm': psm,
+                            'oem': oem,
+                            'dpi': dpi,
+                            'text_file': str(txt_path),
                         }
                     )
 
-    (args.out / "index.json").write_text(
+    (args.out / 'index.json').write_text(
         json.dumps(report_index, indent=2),
-        encoding="utf-8",
+        encoding='utf-8',
     )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

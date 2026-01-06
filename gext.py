@@ -12,18 +12,18 @@ from typing import Any, Dict, List
 import regex as re
 
 # --- Configuration ---
-OUTPUT_DIR = Path("output")
+OUTPUT_DIR = Path('output')
 ARCHIVE_EXTENSIONS = (
-    ".whl",
-    ".zip",
-    ".tar.gz",
-    ".tgz",
-    ".tar.zst",
-    ".tar.xz",
-    ".tar",
-    ".zst",
+    '.whl',
+    '.zip',
+    '.tar.gz',
+    '.tgz',
+    '.tar.zst',
+    '.tar.xz',
+    '.tar',
+    '.zst',
 )
-ALLOWED_PYTHON_EXTENSIONS = (".py", "")  # .py or no extension
+ALLOWED_PYTHON_EXTENSIONS = ('.py', '')  # .py or no extension
 
 
 # --- Core AST Visitor for Entity Extraction ---
@@ -52,54 +52,54 @@ class EntityExtractor(ast.NodeVisitor):
             last_line = code_slice[-1]
             # Adjust the last line content to stop at end_col_offset
             code_slice[-1] = last_line[: node.end_col_offset]
-        return "".join(code_slice)
+        return ''.join(code_slice)
 
     def _extract_and_save(self, node: ast.AST, entity_type: str, name: str):
         """Prepares and saves the entity data."""
         entity_code = self._get_source_slice(node)
-        scope_prefix = "_".join(self.scope_stack)
-        full_name = f"{scope_prefix}_{name}" if scope_prefix else name
+        scope_prefix = '_'.join(self.scope_stack)
+        full_name = f'{scope_prefix}_{name}' if scope_prefix else name
         self.entities.append(
             {
-                "name": name,
-                "full_name": full_name,
-                "type": entity_type,
-                "code": entity_code,
-                "path": str(self.original_path),
-                "is_constant": entity_type in ("constant"),
-                "is_class": entity_type in ("class"),
-                "is_function": entity_type in ("function", "method"),
+                'name': name,
+                'full_name': full_name,
+                'type': entity_type,
+                'code': entity_code,
+                'path': str(self.original_path),
+                'is_constant': entity_type in ('constant'),
+                'is_class': entity_type in ('class'),
+                'is_function': entity_type in ('function', 'method'),
             }
         )
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         # Handle function or method definition
         entity_type = (
-            "method"
-            if self.scope_stack and self.scope_stack[-1].startswith("class_")
-            else "function"
+            'method'
+            if self.scope_stack and self.scope_stack[-1].startswith('class_')
+            else 'function'
         )
         self._extract_and_save(node, entity_type, node.name)
-        self.scope_stack.append(f"func_{node.name}")
+        self.scope_stack.append(f'func_{node.name}')
         self.generic_visit(node)
         self.scope_stack.pop()
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
         # Handle async function or method definition
         entity_type = (
-            "method"
-            if self.scope_stack and self.scope_stack[-1].startswith("class_")
-            else "function"
+            'method'
+            if self.scope_stack and self.scope_stack[-1].startswith('class_')
+            else 'function'
         )
         self._extract_and_save(node, entity_type, node.name)
-        self.scope_stack.append(f"async_func_{node.name}")
+        self.scope_stack.append(f'async_func_{node.name}')
         self.generic_visit(node)
         self.scope_stack.pop()
 
     def visit_ClassDef(self, node: ast.ClassDef):
         # Handle class definition
-        self._extract_and_save(node, "class", node.name)
-        self.scope_stack.append(f"class_{node.name}")
+        self._extract_and_save(node, 'class', node.name)
+        self.scope_stack.append(f'class_{node.name}')
         self.generic_visit(node)
         self.scope_stack.pop()
 
@@ -109,8 +109,8 @@ class EntityExtractor(ast.NodeVisitor):
             if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
                 target_name = node.targets[0].id
                 # Check for common constant naming conventions (all caps)
-                if re.match(r"^[A-Z_][A-Z0-9_]*$", target_name):
-                    self._extract_and_save(node, "constant", target_name)
+                if re.match(r'^[A-Z_][A-Z0-9_]*$', target_name):
+                    self._extract_and_save(node, 'constant', target_name)
         # Do not recurse into children for Assign nodes to avoid processing assignments inside lists/tuples etc.
         # We rely on generic_visit in FunctionDef/ClassDef to handle nested statements.
 
@@ -130,7 +130,7 @@ def get_unique_filepath(base_path: Path) -> Path:
     suffix = base_path.suffix
     i = 1
     while True:
-        new_path = base_path.with_name(f"{name}_{i}{suffix}")
+        new_path = base_path.with_name(f'{name}_{i}{suffix}')
         if not new_path.exists():
             return new_path
         i += 1
@@ -139,20 +139,20 @@ def get_unique_filepath(base_path: Path) -> Path:
 def save_entity(entity: Dict[str, Any]):
     """Saves a single extracted entity to the output folder."""
     filename_base = f'{entity["full_name"]}.py'
-    output_path_base = OUTPUT_DIR / entity["type"] / filename_base
+    output_path_base = OUTPUT_DIR / entity['type'] / filename_base
     # Ensure the target directory exists
     output_path_base.parent.mkdir(parents=True, exist_ok=True)
     # 1. Prepare Content
     #    comment = f'# Original path: {entity["path"]}\n'
-    content = entity["code"]
+    content = entity['code']
     # 2. Save .py file (and handle naming conflict)
     final_py_path = get_unique_filepath(output_path_base)
     try:
-        with open(final_py_path, "w", encoding="utf-8") as f:
+        with open(final_py_path, 'w', encoding='utf-8') as f:
             f.write(content)
         # print(f"Saved: {final_py_path}") # Optional logging
     except Exception as e:
-        print(f"Error saving {final_py_path}: {e}")
+        print(f'Error saving {final_py_path}: {e}')
         return
 
 
@@ -169,7 +169,7 @@ def extract_entities_from_content(content: str, path: Path) -> List[Dict[str, An
         # print(f"Skipping {path}: Not valid Python syntax.")
         return []
     except Exception as e:
-        print(f"Error parsing AST for {path}: {e}")
+        print(f'Error parsing AST for {path}: {e}')
         return []
 
 
@@ -179,15 +179,11 @@ def is_python_file_no_extension(path: Path) -> bool:
         return False
     # Check if the file starts with a Python shebang or contains common Python keywords
     try:
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
-            first_lines = "".join(f.readlines(1024))
-            if re.match(r"#!\s*/.*python", first_lines):
+        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+            first_lines = ''.join(f.readlines(1024))
+            if re.match(r'#!\s*/.*python', first_lines):
                 return True
-            if (
-                "def " in first_lines
-                or "class " in first_lines
-                or "import " in first_lines
-            ):
+            if 'def ' in first_lines or 'class ' in first_lines or 'import ' in first_lines:
                 return True
     except:
         pass
@@ -197,12 +193,12 @@ def is_python_file_no_extension(path: Path) -> bool:
 def process_single_file(path: Path) -> List[Dict[str, Any]]:
     """Reads a file and extracts entities."""
     try:
-        if path.suffix == ".py" or is_python_file_no_extension(path):
-            content = path.read_text(encoding="utf-8", errors="ignore")
+        if path.suffix == '.py' or is_python_file_no_extension(path):
+            content = path.read_text(encoding='utf-8', errors='ignore')
             return extract_entities_from_content(content, path)
         return []
     except Exception as e:
-        print(f"Error reading file {path}: {e}")
+        print(f'Error reading file {path}: {e}')
         return []
 
 
@@ -210,64 +206,51 @@ def process_archive(path: Path) -> List[Dict[str, Any]]:
     """Handles compressed files (.zip, .tar.*, .whl) and extracts entities from Python files within."""
     entities = []
     # 1. Handle ZST-only files (often used for single compressed files)
-    if path.suffix == ".zst":
+    if path.suffix == '.zst':
         try:
             dctx = zstd.ZstdDecompressor()
-            content = dctx.decompress(path.read_bytes()).decode(
-                "utf-8", errors="ignore"
-            )
+            content = dctx.decompress(path.read_bytes()).decode('utf-8', errors='ignore')
             return extract_entities_from_content(content, path)
         except Exception as e:
-            print(f"Error decompressing ZST file {path}: {e}")
+            print(f'Error decompressing ZST file {path}: {e}')
             return []
     # 2. Handle standard archive types
-    if path.suffix in (".zip", ".whl"):
+    if path.suffix in ('.zip', '.whl'):
         try:
-            with zipfile.ZipFile(path, "r") as zf:
+            with zipfile.ZipFile(path, 'r') as zf:
                 for member in zf.namelist():
                     member_path = Path(member)
-                    if member_path.suffix == ".py":
+                    if member_path.suffix == '.py':
                         with zf.open(member) as member_file:
-                            content = member_file.read().decode(
-                                "utf-8", errors="ignore"
-                            )
-                            virtual_path = Path(f"{path}/{member}")
-                            entities.extend(
-                                extract_entities_from_content(content, virtual_path)
-                            )
+                            content = member_file.read().decode('utf-8', errors='ignore')
+                            virtual_path = Path(f'{path}/{member}')
+                            entities.extend(extract_entities_from_content(content, virtual_path))
         except Exception as e:
-            print(f"Error processing ZIP/WHL archive {path}: {e}")
-    elif any(
-        path.name.endswith(ext)
-        for ext in [".tar", ".tar.gz", ".tgz", ".tar.zst", ".tar.xz"]
-    ):
+            print(f'Error processing ZIP/WHL archive {path}: {e}')
+    elif any(path.name.endswith(ext) for ext in ['.tar', '.tar.gz', '.tgz', '.tar.zst', '.tar.xz']):
         mode_map = {
-            ".tar.gz": "r:gz",
-            ".tgz": "r:gz",
-            ".tar.zst": "r:zst",
-            ".tar.xz": "r:xz",
-            ".tar": "r",
+            '.tar.gz': 'r:gz',
+            '.tgz': 'r:gz',
+            '.tar.zst': 'r:zst',
+            '.tar.xz': 'r:xz',
+            '.tar': 'r',
         }
-        mode = next((mode_map[ext] for ext in mode_map if path.name.endswith(ext)), "r")
+        mode = next((mode_map[ext] for ext in mode_map if path.name.endswith(ext)), 'r')
         try:
             with tarfile.open(path, mode) as tf:
                 for member in tf.getmembers():
                     member_path = Path(member.name)
-                    if member.isfile() and member_path.suffix == ".py":
+                    if member.isfile() and member_path.suffix == '.py':
                         member_file = tf.extractfile(member)
                         if member_file:
-                            content = member_file.read().decode(
-                                "utf-8", errors="ignore"
-                            )
-                            virtual_path = Path(f"{path}/{member.name}")
-                            entities.extend(
-                                extract_entities_from_content(content, virtual_path)
-                            )
+                            content = member_file.read().decode('utf-8', errors='ignore')
+                            virtual_path = Path(f'{path}/{member.name}')
+                            entities.extend(extract_entities_from_content(content, virtual_path))
         except tarfile.ReadError:
             # Not a valid archive, or wrong compression mode
             pass
         except Exception as e:
-            print(f"Error processing TAR archive {path}: {e}")
+            print(f'Error processing TAR archive {path}: {e}')
     return entities
 
 
@@ -281,15 +264,15 @@ def worker_process(path_str: str) -> List[Dict[str, Any]]:
 
 # --- Main Execution ---
 def main():
-    print(f"Starting analysis in {Path.cwd()}...")
+    print(f'Starting analysis in {Path.cwd()}...')
     # Remove existing output folder for a clean run
     if OUTPUT_DIR.exists():
         shutil.rmtree(OUTPUT_DIR)
-        print(f"Cleaned previous output directory: {OUTPUT_DIR}")
+        print(f'Cleaned previous output directory: {OUTPUT_DIR}')
     OUTPUT_DIR.mkdir(exist_ok=True)
     # 1. Collect all files to process
     files_to_process = []
-    current_dir = Path(".")
+    current_dir = Path('.')
     for root, _, filenames in os.walk(current_dir):
         for name in filenames:
             path = Path(root) / name
@@ -300,17 +283,14 @@ def main():
             is_archive = path.suffix in ARCHIVE_EXTENSIONS or any(
                 path.name.endswith(ext) for ext in ARCHIVE_EXTENSIONS
             )
-            is_py = (
-                path.suffix in ALLOWED_PYTHON_EXTENSIONS
-                or is_python_file_no_extension(path)
-            )
+            is_py = path.suffix in ALLOWED_PYTHON_EXTENSIONS or is_python_file_no_extension(path)
             if is_archive or is_py:
                 files_to_process.append(str(path))
     if not files_to_process:
-        print("No Python files or archives found to process.")
+        print('No Python files or archives found to process.')
         return
     print(
-        f"Found {len(files_to_process)} relevant files/archives. Starting multiprocessing pool..."
+        f'Found {len(files_to_process)} relevant files/archives. Starting multiprocessing pool...'
     )
     # 2. Process files in parallel
     num_cpus = cpu_count()
@@ -322,16 +302,16 @@ def main():
         # Flatten the list of lists of entities
         for result in results_list:
             all_entities.extend(result)
-    print(f"Processing complete. Extracted {len(all_entities)} entities.")
+    print(f'Processing complete. Extracted {len(all_entities)} entities.')
     # 3. Save all extracted entities
-    print(f"Saving entities to {OUTPUT_DIR}...")
+    print(f'Saving entities to {OUTPUT_DIR}...')
     for entity in all_entities:
         save_entity(entity)
-    print("\n\nAll tasks finished successfully!")
+    print('\n\nAll tasks finished successfully!')
     print(
         f"Results are saved in the '{OUTPUT_DIR}' folder, organized by entity type (class, function, constant)."
     )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -12,11 +12,11 @@ from pathlib import Path
 from deep_translator import GoogleTranslator, single_detection
 
 CHUNK_SIZE = 2000
-ALLOWED_EXT = {".txt", ".md", ".csv", ".json", ".py"}
+ALLOWED_EXT = {'.txt', '.md', '.csv', '.json', '.py'}
 
 
 def translator():
-    return GoogleTranslator(source="zh-CN", target="en")
+    return GoogleTranslator(source='zh-CN', target='en')
 
 
 def translate_text_chunked(text: str) -> str:
@@ -25,7 +25,7 @@ def translate_text_chunked(text: str) -> str:
     t = translator()
     for c in chunks:
         out.append(t.translate(c))
-    return "".join(out)
+    return ''.join(out)
 
 
 # ----------------------------------------------------------------------
@@ -42,9 +42,7 @@ def translate_python_file(content: str) -> str:
         stripped = line.strip()
 
         # Detect docstring start
-        if not in_docstring and (
-            stripped.startswith('"""') or stripped.startswith("'''")
-        ):
+        if not in_docstring and (stripped.startswith('"""') or stripped.startswith("'''")):
             in_docstring = True
             doc_delim = stripped[:3]
             # translate inside docstring
@@ -52,22 +50,22 @@ def translate_python_file(content: str) -> str:
             if inside.endswith(doc_delim):
                 # single-line docstring
                 text = inside[:-3]
-                translated = translate_text_chunked(text) if text else ""
+                translated = translate_text_chunked(text) if text else ''
                 out.append(line.replace(text, translated))
                 in_docstring = False
                 doc_delim = None
             else:
                 text = inside
-                translated = translate_text_chunked(text) if text else ""
+                translated = translate_text_chunked(text) if text else ''
                 out.append(line.replace(text, translated))
             continue
 
         # Inside multi-line docstring
         if in_docstring:
             if stripped.endswith(doc_delim):
-                text = line.replace(doc_delim, "")
+                text = line.replace(doc_delim, '')
                 translated = translate_text_chunked(text)
-                out.append(f"{translated}{doc_delim}\n")
+                out.append(f'{translated}{doc_delim}\n')
                 in_docstring = False
                 doc_delim = None
             else:
@@ -76,14 +74,14 @@ def translate_python_file(content: str) -> str:
             continue
 
         # Translate comments (# …)
-        if "#" in line:
-            code, comment = line.split("#", 1)
+        if '#' in line:
+            code, comment = line.split('#', 1)
             translated = translate_text_chunked(comment)
-            out.append(f"{code}# {translated}\n")
+            out.append(f'{code}# {translated}\n')
         else:
             out.append(line)
 
-    return "".join(out)
+    return ''.join(out)
 
 
 # ----------------------------------------------------------------------
@@ -94,37 +92,35 @@ def translate_text_file(content: str) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Translate zh-CNpanese → English safely."
-    )
-    parser.add_argument("input_path")
-    parser.add_argument("--lang", default="zh-CN", help="Source language or 'auto'")
+    parser = argparse.ArgumentParser(description='Translate zh-CNpanese → English safely.')
+    parser.add_argument('input_path')
+    parser.add_argument('--lang', default='zh-CN', help="Source language or 'auto'")
     args = parser.parse_args()
 
     in_path = Path(args.input_path)
 
     if not in_path.exists():
-        print("File not found.", file=sys.stderr)
+        print('File not found.', file=sys.stderr)
         sys.exit(1)
 
     ext = in_path.suffix.lower()
-    content = in_path.read_text(encoding="utf-8")
+    content = in_path.read_text(encoding='utf-8')
 
     # Auto-detect language
     src_lang = args.lang
-    if src_lang == "auto":
+    if src_lang == 'auto':
         src_lang = single_detection(content[:500])
 
-    if ext == ".py":
+    if ext == '.py':
         translated = translate_python_file(content)
     else:
         translated = translate_text_file(content)
 
-    out_path = in_path.with_name(f"{in_path.stem}_eng{ext}")
-    out_path.write_text(translated, encoding="utf-8")
+    out_path = in_path.with_name(f'{in_path.stem}_eng{ext}')
+    out_path.write_text(translated, encoding='utf-8')
 
-    print(f"Translated ({src_lang} → en): {out_path}")
+    print(f'Translated ({src_lang} → en): {out_path}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

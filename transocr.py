@@ -18,8 +18,8 @@ from PIL import Image, ImageEnhance, ImageFilter
 
 # Ensures consistent results from langdetect
 DetectorFactory.seed = 0
-TEXT_EXT = {".txt", ".md", ".csv", ".json", ".py"}
-IMAGE_EXT = {".jpg", ".jpeg", ".png"}
+TEXT_EXT = {'.txt', '.md', '.csv', '.json', '.py'}
+IMAGE_EXT = {'.jpg', '.jpeg', '.png'}
 CHUNK_SIZE = 2000
 
 
@@ -28,11 +28,11 @@ CHUNK_SIZE = 2000
 # -------------------------------
 def detect_lang_from_text(text: str) -> str:
     if not text.strip():
-        return "unknown"
+        return 'unknown'
     try:
         return detect(text[:500])
     except Exception:
-        return "unknown"
+        return 'unknown'
 
 
 # -------------------------------
@@ -41,9 +41,9 @@ def detect_lang_from_text(text: str) -> str:
 def read_text_file(path: Path) -> str:
     ext = path.suffix.lower()
     if ext not in TEXT_EXT:
-        msg = f"Unsupported text file: {ext}"
+        msg = f'Unsupported text file: {ext}'
         raise ValueError(msg)
-    return path.read_text(encoding="utf-8")
+    return path.read_text(encoding='utf-8')
 
 
 # -------------------------------
@@ -52,7 +52,7 @@ def read_text_file(path: Path) -> str:
 def preprocess_image(img: Image.Image) -> Image.Image:
     """Improve OCR accuracy by cleaning the image."""
     # Convert to grayscale
-    img = img.convert("L")
+    img = img.convert('L')
     # Increase contrast
     img = ImageEnhance.Contrast(img).enhance(2.0)
     # Apply threshold
@@ -68,7 +68,7 @@ def read_image_ocr(path: Path) -> str:
         img = preprocess_image(img)
         return pytesseract.image_to_string(img)
     except Exception as e:
-        msg = f"OCR failed: {e}"
+        msg = f'OCR failed: {e}'
         raise RuntimeError(msg)
 
 
@@ -80,9 +80,9 @@ def chunk_text(text: str, size: int = CHUNK_SIZE) -> list:
 
 
 def translate_chunks(chunks, src_lang: str) -> str:
-    translator = GoogleTranslator(source=src_lang, target="en")
+    translator = GoogleTranslator(source=src_lang, target='en')
     output = [translator.translate(chunk) for chunk in chunks]
-    return "".join(output)
+    return ''.join(output)
 
 
 # -------------------------------
@@ -90,21 +90,21 @@ def translate_chunks(chunks, src_lang: str) -> str:
 # -------------------------------
 def build_translated_output_path(input_path: Path) -> Path:
     if input_path.suffix.lower() in IMAGE_EXT:
-        return input_path.with_name(f"{input_path.stem}_eng.txt")
-    return input_path.with_name(f"{input_path.stem}_eng{input_path.suffix}")
+        return input_path.with_name(f'{input_path.stem}_eng.txt')
+    return input_path.with_name(f'{input_path.stem}_eng{input_path.suffix}')
 
 
 def build_raw_ocr_path(input_path: Path) -> Path:
-    return input_path.with_name(f"{input_path.stem}_ocr.txt")
+    return input_path.with_name(f'{input_path.stem}_ocr.txt')
 
 
 # -------------------------------
 # Main
 # -------------------------------
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Translate text or image to English.")
-    parser.add_argument("input_path")
-    parser.add_argument("--lang", default="auto", help="Source language code or 'auto'")
+    parser = argparse.ArgumentParser(description='Translate text or image to English.')
+    parser.add_argument('input_path')
+    parser.add_argument('--lang', default='auto', help="Source language code or 'auto'")
     args = parser.parse_args()
     in_path = Path(args.input_path)
     if not in_path.exists():
@@ -117,30 +117,19 @@ def main() -> None:
             text = read_image_ocr(in_path)
             # Always save raw OCR output
             raw_ocr_path = build_raw_ocr_path(in_path)
-            raw_ocr_path.write_text(text, encoding="utf-8")
+            raw_ocr_path.write_text(text, encoding='utf-8')
         else:
-            msg = "Unsupported file type. Use text, jpg, jpeg, png."
+            msg = 'Unsupported file type. Use text, jpg, jpeg, png.'
             raise ValueError(msg)
     except Exception:
         sys.exit(1)
     # Language detection
     src_lang = args.lang
-    if src_lang == "auto":
+    if src_lang == 'auto':
         src_lang = detect_lang_from_text(text)
     # Translation
-    src_lang = "vi"
+    src_lang = 'vi'
     chunks = chunk_text(text)
     try:
         translated = translate_chunks(chunks, src_lang)
-    except Exception:
-        sys.exit(1)
-    # Save output
-    out_path = build_translated_output_path(in_path)
-    try:
-        out_path.write_text(translated, encoding="utf-8")
-    except Exception:
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+    except Exce

@@ -14,11 +14,11 @@ class TitleParser(HTMLParser):
         self.title = None
 
     def handle_starttag(self, tag, attrs):
-        if tag.lower() == "title":
+        if tag.lower() == 'title':
             self.in_title = True
 
     def handle_endtag(self, tag):
-        if tag.lower() == "title":
+        if tag.lower() == 'title':
             self.in_title = False
 
     def handle_data(self, data):
@@ -29,26 +29,26 @@ class TitleParser(HTMLParser):
 def extract_title(html_path: Path) -> str | None:
     try:
         parser = TitleParser()
-        parser.feed(html_path.read_text(errors="ignore"))
+        parser.feed(html_path.read_text(errors='ignore'))
         return parser.title
     except Exception:
         return None
 
 
 def slugify(text: str) -> str:
-    text = unicodedata.normalize("NFKD", text)
-    text = text.encode("ascii", "ignore").decode("ascii")
+    text = unicodedata.normalize('NFKD', text)
+    text = text.encode('ascii', 'ignore').decode('ascii')
     text = text.lower()
-    text = re.sub(r"[^\w\s-]", "", text)
-    text = re.sub(r"[\s_-]+", "-", text)
-    return text.strip("-")
+    text = re.sub(r'[^\w\s-]', '', text)
+    text = re.sub(r'[\s_-]+', '-', text)
+    return text.strip('-')
 
 
 def unique_path(path: Path) -> Path:
     counter = 1
     new_path = path
     while new_path.exists():
-        new_path = path.with_stem(f"{path.stem}-{counter}")
+        new_path = path.with_stem(f'{path.stem}-{counter}')
         counter += 1
     return new_path
 
@@ -56,7 +56,7 @@ def unique_path(path: Path) -> Path:
 def rename_html_files(root: Path, dry_run: bool = False):
     for dirpath, _, filenames in os.walk(root):
         for name in filenames:
-            if not name.lower().endswith((".html", ".htm")):
+            if not name.lower().endswith(('.html', '.htm')):
                 continue
 
             old_path = Path(dirpath) / name
@@ -76,20 +76,20 @@ def rename_html_files(root: Path, dry_run: bool = False):
                 continue
 
             if dry_run:
-                print(f"[DRY] {old_path} -> {new_path}")
+                print(f'[DRY] {old_path} -> {new_path}')
             else:
-                print(f"{old_path} -> {new_path}")
+                print(f'{old_path} -> {new_path}')
                 old_path.rename(new_path)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Recursively rename HTML files based on <title> tag"
+        description='Recursively rename HTML files based on <title> tag'
     )
-    parser.add_argument("path", help="Root directory")
-    parser.add_argument("--dry-run", action="store_true", help="Preview changes only")
+    parser.add_argument('path', help='Root directory')
+    parser.add_argument('--dry-run', action='store_true', help='Preview changes only')
 
     args = parser.parse_args()
     rename_html_files(Path(args.path), dry_run=args.dry_run)

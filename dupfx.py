@@ -12,7 +12,7 @@ import xxhash
 # ----------------------------------------
 
 SKIPPED_PATHS = []
-EXCLUDED_DIRS = {".git", ".venv", "venv"}
+EXCLUDED_DIRS = {'.git', '.venv', 'venv'}
 
 # ----------------------------------------
 # FILE HASHING (Worker Function)
@@ -27,8 +27,8 @@ def hash_file(path: str, chunk_size: int = 8192):
     hasher = xxhash.xxh64()
 
     try:
-        with open(path, "rb") as f:
-            for chunk in iter(lambda: f.read(chunk_size), b""):
+        with open(path, 'rb') as f:
+            for chunk in iter(lambda: f.read(chunk_size), b''):
                 hasher.update(chunk)
     except (PermissionError, OSError):
         return path, None
@@ -102,7 +102,7 @@ def hash_groups_in_parallel(groups):
 
 
 def auto_delete_duplicates(dups) -> None:
-    print("\n🔥 AUTO-DELETE MODE: Removing duplicates...\n")
+    print('\n🔥 AUTO-DELETE MODE: Removing duplicates...\n')
     deleted_count = 0
     for _h, files in dups.items():
         duplicates = files[1:]
@@ -111,8 +111,8 @@ def auto_delete_duplicates(dups) -> None:
                 os.remove(f)
                 deleted_count += 1
             except Exception as e:
-                print(f"⚠️ Could not delete {f}: {e}")
-    print(f"\n✅ Deleted {deleted_count} duplicate files.")
+                print(f'⚠️ Could not delete {f}: {e}')
+    print(f'\n✅ Deleted {deleted_count} duplicate files.')
 
 
 # ----------------------------------------
@@ -123,10 +123,10 @@ def auto_delete_duplicates(dups) -> None:
 def report_duplicates(dups):
     dup_count = sum(len(files) - 1 for files in dups.values())
     dup_size = sum(Path(f).stat().st_size for files in dups.values() for f in files[1:])
-    print(f"\n📊 Report:")
-    print(f"   • Duplicate groups: {len(dups)}")
-    print(f"   • Total duplicate files: {dup_count}")
-    print(f"   • Total duplicate size: {dup_size / 1024 / 1024:.2f} MB")
+    print(f'\n📊 Report:')
+    print(f'   • Duplicate groups: {len(dups)}')
+    print(f'   • Total duplicate files: {dup_count}')
+    print(f'   • Total duplicate size: {dup_size / 1024 / 1024:.2f} MB')
 
 
 # ----------------------------------------
@@ -135,12 +135,12 @@ def report_duplicates(dups):
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Ultra-Fast Duplicate Finder")
+    parser = argparse.ArgumentParser(description='Ultra-Fast Duplicate Finder')
     parser.add_argument(
-        "-a",
-        "--auto-delete",
-        action="store_true",
-        help="Auto delete duplicates",
+        '-a',
+        '--auto-delete',
+        action='store_true',
+        help='Auto delete duplicates',
     )
     args = parser.parse_args()
 
@@ -155,8 +155,8 @@ def main() -> None:
         if args.auto_delete:
             auto_delete_duplicates(duplicates)
     else:
-        print("\n✅ No duplicates found.")
+        print('\n✅ No duplicates found.')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

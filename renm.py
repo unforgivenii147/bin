@@ -8,10 +8,10 @@ import rignore
 from deep_translator import GoogleTranslator
 from tqdm import tqdm
 
-DIRECTORY = "."
+DIRECTORY = '.'
 
 # Detect non‑ASCII characters
-non_english_pattern = re.compile(r"[^\x00-\x7F]")
+non_english_pattern = re.compile(r'[^\x00-\x7F]')
 
 
 def is_english(text):
@@ -33,7 +33,7 @@ def translate_name(name):
         return name, translation_cache[base] + ext
 
     try:
-        translated = GoogleTranslator(source="auto", target="en").translate(base)
+        translated = GoogleTranslator(source='auto', target='en').translate(base)
         translation_cache[base] = translated
         return name, translated + ext
     except Exception:
@@ -52,14 +52,12 @@ def rename_files(directory):
     # Parallel translation using ThreadPoolExecutor
     # max_workers can be higher than CPU count for network I/O tasks
     with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [
-            executor.submit(translate_name, name) for name in unique_names_to_translate
-        ]
+        futures = [executor.submit(translate_name, name) for name in unique_names_to_translate]
 
         for future in tqdm(
             as_completed(futures),
             total=len(unique_names_to_translate),
-            desc="Translating filenames",
+            desc='Translating filenames',
         ):
             original, translated = future.result()
             translation_map[original] = translated
@@ -80,15 +78,15 @@ def rename_files(directory):
         counter = 1
         while new_fp.exists():
             base, ext = os.path.splitext(new_name)
-            new_fp = fp.with_name(f"{base}_{counter}{ext}")
+            new_fp = fp.with_name(f'{base}_{counter}{ext}')
             counter += 1
 
         try:
             os.rename(fp, new_fp)
-            print(f"Renamed: {fp.name} -> {new_fp.name}")
+            print(f'Renamed: {fp.name} -> {new_fp.name}')
         except OSError as e:
-            print(f"Error renaming {fp.name}: {e}")
+            print(f'Error renaming {fp.name}: {e}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     rename_files(DIRECTORY)

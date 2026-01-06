@@ -3,7 +3,7 @@
 from pathlib import Path
 
 2  # Folders to exclude (exact names)
-EXCLUDED = {".git", "tmp", "var", ".cache", "etc"}
+EXCLUDED = {'.git', 'tmp', 'var', '.cache', 'etc'}
 
 
 def delete_empty_dirs(root: Path) -> None:
@@ -22,15 +22,15 @@ def delete_empty_dirs(root: Path) -> None:
             try:
                 # If directory is empty, remove it
                 if not any(path.iterdir()):
-                    print(f"Removing empty directory: {path}")
+                    print(f'Removing empty directory: {path}')
                     path.rmdir()
             except PermissionError:
-                print(f"Permission denied: {path}")
+                print(f'Permission denied: {path}')
             except OSError as e:
                 # Directory not empty or some other OS error
-                print(f"Could not remove {path}: {e}")
+                print(f'Could not remove {path}: {e}')
 
 
-if __name__ == "__main__":
-    root = Path(".").resolve()
+if __name__ == '__main__':
+    root = Path('.').resolve()
     delete_empty_dirs(root)
