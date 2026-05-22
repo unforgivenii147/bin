@@ -9,18 +9,18 @@ import os
 
 import dh
 
-EXT = ['.py', '.h', '.c', '.cpp', '.cc', '.cxx', '.hh', '.hpp', '.h', '.hxx']
+EXT = [".py", ".h", ".c", ".cpp", ".cc", ".cxx", ".hh", ".hpp", ".h", ".hxx"]
 
 
 def get_first_13(path: str) -> str:
     """Why: Ensures safe read even for short files."""
-    with open(path, encoding='utf-8', errors='ignore') as f:
+    with open(path, encoding="utf-8", errors="ignore") as f:
         lines = f.readlines()
-    return ''.join(lines[:13])
+    return "".join(lines[:13])
 
 
 def main() -> None:
-    output_path = 'all.txt'
+    output_path = "all.txt"
     collected = []
 
     for base, _, files in os.walk(os.getcwd()):
@@ -43,14 +43,14 @@ def main() -> None:
     # Deduplicate while preserving content
     unique_collected = list(set(collected))
 
-    with open(output_path, 'w', encoding='utf-8') as out:
+    with open(output_path, "w", encoding="utf-8") as out:
         for snippet in unique_collected:
             out.write(snippet)
-            out.write('\n\n\n')  # 3 blank lines
+            out.write("\n\n\n")  # 3 blank lines
 
-    print(f'Unique snippets saved → {output_path}')
-    print(f'Total unique blocks: {len(unique_collected)}')
+    print(f"Unique snippets saved → {output_path}")
+    print(f"Total unique blocks: {len(unique_collected)}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

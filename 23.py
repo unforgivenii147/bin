@@ -14,17 +14,17 @@ def is_python_file(path: Path) -> bool:
     """Determines if a file is a Python file.
     Criteria: Ends in .py OR has a python shebang.
     """
-    if path.suffix == '.py':
+    if path.suffix == ".py":
         return True
 
     # Check for extensionless executable python scripts
-    if path.suffix == '':
+    if path.suffix == "":
         try:
             # Read only the first 64 bytes to check shebang
-            with open(path, 'rb') as f:
+            with open(path, "rb") as f:
                 head = f.read(64)
                 # Look for standard shebangs like #!/usr/bin/env python or #!/usr/bin/python
-                if b'python' in head and b'#!' in head:
+                if b"python" in head and b"#!" in head:
                     return True
         except Exception:
             return False
@@ -36,10 +36,10 @@ def run_command(cmd):
     try:
         # We set force-exclude so ruff doesn't format files unrelated to the project context
         # if they happen to be in the list (though we are scanning current dir).
-        result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
         return result.returncode, result.stdout, result.stderr
     except Exception as e:
-        return -1, '', str(e)
+        return -1, "", str(e)
 
 
 def process_file(file_path_str) -> None:
@@ -57,13 +57,13 @@ def process_file(file_path_str) -> None:
     #               However, defaults are usually safer. We stick to defaults + unsafe here
     #               to avoid overwhelming noise, as 'ALL' is extremely strict).
     check_cmd = [
-        'ruff',
-        'check',
-        '--fix',
-        '--unsafe-fixes',
-        '--line-length',
-        '79',
-        '--quiet',  # We handle output manually
+        "ruff",
+        "check",
+        "--fix",
+        "--unsafe-fixes",
+        "--line-length",
+        "79",
+        "--quiet",  # We handle output manually
         str(path),
     ]
 
@@ -73,10 +73,10 @@ def process_file(file_path_str) -> None:
     # --quote-style single: force single quotes
     # --line-length 79: force wrap at 79
     format_cmd = [
-        'ruff',
-        'format',
-        '--config',
-        '/data/data/com.termux/files/home/.config/ruff/ruff.toml',
+        "ruff",
+        "format",
+        "--config",
+        "/data/data/com.termux/files/home/.config/ruff/ruff.toml",
         str(path),
     ]
 
@@ -90,7 +90,7 @@ def process_file(file_path_str) -> None:
 
     # If check failed or had stderr output (warnings)
     if rc_check != 0 or err_check.strip():
-        output.append(f'--- Issues fixing {path.name} ---')
+        output.append(f"--- Issues fixing {path.name} ---")
         if err_check.strip():
             output.append(err_check.strip())
         if out_check.strip():
@@ -98,13 +98,13 @@ def process_file(file_path_str) -> None:
 
     # If format failed (rare, usually syntax error)
     if rc_fmt != 0 or err_fmt.strip():
-        output.append(f'--- Issues formatting {path.name} ---')
+        output.append(f"--- Issues formatting {path.name} ---")
         if err_fmt.strip():
             output.append(err_fmt.strip())
 
     if output:
         with print_lock:
-            print('\n'.join(output))
+            print("\n".join(output))
             sys.stdout.flush()
 
 
@@ -118,13 +118,13 @@ def get_all_files(root_dir):
             for d in dirs
             if d
             not in {
-                '.git',
-                '.venv',
-                'venv',
-                '__pycache__',
-                'build',
-                'dist',
-                'node_modules',
+                ".git",
+                ".venv",
+                "venv",
+                "__pycache__",
+                "build",
+                "dist",
+                "node_modules",
             }
         ]
 
@@ -138,10 +138,10 @@ def get_all_files(root_dir):
 def main() -> None:
     # Check if ruff is installed
     try:
-        subprocess.run(['ruff', '--version'], capture_output=True, check=True)
+        subprocess.run(["ruff", "--version"], capture_output=True, check=True)
     except (FileNotFoundError, subprocess.CalledProcessError):
         print("Error: 'ruff' is not installed or not in PATH.")
-        print('Please run: pip install ruff')
+        print("Please run: pip install ruff")
         sys.exit(1)
 
     root_dir = os.getcwd()
@@ -158,5 +158,5 @@ def main() -> None:
         pool.map(process_file, files)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

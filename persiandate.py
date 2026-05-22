@@ -3,27 +3,27 @@ import datetime
 
 # Persian weekdays and months
 weekdays = [
-    'دوشنبه',
-    'سه‌شنبه',
-    'چهارشنبه',
-    'پنجشنبه',
-    'جمعه',
-    'شنبه',
-    'یکشنبه',
+    "دوشنبه",
+    "سه‌شنبه",
+    "چهارشنبه",
+    "پنجشنبه",
+    "جمعه",
+    "شنبه",
+    "یکشنبه",
 ]
 months = [
-    'فروردین',
-    'اردیبهشت',
-    'خرداد',
-    'تیر',
-    'مرداد',
-    'شهریور',
-    'مهر',
-    'آبان',
-    'آذر',
-    'دی',
-    'بهمن',
-    'اسفند',
+    "فروردین",
+    "اردیبهشت",
+    "خرداد",
+    "تیر",
+    "مرداد",
+    "شهریور",
+    "مهر",
+    "آبان",
+    "آذر",
+    "دی",
+    "بهمن",
+    "اسفند",
 ]
 
 
@@ -58,12 +58,12 @@ now = datetime.datetime()
 jy, jm, jd = gregorian_to_jalali(now.year, now.month, now.day)
 weekday = weekdays[now.weekday()]
 month = months[jm - 1]
-time_str = f'{now.hour:02d}:{now.minute:02d}'
+time_str = f"{now.hour:02d}:{now.minute:02d}"
 
 
 # convert to Persian digits
 def to_persian(s):
-    return s.translate(str.maketrans(string.digits, '۰۱۲۳۴۵۶۷۸۹'))
+    return s.translate(str.maketrans(string.digits, "۰۱۲۳۴۵۶۷۸۹"))
 
 
-result = f'{weekday} {to_persian(str(jd))} {month} {to_persian(str(jy))} {to_persian(time_str)}'
+result = f"{weekday} {to_persian(str(jd))} {month} {to_persian(str(jy))} {to_persian(time_str)}"

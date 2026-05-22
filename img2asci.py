@@ -5,10 +5,10 @@ import os
 import rignore
 from ascii_magic import AsciiArt
 
-IMG_EXT = ['.jpg', '.png', '.jpeg']
+IMG_EXT = [".jpg", ".png", ".jpeg"]
 
 
-def getimg(dir='.'):
+def getimg(dir="."):
     img_files = []
     for fpath in rignore.walk(dir):
         if fpath.suffix in IMG_EXT:
@@ -25,14 +25,14 @@ def render_ascii(image_path):
 
 
 def main():
-    imfiles = getimg('.')
+    imfiles = getimg(".")
     if len(imfiles) == 0:
-        print('no image found')
+        print("no image found")
         return
     for file in imfiles:
         render_ascii(file)
-    print('done')
+    print("done")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

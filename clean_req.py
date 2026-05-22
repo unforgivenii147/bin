@@ -5,24 +5,24 @@ import sys
 import regex as re
 
 # Pattern to split on version operators
-_VERSION_OP_RE = re.compile(r'\s*(?:===|==|!=|>=|<=|~=|>|<)\s*')
+_VERSION_OP_RE = re.compile(r"\s*(?:===|==|!=|>=|<=|~=|>|<)\s*")
 
 
 def clean_requirement(line: str) -> str:
     # Remove comments
-    line = line.split('#', 1)[0].strip()
+    line = line.split("#", 1)[0].strip()
     if not line:
-        return ''
+        return ""
 
     # Remove environment markers ("; something")
-    line = line.split(';', 1)[0].strip()
+    line = line.split(";", 1)[0].strip()
     if not line:
-        return ''
+        return ""
 
     # Remove extras like pkg[extra]
-    line = re.sub(r'\[.*?\]', '', line).strip()
+    line = re.sub(r"\[.*?\]", "", line).strip()
     if not line:
-        return ''
+        return ""
 
     # Remove version operators
     parts = _VERSION_OP_RE.split(line, maxsplit=1)
@@ -49,13 +49,13 @@ def group_key(name: str):
 
 def main() -> None:
     if len(sys.argv) != 2:
-        print(f'Usage: {sys.argv[0]} requirements.txt', file=sys.stderr)
+        print(f"Usage: {sys.argv[0]} requirements.txt", file=sys.stderr)
         sys.exit(1)
 
     fname = sys.argv[1]
 
     try:
-        with open(fname, encoding='utf-8') as f:
+        with open(fname, encoding="utf-8") as f:
             lines = f.readlines()
     except FileNotFoundError:
         print(f"Error: File '{fname}' not found.", file=sys.stderr)
@@ -73,15 +73,15 @@ def main() -> None:
     cleaned = sorted(cleaned, key=group_key)
 
     # Write back in-place
-    with open(fname, 'w', encoding='utf-8') as f:
+    with open(fname, "w", encoding="utf-8") as f:
         for item in cleaned:
-            f.write(item + '\n')
+            f.write(item + "\n")
 
     # Print output file contents
-    print('\n=== Cleaned Requirements ===')
+    print("\n=== Cleaned Requirements ===")
     for item in cleaned:
         print(item)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -17,7 +17,7 @@ def safe_mkdir(base: Path) -> Path:
 
     i = 1
     while True:
-        candidate = base.with_name(f'{base.name}_{i}')
+        candidate = base.with_name(f"{base.name}_{i}")
         if not candidate.exists():
             candidate.mkdir()
             return candidate
@@ -31,7 +31,7 @@ def unzip_file(archive: Path, target_dir: Path) -> bool:
     """
     try:
         result = subprocess.run(
-            ['unzip', archive.name],
+            ["unzip", archive.name],
             cwd=target_dir,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -63,10 +63,10 @@ def main() -> None:
 
         if ok:
             moved_file.unlink()  # delete original archive
-            print(f'[OK] Unzipped and removed: {item.name}')
+            print(f"[OK] Unzipped and removed: {item.name}")
         else:
-            print(f'[SKIP] Not a zip or unzip failed: {item.name}')
+            print(f"[SKIP] Not a zip or unzip failed: {item.name}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

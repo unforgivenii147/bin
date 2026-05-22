@@ -13,17 +13,17 @@ from pathlib import Path
 # =============================
 
 COLORS = {
-    'dir': '\033[34m',
-    'link': '\033[36m',
-    'exec': '\033[32m',
-    'reset': '\033[0m',
+    "dir": "\033[34m",
+    "link": "\033[36m",
+    "exec": "\033[32m",
+    "reset": "\033[0m",
 }
 
 
 def use_color(mode: str) -> bool:
-    if mode == 'always':
+    if mode == "always":
         return True
-    if mode == 'never':
+    if mode == "never":
         return False
     return sys.stdout.isatty()
 
@@ -32,11 +32,11 @@ def colorize(name, st, enabled):
     if not enabled:
         return name
     if stat.S_ISDIR(st.st_mode):
-        return f'{COLORS["dir"]}{name}{COLORS["reset"]}'
+        return f"{COLORS['dir']}{name}{COLORS['reset']}"
     if stat.S_ISLNK(st.st_mode):
-        return f'{COLORS["link"]}{name}{COLORS["reset"]}'
+        return f"{COLORS['link']}{name}{COLORS['reset']}"
     if st.st_mode & stat.S_IXUSR:
-        return f'{COLORS["exec"]}{name}{COLORS["reset"]}'
+        return f"{COLORS['exec']}{name}{COLORS['reset']}"
     return name
 
 
@@ -46,26 +46,26 @@ def colorize(name, st, enabled):
 
 
 def human_size(size):
-    for unit in ('B', 'K', 'M', 'G', 'T'):
+    for unit in ("B", "K", "M", "G", "T"):
         if size < 1024:
-            return f'{size}{unit}'
+            return f"{size}{unit}"
         size //= 1024
-    return f'{size}P'
+    return f"{size}P"
 
 
 def indicator(path, st):
     if stat.S_ISDIR(st.st_mode):
-        return '/'
+        return "/"
     if stat.S_ISLNK(st.st_mode):
-        return '@'
+        return "@"
     if st.st_mode & stat.S_IXUSR:
-        return '*'
-    return ''
+        return "*"
+    return ""
 
 
 def format_time(ts, full):
     dt = datetime.datetime.fromtimestamp(ts)
-    return dt.strftime('%Y-%m-%d %H:%M:%S' if full else '%b %d %H:%M')
+    return dt.strftime("%Y-%m-%d %H:%M:%S" if full else "%b %d %H:%M")
 
 
 # =============================
@@ -77,21 +77,21 @@ def format_entry(entry, args, color_enabled):
     try:
         st = entry.stat(follow_symlinks=args.L)
     except FileNotFoundError:
-        return ''
+        return ""
 
     name = entry.name
     name = colorize(name, st, color_enabled)
 
     if args.p and entry.is_dir():
-        name += '/'
+        name += "/"
     if args.F:
         name += indicator(entry, st)
 
-    inode = f'{st.st_ino} ' if args.i else ''
-    blocks = f'{st.st_blocks} ' if args.s else ''
+    inode = f"{st.st_ino} " if args.i else ""
+    blocks = f"{st.st_blocks} " if args.s else ""
 
     if not args.l:
-        return f'{inode}{blocks}{name}'
+        return f"{inode}{blocks}{name}"
 
     perms = stat.filemode(st.st_mode)
     nlink = st.st_nlink
@@ -103,7 +103,7 @@ def format_entry(entry, args, color_enabled):
 
     time_str = format_time(ts, args.full_time)
 
-    return f'{inode}{blocks}{perms} {nlink} {uid} {gid} {size:>6} {time_str} {name}'
+    return f"{inode}{blocks}{perms} {nlink} {uid} {gid} {size:>6} {time_str} {name}"
 
 
 # =============================
@@ -121,11 +121,9 @@ def scan_dir(path, args):
 
     if not args.a:
         if args.A:
-            entries = [
-                e for e in entries if e.name not in ('.', '..') and not e.name.startswith('.')
-            ]
+            entries = [e for e in entries if e.name not in (".", "..") and not e.name.startswith(".")]
         else:
-            entries = [e for e in entries if not e.name.startswith('.')]
+            entries = [e for e in entries if not e.name.startswith(".")]
 
     def key(p):
         try:
@@ -169,4 +167,4 @@ def print_columns(items, width, by_row):
         for c in range(cols):
             idx = r * cols + c if by_row else c * rows + r
             if idx < len(items):
-                print(items[idx].ljust(max_len), end='')
+                print(items[idx].ljust(max_len), end="")
