@@ -1,4 +1,8 @@
 #!/data/data/com.termux/files/usr/bin/env python3
+"""
+A tool to scan text-based files (e.g., .ipynb, .js, .html) for embedded base64 images
+and extract them into a dedicated directory.
+"""
 
 import base64
 import hashlib
@@ -11,9 +15,16 @@ import regex as re
 BASE64_IMG_REGEX = re.compile(r"data:image/(?P<ext>[a-zA-Z0-9+]+);base64,(?P<data>[A-Za-z0-9+/=\n\r]+)")
 
 
-def extract_images_from_file(file_path: Path, output_dir: Path):
-    """Scans a text file for embedded base64 images and extracts them.
-    Returns number of images found.
+def extract_images_from_file(file_path: Path, output_dir: Path) -> int:
+    """
+    Scans a text file for embedded base64 images and extracts them.
+    
+    Args:
+        file_path (Path): Path to the source file.
+        output_dir (Path): Directory where extracted images will be saved.
+        
+    Returns:
+        int: The number of images successfully found and extracted.
     """
     try:
         text = file_path.read_text(errors="ignore")
@@ -38,8 +49,10 @@ def extract_images_from_file(file_path: Path, output_dir: Path):
         filename = f"{file_path.stem}_{digest}.{ext}"
         output_path = output_dir / filename
 
-        with open(output_path, "wb") as f:
-            f.write(img_bytes)
+        # Skip if already exists to save I/O
+        if not output_path.exists():
+            with open(output_path, "wb") as f:
+                f.write(img_bytes)
 
         count += 1
 
@@ -47,8 +60,15 @@ def extract_images_from_file(file_path: Path, output_dir: Path):
 
 
 def scan_and_extract(base_dir: Path, output_dir: Path) -> None:
-    """Recursively scan for .ipynb, .js, .html files and extract images."""
-    output_dir.mkdir(exist_ok=True)
+    """
+    Recursively scans for .ipynb, .js, and .html files in the base directory
+    and extracts any embedded base64 images found within them.
+    
+    Args:
+        base_dir (Path): The directory to start the recursive scan.
+        output_dir (Path): The directory to save extracted images.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     target_exts = {".ipynb", ".js", ".html"}
     total_found = 0
@@ -72,6 +92,6 @@ def scan_and_extract(base_dir: Path, output_dir: Path) -> None:
 
 
 if __name__ == "__main__":
-    base_dir = Path(".")
-    output_dir = Path("extracted_images")
-    scan_and_extract(base_dir, output_dir)
+    BASE_DIR = Path(".")
+    OUTPUT_DIR = Path("extracted_images")
+    scan_and_extract(BASE_DIR, OUTPUT_DIR)

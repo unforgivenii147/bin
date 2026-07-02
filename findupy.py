@@ -1,85 +1,100 @@
-#!/data/data/com.termux/files/usr/bin/env python3
+#!/usr/bin/env python3
+"""
+Finds duplicate files in a directory using file size comparison and SHA256 hashing.
+Uses tqdm for progress tracking and supports exporting results to JSON.
+"""
 
 import hashlib
 import json
 import os
+import sys
 from collections import defaultdict
 from pathlib import Path
 
-from tqdm import tqdm
+try:
+    from tqdm import tqdm
+except ImportError:
+    # Fallback if tqdm is not installed
+    def tqdm(iterable, **kwargs):
+        return iterable
 
-SKIPPED_PATHS = []  # Store permission-denied paths
+SKIPPED_PATHS = []
 
 
 def hash_file(path: Path, chunk_size: int = 8192) -> str:
-    """Efficiently compute SHA256 hash of a file.
-    Shows a tqdm progress bar for each file.
-    Automatically skips files with permission errors.
+    """
+    Computes SHA256 hash of a file.
+    Only shows progress bar for files larger than 100MB.
     """
     sha = hashlib.sha256()
-
     try:
         file_size = path.stat().st_size
-        with (
-            open(path, "rb") as f,
-            tqdm(
-                total=file_size,
-                unit="B",
-                unit_scale=True,
-                unit_divisor=1024,
-                desc=f"Hashing {path.name}",
-                leave=False,
-            ) as pbar,
-        ):
-            for chunk in iter(lambda: f.read(chunk_size), b""):
-                sha.update(chunk)
-                pbar.update(len(chunk))
-
-    except PermissionError:
+        use_pbar = file_size > 100 * 1024 * 1024  # 100MB
+        
+        with open(path, "rb") as f:
+            if use_pbar:
+                with tqdm(
+                    total=file_size,
+                    unit="B",
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    desc=f"Hashing {path.name}",
+                    leave=False,
+                ) as pbar:
+                    for chunk in iter(lambda: f.read(chunk_size), b""):
+                        sha.update(chunk)
+                        pbar.update(len(chunk))
+            else:
+                for chunk in iter(lambda: f.read(chunk_size), b""):
+                    sha.update(chunk)
+    except (PermissionError, OSError):
         SKIPPED_PATHS.append(str(path))
         return None
-
-    except OSError:
-        SKIPPED_PATHS.append(str(path))
-        return None
-
     return sha.hexdigest()
 
 
-def collect_all_files(directory: Path):
-    """Collect all file paths so we can show a global progress bar.
-    Skips unreadable directories automatically.
+def find_duplicate_files(directory: str) -> dict:
     """
-    all_files = []
-    for root, _dirs, files in os.walk(directory, onerror=lambda e: None):
+    Finds duplicate files by first grouping by size and then hashing candidates.
+    """
+    dir_path = Path(directory)
+    if not dir_path.exists():
+        print(f"Error: Directory {directory} does not exist.")
+        return {}
+
+    # 1. Group files by size
+    size_map = defaultdict(list)
+    all_files_count = 0
+    print(f"📁 Scanning {directory}...")
+    for root, _, files in os.walk(dir_path):
         for f in files:
-            full_path = Path(root) / f
-            all_files.append(full_path)
-    return all_files
+            p = Path(root) / f
+            try:
+                size_map[p.stat().st_size].append(p)
+                all_files_count += 1
+            except (PermissionError, OSError):
+                SKIPPED_PATHS.append(str(p))
 
+    # 2. Identify candidates for hashing (size groups > 1)
+    candidates = [p for paths in size_map.values() if len(paths) > 1 for p in paths]
+    if not candidates:
+        return {}
 
-def find_duplicate_files(directory: str):
-    """Finds duplicate files using hashing + tqdm overall progress bar.
-    Auto-skip unreadable files.
-    """
-    directory = Path(directory)
-    if not directory.exists():
-        raise ValueError(f"Directory does not exist: {directory}")
-
-    all_files = collect_all_files(directory)
+    print(f"🔍 Found {len(candidates)} candidate files with matching sizes. Hashing...")
+    
     duplicates = defaultdict(list)
-
-    print(f"📁 Scanning {len(all_files)} files...\n")
-
-    for file_path in tqdm(all_files, desc="Overall Progress", unit="file"):
-        file_hash = hash_file(file_path)
-        if file_hash:
-            duplicates[file_hash].append(str(file_path))
+    for p in tqdm(candidates, desc="Hashing candidates", unit="file"):
+        h = hash_file(p)
+        if h:
+            duplicates[h].append(str(p))
 
     return {h: paths for h, paths in duplicates.items() if len(paths) > 1}
 
 
 def print_duplicates(dups: dict) -> None:
+    """
+    Prints the found duplicates in a readable format.
+    """
     if not dups:
         print("🎉 No duplicates found!")
         return
@@ -93,26 +108,37 @@ def print_duplicates(dups: dict) -> None:
 
 
 def export_to_json(dups: dict, output_path="duplicates.json") -> None:
+    """
+    Exports the duplicate groups to a JSON file.
+    """
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(dups, f, indent=2)
     print(f"📦 Results exported to {output_path}")
 
 
-def print_skipped_paths() -> None:
-    if not SKIPPED_PATHS:
-        return
-    print("\n⚠️  Skipped (permission denied):")
-    for p in SKIPPED_PATHS:
-        print(f"   • {p}")
+def main() -> None:
+    """
+    Main entry point. Handles user input and workflow.
+    """
+    if len(sys.argv) > 1:
+        folder = sys.argv[1]
+    else:
+        folder = input("Enter folder path to scan (default: current): ").strip() or "."
+    
+    duplicates = find_duplicate_files(folder)
+    print_duplicates(duplicates)
+    
+    if SKIPPED_PATHS:
+        print(f"\n⚠️  Skipped {len(SKIPPED_PATHS)} files due to permissions.")
+        if input("Show skipped paths? (y/n): ").lower() == "y":
+            for p in SKIPPED_PATHS:
+                print(f"   • {p}")
+
+    if duplicates:
+        save = input("\nExport results to JSON? (y/n): ").lower().strip()
+        if save == "y":
+            export_to_json(duplicates)
 
 
 if __name__ == "__main__":
-    folder = input("Enter folder path to scan: ").strip()
-    duplicates = find_duplicate_files(folder)
-    print_duplicates(duplicates)
-    print_skipped_paths()
-
-    if duplicates:
-        save = input("Export results to JSON? (y/n): ").lower().strip()
-        if save == "y":
-            export_to_json(duplicates)
+    main()

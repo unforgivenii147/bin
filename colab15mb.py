@@ -1,52 +1,93 @@
 #!/data/data/com.termux/files/usr/bin/python
+"""
+Compress small site-packages from Google Colab.
+
+This module provides a utility to identify and compress small packages
+from the Google Colab environment's site-packages directory, making it
+easier to export and reuse lightweight dependencies.
+"""
+
 import os
 import site
 import tarfile
+from typing import List
+from pathlib import Path
 
-from google.colab import files
+try:
+    from google.colab import files
+except ImportError:
+    # Fallback for local testing
+    files = None
 
 
-def get_folder_size(path):
-    """Return total size of a folder in bytes."""
+def get_folder_size(path: Path) -> int:
+    """
+    Calculate the total size of a folder in bytes.
+
+    Args:
+        path: The Path object pointing to the directory.
+
+    Returns:
+        The total size of the folder in bytes.
+    """
     total = 0
-    for root, dirs, files in os.walk(path):
-        for f in files:
-            fp = os.path.join(root, f)
-            if os.path.isfile(fp):
-                total += os.path.getsize(fp)
+    for root, _, files_list in os.walk(path):
+        for f in files_list:
+            fp = Path(root) / f
+            try:
+                if fp.is_file():
+                    total += fp.stat().st_size
+            except OSError:
+                continue
     return total
 
 
-def compress_small_site_packages(max_size_mb=15):
-    site_packages_dir = site.getsitepackages()[0]
+def compress_small_site_packages(max_size_mb: float = 15.0) -> None:
+    """
+    Compress packages in site-packages that are smaller than the specified size.
+
+    Args:
+        max_size_mb: The maximum size of a package (in MB) to be included in the archive.
+    """
+    try:
+        site_packages_dir = Path(site.getsitepackages()[0])
+    except (IndexError, AttributeError):
+        print("Error: Could not determine site-packages directory.")
+        return
+
     output_file = "site-packages-small.tar.gz"
 
-    with tarfile.open(output_file, "w:gz") as tar:
-        for item in os.listdir(site_packages_dir):
-            item_path = os.path.join(site_packages_dir, item)
+    print(f"Searching in: {site_packages_dir}")
+    print(f"Max size: {max_size_mb} MB")
 
-            if os.path.isdir(item_path):
+    with tarfile.open(output_file, "w:gz") as tar:
+        for item in site_packages_dir.iterdir():
+            if item.is_dir():
                 # Include folder if total size <= max_size_mb
-                folder_size_mb = get_folder_size(item_path) / (1024 * 1024)
+                folder_size_mb = get_folder_size(item) / (1024 * 1024)
                 if folder_size_mb <= max_size_mb:
-                    print(f"Including folder {item} ({folder_size_mb:.2f} MB)")
-                    for root, dirs, files_list in os.walk(item_path):
+                    print(f"Including folder {item.name} ({folder_size_mb:.2f} MB)")
+                    for root, _, files_list in os.walk(item):
                         for f in files_list:
                             if not f.endswith(".pyc"):
-                                full_path = os.path.join(root, f)
-                                arcname = os.path.relpath(full_path, site_packages_dir)
+                                full_path = Path(root) / f
+                                arcname = full_path.relative_to(site_packages_dir)
                                 tar.add(full_path, arcname=arcname)
 
-            elif os.path.isfile(item_path):
+            elif item.is_file():
                 # Include individual file if size <= max_size_mb
-                file_size_mb = os.path.getsize(item_path) / (1024 * 1024)
-                if file_size_mb <= max_size_mb and not item.endswith(".pyc"):
-                    print(f"Including file {item} ({file_size_mb:.2f} MB)")
-                    arcname = os.path.relpath(item_path, site_packages_dir)
-                    tar.add(item_path, arcname=arcname)
+                file_size_mb = item.stat().st_size / (1024 * 1024)
+                if file_size_mb <= max_size_mb and not item.name.endswith(".pyc"):
+                    print(f"Including file {item.name} ({file_size_mb:.2f} MB)")
+                    arcname = item.relative_to(site_packages_dir)
+                    tar.add(item, arcname=arcname)
 
     print(f"Archive created: {output_file}")
-    files.download(output_file)
+    if files:
+        files.download(output_file)
+    else:
+        print("google.colab not found, skipping download.")
 
 
-compress_small_site_packages(max_size_mb=15)
+if __name__ == "__main__":
+    compress_small_site_packages(max_size_mb=15)

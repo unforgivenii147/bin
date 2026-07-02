@@ -1,25 +1,28 @@
 #!/data/data/com.termux/files/usr/bin/env python3
 """
-Recursive extractor of top-level & nested classes/functions + top-level constants.
-Excludes directories: test, tests, examples.
-Outputs:
- - output/classes.py
- - output/functions.py
- - output/nested_classes.py
- - output/nested_functions.py
- - output/const.py
+Recursive extractor of top-level and nested classes, functions, and constants from Python scripts.
+Useful for codebase analysis and refactoring.
 """
 
 import ast
 import multiprocessing as mp
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Set
 
 OUTPUT_DIR = "output"
-EXCLUDE_DIRS = {"test", "tests", "examples", "output"}
+EXCLUDE_DIRS = {"test", "tests", "examples", "output", ".git", "__pycache__"}
 
 
 def is_python_script(path: str) -> bool:
+    """
+    Checks if a file is a Python script based on its extension or shebang.
+    
+    Args:
+        path (str): The file path to check.
+        
+    Returns:
+        bool: True if it's a Python script, False otherwise.
+    """
     if path.endswith(".py"):
         return True
     try:
@@ -30,9 +33,18 @@ def is_python_script(path: str) -> bool:
         return False
 
 
-def discover_python_files() -> List[str]:
+def discover_python_files(root_dir: str = ".") -> List[str]:
+    """
+    Recursively finds all Python files in the given root directory, excluding specific folders.
+    
+    Args:
+        root_dir (str): The starting directory for discovery.
+        
+    Returns:
+        List[str]: A list of paths to discovered Python files.
+    """
     files = []
-    for root, dirs, fnames in os.walk("."):
+    for root, dirs, fnames in os.walk(root_dir):
         dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
         for fname in fnames:
             p = os.path.join(root, fname)
@@ -41,13 +53,28 @@ def discover_python_files() -> List[str]:
     return files
 
 
-def mark_parents(node: ast.AST, parent=None):
+def mark_parents(node: ast.AST):
+    """
+    Recursively marks each node with its parent node.
+    
+    Args:
+        node (ast.AST): The current AST node.
+    """
     for child in ast.iter_child_nodes(node):
         setattr(child, "_parent", node)
-        mark_parents(child, node)
+        mark_parents(child)
 
 
 def is_constant_name(name: str) -> bool:
+    """
+    Checks if a variable name follows constant naming conventions (all uppercase).
+    
+    Args:
+        name (str): The name to check.
+        
+    Returns:
+        bool: True if the name is all uppercase, False otherwise.
+    """
     return name.isupper()
 
 
@@ -61,6 +88,15 @@ def extract_from_file(
     Dict[str, str],  # nested functions
     Dict[str, str],  # top-level constants
 ]:
+    """
+    Extracts structural elements (classes, functions, constants) from a single Python file.
+    
+    Args:
+        path (str): Path to the Python file.
+        
+    Returns:
+        A tuple containing the file path and dictionaries of extracted elements.
+    """
     try:
         with open(path, "r", encoding="utf-8", errors="ignore") as f:
             source = f.read()
@@ -77,7 +113,10 @@ def extract_from_file(
     for node in ast.walk(tree):
         # ----- Classes & Functions -----
         if isinstance(node, (ast.ClassDef, ast.FunctionDef)):
-            src = ast.get_source_segment(source, node)
+            try:
+                src = ast.get_source_segment(source, node)
+            except (ValueError, Exception):
+                continue
             if not src:
                 continue
 
@@ -112,7 +151,10 @@ def extract_from_file(
             if not is_constant_name(name):
                 continue
 
-            src = ast.get_source_segment(source, node)
+            try:
+                src = ast.get_source_segment(source, node)
+            except (ValueError, Exception):
+                continue
             if src:
                 consts[name] = src
 
@@ -120,12 +162,23 @@ def extract_from_file(
 
 
 def write_output(path: str, data: Dict[str, str]) -> None:
+    """
+    Writes extracted source segments to a file.
+    
+    Args:
+        path (str): Output file path.
+        data (Dict[str, str]): Mapping of element names to their source code.
+    """
     with open(path, "w", encoding="utf-8") as f:
         for name, src in sorted(data.items()):
             f.write(src.rstrip() + "\n\n")
 
 
 def main():
+    """
+    Main execution logic for discovering files, extracting elements in parallel,
+    and saving the results.
+    """
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     files = discover_python_files()
 
@@ -133,6 +186,7 @@ def main():
         print("No Python files found.")
         return
 
+    # Use multiprocessing for speed on large codebases
     with mp.Pool(mp.cpu_count()) as pool:
         results = pool.map(extract_from_file, files)
 
@@ -147,33 +201,28 @@ def main():
         nested_funcs.update(nf)
         const_map.update(consts)
 
+    # Save to corresponding files
     write_output(os.path.join(OUTPUT_DIR, "classes.py"), tl_classes)
     write_output(os.path.join(OUTPUT_DIR, "functions.py"), tl_funcs)
     write_output(os.path.join(OUTPUT_DIR, "nested_classes.py"), nested_classes)
     write_output(os.path.join(OUTPUT_DIR, "nested_functions.py"), nested_funcs)
     write_output(os.path.join(OUTPUT_DIR, "const.py"), const_map)
 
-    print("\n=== Top-Level Classes ===")
-    for n in sorted(tl_classes):
-        print(" -", n)
+    # Print summary
+    categories = [
+        ("Top-Level Classes", tl_classes),
+        ("Top-Level Functions", tl_funcs),
+        ("Nested Classes", nested_classes),
+        ("Nested Functions", nested_funcs),
+        ("Constants", const_map),
+    ]
 
-    print("\n=== Top-Level Functions ===")
-    for n in sorted(tl_funcs):
-        print(" -", n)
+    for title, mapping in categories:
+        print(f"\n=== {title} ===")
+        for n in sorted(mapping):
+            print(f" - {n}")
 
-    print("\n=== Nested Classes ===")
-    for n in sorted(nested_classes):
-        print(" -", n)
-
-    print("\n=== Nested Functions ===")
-    for n in sorted(nested_funcs):
-        print(" -", n)
-
-    print("\n=== Constants ===")
-    for n in sorted(const_map):
-        print(" -", n)
-
-    print("\nOutputs saved to:", OUTPUT_DIR)
+    print(f"\nOutputs saved to: {OUTPUT_DIR}")
 
 
 if __name__ == "__main__":

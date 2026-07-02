@@ -1,59 +1,96 @@
 #!/data/data/com.termux/files/usr/bin/python
+"""
+Scrape Clash of Clans TH18 base layout links from YouTube channels.
+
+This module uses the YouTube Data API to find recent videos from specific
+Clash of Clans channels, extracts TH18 layout links from their descriptions,
+and generates an HTML report of the findings.
+"""
+
 import os
-import regex as re
 from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+import regex as re
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
+from pathlib import Path
 
 # Load API Key
 load_dotenv()
 API_KEY = os.getenv("YOUTUBE_API_KEY")
 
 # Configuration
-CHANNELS = {
+CHANNELS: Dict[str, str] = {
     "Blueprint_CoC": "UCQJJGSWnPUCb8uKV_MoJeOA",
     "iTzu": "UCLKKvlo0yK8OgWvjCiZQ3sA",
     "Clash_Champs": "UC_mD8S6pWpSstY3mXJ9nEqw",
 }
 
 
-def get_videos(youtube, channel_id):
+def get_videos(youtube: Any, channel_id: str) -> List[Dict[str, str]]:
+    """
+    Fetch recent videos from a specific YouTube channel.
+
+    Args:
+        youtube: The YouTube API client.
+        channel_id: The ID of the channel to search.
+
+    Returns:
+        A list of dictionaries containing video title, description, and URL.
+    """
     # Calculate RFC3339 date for 30 days ago
     past_date = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
 
-    videos = []
-    request = youtube.search().list(
-        part="snippet",
-        channelId=channel_id,
-        publishedAfter=past_date,
-        maxResults=50,
-        order="date",
-        type="video",
-    )
+    videos: List[Dict[str, str]] = []
+    try:
+        request = youtube.search().list(
+            part="snippet",
+            channelId=channel_id,
+            publishedAfter=past_date,
+            maxResults=50,
+            order="date",
+            type="video",
+        )
 
-    while request:
-        response = request.execute()
-        for item in response.get("items", []):
-            video_id = item["id"]["videoId"]
-            # Fetch full description (search only gives a snippet)
-            video_details = youtube.videos().list(part="snippet", id=video_id).execute()
+        while request:
+            response = request.execute()
+            for item in response.get("items", []):
+                video_id = item["id"]["videoId"]
+                # Fetch full description (search only gives a snippet)
+                video_details = youtube.videos().list(part="snippet", id=video_id).execute()
 
-            snippet = video_details["items"][0]["snippet"]
-            videos.append(
-                {
-                    "title": snippet["title"],
-                    "description": snippet["description"],
-                    "url": f"https://www.youtube.com/watch?v={video_id}",
-                }
-            )
+                if not video_details.get("items"):
+                    continue
 
-        request = youtube.search().list_next(request, response)
-        if len(videos) > 100:
-            break  # Safety limit
+                snippet = video_details["items"][0]["snippet"]
+                videos.append(
+                    {
+                        "title": snippet["title"],
+                        "description": snippet["description"],
+                        "url": f"https://www.youtube.com/watch?v={video_id}",
+                    }
+                )
+
+            request = youtube.search().list_next(request, response)
+            if len(videos) > 100:
+                break  # Safety limit
+    except Exception as e:
+        print(f"Error fetching videos for channel {channel_id}: {e}")
+        
     return videos
 
 
-def extract_th18_links(description):
+def extract_th18_links(description: str) -> List[str]:
+    """
+    Extract Clash of Clans layout links from a video description if they relate to TH18.
+
+    Args:
+        description: The video description text.
+
+    Returns:
+        A list of layout links found.
+    """
     # Regex to find CoC layout links
     pattern = r"(https?://link\.clashofclans\.com/[^\s]+)"
     links = re.findall(pattern, description)
@@ -61,12 +98,19 @@ def extract_th18_links(description):
     return [l for l in links if "TH18" in l.upper() or "TH18" in description.upper()]
 
 
-def create_html(channel_name, base_data):
-    date_str = datetime.now().strftime("%d-%m-%Y")
-    dir_name = f"output/{date_str}_{channel_name}"
-    os.makedirs(dir_name, exist_ok=True)
+def create_html(channel_name: str, base_data: List[Dict[str, Any]]) -> None:
+    """
+    Generate an HTML file listing the found base layouts.
 
-    file_path = os.path.join(dir_name, "bases.html")
+    Args:
+        channel_name: The name of the YouTube channel.
+        base_data: A list of found bases and their sources.
+    """
+    date_str = datetime.now().strftime("%d-%m-%Y")
+    dir_path = Path(f"output/{date_str}_{channel_name}")
+    dir_path.mkdir(parents=True, exist_ok=True)
+
+    file_path = dir_path / "bases.html"
 
     html_content = f"""
     <html>
@@ -96,22 +140,31 @@ def create_html(channel_name, base_data):
 
     html_content += "</body></html>"
 
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
-    print(f"Generated: {file_path}")
+    try:
+        file_path.write_text(html_content, encoding="utf-8")
+        print(f"Generated: {file_path}")
+    except Exception as e:
+        print(f"Error writing HTML file: {e}")
 
 
-def main():
+def main() -> None:
+    """
+    Main entry point for the scraper.
+    """
     if not API_KEY:
-        print("Error: API_KEY not found in .env file.")
+        print("Error: YOUTUBE_API_KEY not found in .env file.")
         return
 
-    youtube = build("youtube", "v3", developerKey=API_KEY)
+    try:
+        youtube = build("youtube", "v3", developerKey=API_KEY)
+    except Exception as e:
+        print(f"Error building YouTube service: {e}")
+        return
 
     for name, cid in CHANNELS.items():
         print(f"Processing {name}...")
         vids = get_videos(youtube, cid)
-        results = []
+        results: List[Dict[str, Any]] = []
 
         for v in vids:
             links = extract_th18_links(v["description"])

@@ -1,9 +1,17 @@
 #!/data/data/com.termux/files/usr/bin/env python3
+"""
+Extract package names from a pip freeze output file and overwrite it.
+
+This module provides a command-line utility to strip version information
+from a requirements file, leaving only the package names.
+"""
 
 import argparse
+from typing import Optional
 import regex as re
 from pathlib import Path
 
+# Regular expression to match package names, including optional editable flags
 PKG_NAME_RE = re.compile(
     r"""
     ^\s*
@@ -16,7 +24,16 @@ PKG_NAME_RE = re.compile(
 )
 
 
-def extract_package_name(line: str) -> str | None:
+def extract_package_name(line: str) -> Optional[str]:
+    """
+    Extract the package name from a single line of pip freeze output.
+
+    Args:
+        line: A line of text from pip freeze.
+
+    Returns:
+        The extracted package name, or None if no name could be found.
+    """
     line = line.strip()
 
     # Skip empty lines and comments
@@ -41,18 +58,27 @@ def extract_package_name(line: str) -> str | None:
 
 
 def main() -> None:
+    """
+    Main execution function for the script.
+    """
     parser = argparse.ArgumentParser(
         description="Clean pip freeze output and keep only package names (overwrite file)."
     )
-    parser.add_argument("file", help="pip freeze output file")
+    parser.add_argument("file", help="Path to the pip freeze output file to clean")
     args = parser.parse_args()
 
     path = Path(args.file)
 
     if not path.is_file():
-        raise SystemExit(f"Error: file not found: {path}")
+        print(f"Error: file not found: {path}")
+        return
 
-    lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    try:
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        lines = content.splitlines()
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        return
 
     packages = []
     for line in lines:
@@ -64,7 +90,11 @@ def main() -> None:
     seen = set()
     cleaned = [p for p in packages if not (p in seen or seen.add(p))]
 
-    path.write_text("\n".join(cleaned) + "\n", encoding="utf-8")
+    try:
+        path.write_text("\n".join(cleaned) + "\n", encoding="utf-8")
+        print(f"Successfully cleaned '{path}' and kept {len(cleaned)} packages.")
+    except Exception as e:
+        print(f"Error writing file: {e}")
 
 
 if __name__ == "__main__":

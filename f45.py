@@ -1,73 +1,93 @@
 #!/usr/bin/env python3
-import subprocess
+"""
+A utility to fold text file content to a specific width (default 45 characters).
+Can either cut strictly at the width or try to break at spaces (smart folding).
+"""
+
+import os
 import sys
 import tempfile
-import os
+from pathlib import Path
 
 
-def fold_content_pure(fname, width=45):
-    content = ""
-    with open(fname, "r", errors="ignore") as f:
-        content = f.read()
-    lines = content.splitlines()
+def fold_text(text: str, width: int = 45, smart_break: bool = True) -> str:
+    """
+    Folds text to a specific width.
+    
+    Args:
+        text (str): The input text to fold.
+        width (int): Maximum line width.
+        smart_break (bool): If True, attempts to break lines at spaces.
+        
+    Returns:
+        str: The folded text.
+    """
+    lines = text.splitlines()
     folded_lines = []
 
     for line in lines:
+        if not line:
+            folded_lines.append("")
+            continue
+            
         while len(line) > width:
-            folded_lines.append(line[:width])
-            line = line[width:]
+            if smart_break:
+                # Find the last space within the width
+                break_point = line.rfind(" ", 0, width + 1)
+                if break_point == -1:
+                    # No space found, forced cut at width
+                    break_point = width
+            else:
+                break_point = width
+            
+            folded_lines.append(line[:break_point].rstrip())
+            line = line[break_point:].lstrip()
+            
         if line:
             folded_lines.append(line)
 
-    #    return '\n'.join(folded_lines) + '\n'
-    with open(fname, "w") as fo:
-        for line in folded_lines:
-            fo.write(line + "\n")
-
-    print(f"{fname} updated.")
+    return "\n".join(folded_lines) + "\n"
 
 
-def fold_file_inplace(filename):
-    """Fold file content to 45 columns with spaces, then overwrite the original file."""
-    if not os.path.exists(filename):
+def fold_file_inplace(filename: str, width: int = 45) -> None:
+    """
+    Folds the content of a file in-place.
+    
+    Args:
+        filename (str): Path to the file to fold.
+        width (int): Target width for folding.
+    """
+    path = Path(filename)
+    if not path.exists():
         print(f"Error: File '{filename}' not found.", file=sys.stderr)
-        sys.exit(1)
+        return
 
-    # Read original content to a temp file first (safer approach)
-    with open(filename, "r", encoding="utf-8") as f:
-        original_content = f.read()
-
-    # Write to temp file using fold command
-    with tempfile.NamedTemporaryFile(mode="w+", suffix=".tmp", delete=False, encoding="utf-8") as temp_f:
-        temp_filename = temp_f.name
-        temp_f.write(original_content)
-        temp_f.flush()
-
-        # Run fold on temp file and capture output
-        result = subprocess.run(
-            ["fold", "-w", "45", "-s", temp_filename],
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-        )
-
-        if result.returncode != 0:
-            print(f"Error running fold: {result.stderr}", file=sys.stderr)
-            os.unlink(temp_filename)
-            sys.exit(1)
-
-        # Overwrite original file with folded content
-        with open(filename, "w", encoding="utf-8") as original_f:
-            original_f.write(result.stdout)
-
-    # Clean up temp file
-    os.unlink(temp_filename)
-    print(f"Successfully folded '{filename}' in place.")
+    try:
+        # Read content
+        original_content = path.read_text(encoding="utf-8", errors="ignore")
+        
+        # Fold content
+        folded_content = fold_text(original_content, width=width, smart_break=True)
+        
+        # Write back to file safely using a temporary file
+        fd, temp_path = tempfile.mkstemp(dir=path.parent, text=True)
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            f.write(folded_content)
+        
+        # Replace original file with temporary file
+        os.replace(temp_path, filename)
+        print(f"Successfully folded '{filename}' to {width} columns.")
+        
+    except Exception as e:
+        print(f"Error processing '{filename}': {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python3 fold_inplace.py <filename>", file=sys.stderr)
+    if len(sys.argv) < 2:
+        print(f"Usage: {os.path.basename(sys.argv[0])} <filename> [width]", file=sys.stderr)
         sys.exit(1)
-    fold_content_pure(sys.argv[1])
-#    fold_file_inplace(sys.argv[1])
+        
+    file_to_fold = sys.argv[1]
+    target_width = int(sys.argv[2]) if len(sys.argv) > 2 else 45
+    
+    fold_file_inplace(file_to_fold, target_width)

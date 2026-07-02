@@ -1,35 +1,69 @@
 #!/usr/bin/env python3
+"""
+A robust utility to extract all embedded subtitle streams from a video file using ffmpeg and ffprobe.
+Supports metadata-based naming (language and title).
+"""
 
 import argparse
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 
-def run(cmd):
+def run_command(cmd: list[str]) -> str:
+    """
+    Executes a shell command and returns its stdout.
+    
+    Args:
+        cmd (list[str]): The command to execute as a list of strings.
+        
+    Returns:
+        str: The standard output of the command.
+        
+    Raises:
+        RuntimeError: If the command fails.
+    """
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip())
     return result.stdout
 
 
-def probe_subtitles(video_path):
+def probe_subtitles(video_path: Path) -> list[dict]:
+    """
+    Uses ffprobe to discover all subtitle streams in a video file.
+    
+    Args:
+        video_path (Path): Path to the video file.
+        
+    Returns:
+        list[dict]: A list of dictionaries, each describing a subtitle stream.
+    """
     cmd = [
         "ffprobe",
-        "-v",
-        "error",
-        "-select_streams",
-        "s",
-        "-show_entries",
-        "stream=index,codec_name:stream_tags=language,title",
-        "-of",
-        "json",
-        video_path,
+        "-v", "error",
+        "-select_streams", "s",
+        "-show_entries", "stream=index,codec_name:stream_tags=language,title",
+        "-of", "json",
+        str(video_path),
     ]
-    return json.loads(run(cmd)).get("streams", [])
+    try:
+        output = run_command(cmd)
+        return json.loads(output).get("streams", [])
+    except Exception as e:
+        print(f"Error probing file: {e}", file=sys.stderr)
+        return []
 
 
-def extract_subtitles(video_path, output_dir):
+def extract_subtitles(video_path: Path, output_dir: Path) -> None:
+    """
+    Extracts each subtitle stream into a separate file in the output directory.
+    
+    Args:
+        video_path (Path): Path to the source video file.
+        output_dir (Path): Directory where extracted subtitles will be saved.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     subs = probe_subtitles(video_path)
 
@@ -37,10 +71,11 @@ def extract_subtitles(video_path, output_dir):
         print("No embedded subtitle streams found.")
         return
 
-    base = video_path.stem
+    base_name = video_path.stem
 
-    for s in subs:
-        idx = s["index"]
+    for i, s in enumerate(subs):
+        # index is the stream index relative to all streams in the file
+        stream_idx = s["index"]
         codec = s.get("codec_name", "sub")
         lang = s.get("tags", {}).get("language", "und")
         title = s.get("tags", {}).get("title", "").replace(" ", "_")
@@ -49,30 +84,42 @@ def extract_subtitles(video_path, output_dir):
         if title:
             suffix += f".{title}"
 
-        # Prefer SRT output when possible
+        # Prefer SRT output for standard subtitle formats
         out_ext = "srt" if codec in {"subrip", "srt"} else codec
-        out_file = output_dir / f"{base}{suffix}.{out_ext}"
+        out_file = output_dir / f"{base_name}{suffix}.stream_{i}.{out_ext}"
 
-        cmd = ["ffmpeg", "-y", "-i", str(video_path), "-map", f"0:s:{subs.index(s)}", str(out_file)]
+        # -y: overwrite output
+        # -map 0:s:{i}: selects the i-th subtitle stream
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i", str(video_path),
+            "-map", f"0:s:{i}",
+            str(out_file)
+        ]
 
         try:
-            run(cmd)
-            print(f"Extracted: {out_file}")
+            run_command(cmd)
+            print(f"Extracted: {out_file.name}")
         except RuntimeError as e:
-            print(f"Failed to extract subtitle stream {idx}: {e}")
+            print(f"Failed to extract subtitle stream {stream_idx} (index {i}): {e}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Extract embedded subtitles from a movie file")
-    parser.add_argument("movie", help="Path to movie file")
-    parser.add_argument("-o", "--output", default="subtitles", help="Output directory")
+    """
+    Main entry point: parses CLI arguments and initiates extraction.
+    """
+    parser = argparse.ArgumentParser(description="Extract all embedded subtitles from a video file")
+    parser.add_argument("movie", help="Path to the video file")
+    parser.add_argument("-o", "--output", default="subtitles", help="Output directory (default: 'subtitles')")
 
     args = parser.parse_args()
     video_path = Path(args.movie).resolve()
     output_dir = Path(args.output).resolve()
 
     if not video_path.exists():
-        raise FileNotFoundError(video_path)
+        print(f"Error: File not found: {video_path}", file=sys.stderr)
+        sys.exit(1)
 
     extract_subtitles(video_path, output_dir)
 

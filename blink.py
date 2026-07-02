@@ -1,21 +1,41 @@
-#!/data/data/com.termux/files/usr/bin/env python3
+#!/usr/bin/env python3
+"""Recursively identifies and deletes broken symbolic links.
+
+This script scans the current directory and all subdirectories for symbolic
+links. If a link's target does not exist, the script deletes the broken link.
+"""
 
 import os
+import sys
+from pathlib import Path
 
-# Get the current directory
-current_dir = os.getcwd()
 
-# Walk through the directory recursively
-for root, _dirs, files in os.walk(current_dir):
-    for file in files:
-        file_path = os.path.join(root, file)
-        # Check if it's a symbolic link
-        if os.path.islink(file_path):
-            # Check if the symbolic link is broken (target doesn't exist)
-            if not os.path.exists(file_path):
+def delete_broken_links(root_dir: Path) -> None:
+    """Recursively deletes broken symbolic links starting from root_dir.
+
+    Args:
+        root_dir: Path object representing the starting directory.
+    """
+    deleted_count = 0
+    for path in root_dir.rglob("*"):
+        if path.is_symlink():
+            # Check if the target exists
+            if not path.exists():
                 try:
-                    # Delete the broken link
-                    os.remove(file_path)
-                    print(f"Deleted broken link: {file_path}")
-                except Exception as e:
-                    print(f"Error deleting {file_path}: {e}")
+                    path.unlink()
+                    print(f"Deleted broken link: {path}")
+                    deleted_count += 1
+                except OSError as e:
+                    print(f"Error deleting {path}: {e}")
+    
+    print(f"Total broken links deleted: {deleted_count}")
+
+
+def main() -> None:
+    """Main execution function to delete broken symbolic links."""
+    current_dir = Path.cwd()
+    delete_broken_links(current_dir)
+
+
+if __name__ == "__main__":
+    main()
